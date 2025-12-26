@@ -1,0 +1,5 @@
+import React from 'react';
+import { Layout } from '@/components/Layout';
+
+const Terms = () => (<Layout><div className="container py-8 max-w-3xl"><h1 className="text-3xl font-bold mb-6">Terms of Service</h1><div className="prose prose-gray max-w-none text-muted-foreground space-y-4"><p>These Terms of Service govern your use of MarketHub. By using our platform, you agree to these terms.</p><h2 className="text-xl font-semibold text-foreground mt-6">1. Account Terms</h2><p>You must be 18 years or older to use this service. You are responsible for maintaining the security of your account.</p><h2 className="text-xl font-semibold text-foreground mt-6">2. Seller Terms</h2><p>Vendors must provide accurate product information and fulfill orders promptly.</p><h2 className="text-xl font-semibold text-foreground mt-6">3. Buyer Terms</h2><p>Buyers agree to pay for products purchased and provide accurate shipping information.</p><p className="text-sm italic mt-8">This is a demo prototype. These terms are for demonstration purposes only.</p></div></div></Layout>);
+export default Terms;
