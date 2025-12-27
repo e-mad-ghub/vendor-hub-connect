@@ -3,26 +3,26 @@ import { Link } from 'react-router-dom';
 
 export const Footer: React.FC = () => {
   const footerLinks = {
-    'Customer Service': [
-      { label: 'Contact Us', path: '/contact' },
-      { label: 'FAQs', path: '/about' },
-      { label: 'Shipping Info', path: '/about' },
-      { label: 'Returns', path: '/refund-policy' },
+    'خدمة العملاء': [
+      { label: 'اتصل بينا', path: '/contact' },
+      { label: 'الأسئلة الشائعة', path: '/about' },
+      { label: 'معلومات الشحن', path: '/about' },
+      { label: 'الاسترجاع', path: '/refund-policy' },
     ],
-    'About Us': [
-      { label: 'About MarketHub', path: '/about' },
-      { label: 'Careers', path: '/about' },
-      { label: 'Press', path: '/about' },
+    'عنّا': [
+      { label: 'عن سوق علاء الدين', path: '/about' },
+      { label: 'الوظائف', path: '/about' },
+      { label: 'الصحافة', path: '/about' },
     ],
-    'Sell on MarketHub': [
-      { label: 'Become a Vendor', path: '/vendor/register' },
-      { label: 'Vendor Policy', path: '/vendor-policy' },
-      { label: 'Vendor Login', path: '/login' },
+    'بيع على سوق علاء الدين': [
+      { label: 'ابدا كبائع', path: '/vendor/register' },
+      { label: 'سياسة البائعين', path: '/vendor-policy' },
+      { label: 'تسجيل دخول البائع', path: '/login' },
     ],
-    'Legal': [
-      { label: 'Terms of Service', path: '/terms' },
-      { label: 'Privacy Policy', path: '/privacy' },
-      { label: 'Refund Policy', path: '/refund-policy' },
+    'بنود قانونية': [
+      { label: 'الشروط والأحكام', path: '/terms' },
+      { label: 'سياسة الخصوصية', path: '/privacy' },
+      { label: 'سياسة الاسترجاع', path: '/refund-policy' },
     ],
   };
 
@@ -53,10 +53,10 @@ export const Footer: React.FC = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-center md:text-left">
               <h2 className="text-xl font-bold">
-                Market<span className="text-primary">Hub</span>
+                سوق <span className="text-primary">علاء الدين</span>
               </h2>
               <p className="text-xs text-muted-foreground mt-1">
-                Your trusted multi-vendor marketplace
+                منصتك الموثوقة للتجار المتعددين
               </p>
             </div>
             
@@ -67,7 +67,7 @@ export const Footer: React.FC = () => {
             </div>
             
             <p className="text-xs text-muted-foreground">
-              © 2024 MarketHub. All rights reserved. (Demo Prototype)
+              © 2024 سوق علاء الدين. كل الحقوق محفوظة. (نموذج تجريبي)
             </p>
           </div>
         </div>

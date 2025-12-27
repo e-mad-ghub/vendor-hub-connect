@@ -24,10 +24,10 @@ const Login = () => {
     const result = await login(loginData.email, loginData.password);
     
     if (result.success) {
-      toast.success('Welcome back!');
+      toast.success('نورتنا!');
       navigate('/');
     } else {
-      toast.error(result.error || 'Login failed');
+      toast.error(result.error || 'فشل تسجيل الدخول');
     }
     
     setIsLoading(false);
@@ -37,7 +37,7 @@ const Login = () => {
     e.preventDefault();
     
     if (registerData.password !== registerData.confirmPassword) {
-      toast.error('Passwords do not match');
+      toast.error('كلمة السر مش متطابقة');
       return;
     }
 
@@ -46,10 +46,10 @@ const Login = () => {
     const result = await register(registerData.email, registerData.password, registerData.name, 'customer');
     
     if (result.success) {
-      toast.success('Account created successfully!');
+      toast.success('تم إنشاء الحساب!');
       navigate('/');
     } else {
-      toast.error(result.error || 'Registration failed');
+      toast.error(result.error || 'فشل التسجيل');
     }
     
     setIsLoading(false);
@@ -57,9 +57,9 @@ const Login = () => {
 
   // Demo accounts
   const demoAccounts = [
-    { label: 'Customer', email: 'customer@test.com' },
-    { label: 'Vendor', email: 'techhub@vendor.com' },
-    { label: 'Admin', email: 'admin@marketplace.com' },
+    { label: 'عميل', email: 'customer@test.com' },
+    { label: 'بائع', email: 'techhub@vendor.com' },
+    { label: 'أدمن', email: 'admin@marketplace.com' },
   ];
 
   return (
@@ -67,26 +67,26 @@ const Login = () => {
       <div className="container py-8 md:py-12 max-w-md mx-auto">
         <div className="bg-card rounded-xl shadow-card p-6 md:p-8">
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold">Welcome to MarketHub</h1>
-            <p className="text-muted-foreground mt-1">Sign in to your account or create a new one</p>
+            <h1 className="text-2xl font-bold">أهلا بيك في سوق علاء الدين</h1>
+            <p className="text-muted-foreground mt-1">سجل دخولك أو اعمل حساب جديد</p>
           </div>
 
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login">Sign In</TabsTrigger>
-              <TabsTrigger value="register">Sign Up</TabsTrigger>
+              <TabsTrigger value="login">تسجيل دخول</TabsTrigger>
+              <TabsTrigger value="register">إنشاء حساب</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <Label htmlFor="login-email">Email</Label>
+                  <Label htmlFor="login-email">الإيميل</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="login-email"
                       type="email"
-                      placeholder="you@example.com"
+                      placeholder="example@email.com"
                       value={loginData.email}
                       onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                       className="pl-10"
@@ -96,7 +96,7 @@ const Login = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="login-password">Password</Label>
+                  <Label htmlFor="login-password">كلمة السر</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -112,13 +112,13 @@ const Login = () => {
                 </div>
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Signing in...' : 'Sign In'}
+                  {isLoading ? 'جاري تسجيل الدخول...' : 'تسجيل دخول'}
                 </Button>
               </form>
 
               {/* Demo Accounts */}
               <div className="mt-6 pt-6 border-t border-border">
-                <p className="text-sm text-muted-foreground text-center mb-3">Demo Accounts (click to fill):</p>
+                <p className="text-sm text-muted-foreground text-center mb-3">حسابات للتجربة (اضغط للملء):</p>
                 <div className="flex flex-wrap gap-2 justify-center">
                   {demoAccounts.map((account) => (
                     <Button
@@ -137,12 +137,12 @@ const Login = () => {
             <TabsContent value="register">
               <form onSubmit={handleRegister} className="space-y-4">
                 <div>
-                  <Label htmlFor="register-name">Full Name</Label>
+                  <Label htmlFor="register-name">الاسم بالكامل</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="register-name"
-                      placeholder="John Doe"
+                      placeholder="محمد أحمد"
                       value={registerData.name}
                       onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
                       className="pl-10"
@@ -152,13 +152,13 @@ const Login = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="register-email">Email</Label>
+                  <Label htmlFor="register-email">الإيميل</Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="register-email"
                       type="email"
-                      placeholder="you@example.com"
+                      placeholder="example@email.com"
                       value={registerData.email}
                       onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                       className="pl-10"
@@ -168,7 +168,7 @@ const Login = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="register-password">Password</Label>
+                  <Label htmlFor="register-password">كلمة السر</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -184,7 +184,7 @@ const Login = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="register-confirm">Confirm Password</Label>
+                  <Label htmlFor="register-confirm">تأكيد كلمة السر</Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -200,14 +200,14 @@ const Login = () => {
                 </div>
 
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Creating account...' : 'Create Account'}
+                  {isLoading ? 'جاري إنشاء الحساب...' : 'إنشاء حساب'}
                 </Button>
 
                 <p className="text-xs text-muted-foreground text-center">
-                  By creating an account, you agree to our{' '}
-                  <Link to="/terms" className="text-primary hover:underline">Terms</Link>
-                  {' '}and{' '}
-                  <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+                  بإنشاء الحساب انت بتوافق على{' '}
+                  <Link to="/terms" className="text-primary hover:underline">الشروط</Link>
+                  {' '}و{' '}
+                  <Link to="/privacy" className="text-primary hover:underline">سياسة الخصوصية</Link>
                 </p>
               </form>
             </TabsContent>
@@ -215,7 +215,7 @@ const Login = () => {
 
           <div className="mt-6 text-center">
             <Link to="/vendor/register" className="text-sm text-primary hover:underline inline-flex items-center gap-1">
-              Want to sell on MarketHub?
+              عايز تبيع على سوق علاء الدين؟
               <ArrowRight className="h-3 w-3" />
             </Link>
           </div>

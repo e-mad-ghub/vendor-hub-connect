@@ -104,7 +104,7 @@ const Search = () => {
     <div className="space-y-6">
       {/* Price Range */}
       <div>
-        <h4 className="font-medium mb-3">Price Range</h4>
+        <h4 className="font-medium mb-3">نطاق السعر</h4>
         <Slider
           value={priceRange}
           onValueChange={setPriceRange}
@@ -114,14 +114,14 @@ const Search = () => {
           className="mb-2"
         />
         <div className="flex justify-between text-sm text-muted-foreground">
-          <span>${priceRange[0]}</span>
-          <span>${priceRange[1]}+</span>
+          <span>ج.م {priceRange[0]}</span>
+          <span>ج.م {priceRange[1]}+</span>
         </div>
       </div>
 
       {/* Categories */}
       <div>
-        <h4 className="font-medium mb-3">Categories</h4>
+        <h4 className="font-medium mb-3">الفئات</h4>
         <div className="space-y-2">
           {categories.map((cat) => (
             <label key={cat.id} className="flex items-center gap-2 cursor-pointer">
@@ -137,7 +137,7 @@ const Search = () => {
 
       {/* Rating */}
       <div>
-        <h4 className="font-medium mb-3">Minimum Rating</h4>
+        <h4 className="font-medium mb-3">أقل تقييم</h4>
         <div className="space-y-2">
           {[4, 3, 2, 1].map((rating) => (
             <label key={rating} className="flex items-center gap-2 cursor-pointer">
@@ -146,7 +146,7 @@ const Search = () => {
                 onCheckedChange={() => setSelectedRating(selectedRating === rating ? null : rating)}
               />
               <span className="text-sm flex items-center gap-1">
-                {'⭐'.repeat(rating)} & up
+                {'⭐'.repeat(rating)} وأكثر
               </span>
             </label>
           ))}
@@ -155,7 +155,7 @@ const Search = () => {
 
       {/* Vendors */}
       <div>
-        <h4 className="font-medium mb-3">Vendors</h4>
+        <h4 className="font-medium mb-3">التجار</h4>
         <div className="space-y-2">
           {vendors.filter(v => v.status === 'approved').map((vendor) => (
             <label key={vendor.id} className="flex items-center gap-2 cursor-pointer">
@@ -172,7 +172,7 @@ const Search = () => {
       {hasActiveFilters && (
         <Button variant="outline" onClick={clearFilters} className="w-full">
           <X className="h-4 w-4 mr-2" />
-          Clear Filters
+          مسح الفلاتر
         </Button>
       )}
     </div>
@@ -185,11 +185,11 @@ const Search = () => {
         <div className="mb-4">
           {query ? (
             <h1 className="text-xl font-semibold">
-              Results for "{query}" <span className="text-muted-foreground font-normal">({filteredProducts.length} items)</span>
+              النتايج لـ "{query}" <span className="text-muted-foreground font-normal">({filteredProducts.length} منتج)</span>
             </h1>
           ) : (
             <h1 className="text-xl font-semibold">
-              All Products <span className="text-muted-foreground font-normal">({filteredProducts.length} items)</span>
+              كل المنتجات <span className="text-muted-foreground font-normal">({filteredProducts.length} منتج)</span>
             </h1>
           )}
         </div>
@@ -203,7 +203,7 @@ const Search = () => {
             <SheetTrigger asChild>
               <Button variant="outline" size="sm" className="md:hidden">
                 <SlidersHorizontal className="h-4 w-4 mr-2" />
-                Filters
+                الفلاتر
                 {hasActiveFilters && (
                   <span className="ml-1 bg-primary text-primary-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center">
                     !
@@ -213,7 +213,7 @@ const Search = () => {
             </SheetTrigger>
             <SheetContent side="left" className="w-80">
               <SheetHeader>
-                <SheetTitle>Filters</SheetTitle>
+                <SheetTitle>الفلاتر</SheetTitle>
               </SheetHeader>
               <div className="mt-6">
                 <FilterContent />
@@ -222,18 +222,18 @@ const Search = () => {
           </Sheet>
 
           <div className="flex items-center gap-2 ml-auto">
-            <span className="text-sm text-muted-foreground hidden sm:inline">Sort by:</span>
+            <span className="text-sm text-muted-foreground hidden sm:inline">ترتيب حسب:</span>
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="relevance">Relevance</SelectItem>
-                <SelectItem value="bestselling">Best Selling</SelectItem>
-                <SelectItem value="rating">Top Rated</SelectItem>
-                <SelectItem value="newest">Newest</SelectItem>
-                <SelectItem value="price-low">Price: Low to High</SelectItem>
-                <SelectItem value="price-high">Price: High to Low</SelectItem>
+                <SelectItem value="relevance">الأكثر صلة</SelectItem>
+                <SelectItem value="bestselling">الأكثر مبيعًا</SelectItem>
+                <SelectItem value="rating">أعلى تقييم</SelectItem>
+                <SelectItem value="newest">الأحدث</SelectItem>
+                <SelectItem value="price-low">السعر: من الأقل للأعلى</SelectItem>
+                <SelectItem value="price-high">السعر: من الأعلى للأقل</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -244,7 +244,7 @@ const Search = () => {
           {/* Desktop Filters */}
           <aside className="hidden md:block w-64 flex-shrink-0">
             <div className="sticky top-24 bg-card rounded-lg p-4 shadow-card">
-              <h3 className="font-semibold mb-4">Filters</h3>
+              <h3 className="font-semibold mb-4">الفلاتر</h3>
               <FilterContent />
             </div>
           </aside>
@@ -259,9 +259,9 @@ const Search = () => {
               </div>
             ) : (
               <div className="text-center py-12">
-                <p className="text-muted-foreground mb-4">No products found</p>
+                <p className="text-muted-foreground mb-4">مافيش منتجات مطابقة</p>
                 <Button variant="outline" onClick={clearFilters}>
-                  Clear Filters
+                  مسح الفلاتر
                 </Button>
               </div>
             )}

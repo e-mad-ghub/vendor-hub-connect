@@ -41,20 +41,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
         
         <div className="flex items-baseline gap-2 mb-1">
-          <span className="text-lg font-bold text-foreground">${product.price.toFixed(2)}</span>
+          <span className="text-lg font-bold text-foreground">ج.م {product.price.toFixed(2)}</span>
           {product.originalPrice && (
-            <span className="text-sm text-muted-foreground line-through">${product.originalPrice.toFixed(2)}</span>
+            <span className="text-sm text-muted-foreground line-through">ج.م {product.originalPrice.toFixed(2)}</span>
           )}
         </div>
         
         {vendor && (
           <p className="text-xs text-muted-foreground truncate">
-            by {vendor.storeName}
+            من {vendor.storeName}
           </p>
         )}
         
         <p className="text-xs text-muted-foreground mt-1">
-          {product.sold.toLocaleString()}+ sold
+          {product.sold.toLocaleString()}+ مبيعات
         </p>
       </div>
     </Link>

@@ -14,7 +14,7 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({ categories, active
         to="/search"
         className={`category-chip ${!activeCategory ? 'active' : ''}`}
       >
-        All
+        الكل
       </Link>
       {categories.map((cat) => (
         <Link

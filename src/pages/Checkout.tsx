@@ -33,16 +33,16 @@ const Checkout = () => {
     city: '',
     state: '',
     zipCode: '',
-    country: 'USA',
+    country: 'مصر',
   });
 
   if (items.length === 0 && !orderPlaced) {
     return (
       <Layout>
         <div className="container py-12 text-center">
-          <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
+          <h1 className="text-2xl font-bold mb-4">العربة فاضية</h1>
           <Link to="/search">
-            <Button>Continue Shopping</Button>
+            <Button>كمل تسوق</Button>
           </Link>
         </div>
       </Layout>
@@ -57,7 +57,7 @@ const Checkout = () => {
     
     setOrderPlaced(true);
     clearCart();
-    toast.success('Order placed successfully!');
+    toast.success('تم تأكيد طلبك بنجاح!');
     setIsProcessing(false);
   };
 
@@ -67,19 +67,19 @@ const Checkout = () => {
         <div className="container py-12 text-center max-w-lg mx-auto">
           <div className="bg-card rounded-xl p-8 shadow-card">
             <CheckCircle className="h-16 w-16 mx-auto text-marketplace-success mb-4" />
-            <h1 className="text-2xl font-bold mb-2">Order Placed!</h1>
+            <h1 className="text-2xl font-bold mb-2">تم تأكيد الطلب!</h1>
             <p className="text-muted-foreground mb-6">
-              Thank you for your order. You will receive a confirmation email shortly.
+              شكرًا لطلبك. هيوصلك إيميل تأكيد قريب.
             </p>
             <p className="text-sm text-muted-foreground mb-6">
               Order #ORD-{Date.now().toString().slice(-8)}
             </p>
             <div className="flex flex-col gap-2">
               <Link to="/account">
-                <Button className="w-full">View Orders</Button>
+                <Button className="w-full">شوف طلباتك</Button>
               </Link>
               <Link to="/">
-                <Button variant="outline" className="w-full">Continue Shopping</Button>
+                <Button variant="outline" className="w-full">كمل تسوق</Button>
               </Link>
             </div>
           </div>
@@ -91,11 +91,11 @@ const Checkout = () => {
   return (
     <Layout>
       <div className="container py-4 md:py-8 max-w-5xl">
-        <h1 className="text-2xl md:text-3xl font-bold mb-6">Checkout</h1>
+        <h1 className="text-2xl md:text-3xl font-bold mb-6">الدفع</h1>
 
         {/* Progress Steps */}
         <div className="flex items-center justify-center mb-8">
-          {['Shipping', 'Payment', 'Review'].map((label, idx) => (
+          {['الشحن', 'الدفع', 'المراجعة'].map((label, idx) => (
             <React.Fragment key={label}>
               <div
                 className={`flex items-center gap-2 ${
@@ -127,87 +127,87 @@ const Checkout = () => {
               <div className="bg-card rounded-xl shadow-card p-6 animate-fade-in">
                 <div className="flex items-center gap-2 mb-6">
                   <Truck className="h-5 w-5 text-primary" />
-                  <h2 className="text-lg font-semibold">Shipping Information</h2>
+                  <h2 className="text-lg font-semibold">بيانات الشحن</h2>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
-                    <Label htmlFor="fullName">Full Name</Label>
+                    <Label htmlFor="fullName">الاسم بالكامل</Label>
                     <Input
                       id="fullName"
                       value={shippingInfo.fullName}
                       onChange={(e) => setShippingInfo({ ...shippingInfo, fullName: e.target.value })}
-                      placeholder="John Doe"
+                      placeholder="محمد أحمد"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">الإيميل</Label>
                     <Input
                       id="email"
                       type="email"
                       value={shippingInfo.email}
                       onChange={(e) => setShippingInfo({ ...shippingInfo, email: e.target.value })}
-                      placeholder="john@example.com"
+                      placeholder="example@email.com"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="phone">Phone</Label>
+                    <Label htmlFor="phone">التليفون</Label>
                     <Input
                       id="phone"
                       value={shippingInfo.phone}
                       onChange={(e) => setShippingInfo({ ...shippingInfo, phone: e.target.value })}
-                      placeholder="+1 (555) 123-4567"
+                      placeholder="+20 1X XXX XXXX"
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <Label htmlFor="street">Street Address</Label>
+                    <Label htmlFor="street">عنوان الشارع</Label>
                     <Input
                       id="street"
                       value={shippingInfo.street}
                       onChange={(e) => setShippingInfo({ ...shippingInfo, street: e.target.value })}
-                      placeholder="123 Main Street"
+                      placeholder="١٢٣ شارع رئيسي"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="city">City</Label>
+                    <Label htmlFor="city">المدينة</Label>
                     <Input
                       id="city"
                       value={shippingInfo.city}
                       onChange={(e) => setShippingInfo({ ...shippingInfo, city: e.target.value })}
-                      placeholder="New York"
+                      placeholder="القاهرة"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="state">State</Label>
+                    <Label htmlFor="state">المحافظة</Label>
                     <Input
                       id="state"
                       value={shippingInfo.state}
                       onChange={(e) => setShippingInfo({ ...shippingInfo, state: e.target.value })}
-                      placeholder="NY"
+                      placeholder="الجيزة"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="zipCode">ZIP Code</Label>
+                    <Label htmlFor="zipCode">الرمز البريدي</Label>
                     <Input
                       id="zipCode"
                       value={shippingInfo.zipCode}
                       onChange={(e) => setShippingInfo({ ...shippingInfo, zipCode: e.target.value })}
-                      placeholder="10001"
+                      placeholder="XXXXX"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="country">Country</Label>
+                    <Label htmlFor="country">الدولة</Label>
                     <Input
                       id="country"
                       value={shippingInfo.country}
                       onChange={(e) => setShippingInfo({ ...shippingInfo, country: e.target.value })}
-                      placeholder="USA"
+                      placeholder="مصر"
                     />
                   </div>
                 </div>
 
                 <Button onClick={() => setStep(2)} className="w-full mt-6">
-                  Continue to Payment
+                  اكمل للدفع
                 </Button>
               </div>
             )}
@@ -216,14 +216,14 @@ const Checkout = () => {
               <div className="bg-card rounded-xl shadow-card p-6 animate-fade-in">
                 <div className="flex items-center gap-2 mb-6">
                   <CreditCard className="h-5 w-5 text-primary" />
-                  <h2 className="text-lg font-semibold">Payment Method</h2>
+                  <h2 className="text-lg font-semibold">طريقة الدفع</h2>
                 </div>
 
                 <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
                   <label className="flex items-center gap-3 p-4 border border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
                     <RadioGroupItem value="card" />
                     <CreditCard className="h-5 w-5" />
-                    <span className="font-medium">Credit / Debit Card</span>
+                    <span className="font-medium">كريدت/ديبت كارد</span>
                   </label>
                   <label className="flex items-center gap-3 p-4 border border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
                     <RadioGroupItem value="paypal" />
@@ -234,12 +234,12 @@ const Checkout = () => {
                 {paymentMethod === 'card' && (
                   <div className="mt-6 space-y-4">
                     <div>
-                      <Label htmlFor="cardNumber">Card Number</Label>
+                      <Label htmlFor="cardNumber">رقم الكارت</Label>
                       <Input id="cardNumber" placeholder="1234 5678 9012 3456" />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="expiry">Expiry Date</Label>
+                        <Label htmlFor="expiry">تاريخ الانتهاء</Label>
                         <Input id="expiry" placeholder="MM/YY" />
                       </div>
                       <div>
@@ -252,15 +252,15 @@ const Checkout = () => {
 
                 <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1">
                   <ShieldCheck className="h-4 w-4" />
-                  This is a demo. No real payment will be processed.
+                  ده نموذج تجريبي، مافيش دفع حقيقي هيتم.
                 </p>
 
                 <div className="flex gap-3 mt-6">
                   <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
-                    Back
+                    رجوع
                   </Button>
                   <Button onClick={() => setStep(3)} className="flex-1">
-                    Review Order
+                    مراجعة الطلب
                   </Button>
                 </div>
               </div>
@@ -268,13 +268,13 @@ const Checkout = () => {
 
             {step === 3 && (
               <div className="bg-card rounded-xl shadow-card p-6 animate-fade-in">
-                <h2 className="text-lg font-semibold mb-6">Review Your Order</h2>
+                <h2 className="text-lg font-semibold mb-6">راجع طلبك</h2>
 
                 {/* Shipping Summary */}
                 <div className="mb-6 p-4 bg-muted/50 rounded-lg">
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="font-medium">Shipping to:</p>
+                      <p className="font-medium">الشحن إلى:</p>
                       <p className="text-sm text-muted-foreground">
                         {shippingInfo.fullName}<br />
                         {shippingInfo.street}<br />
@@ -282,7 +282,7 @@ const Checkout = () => {
                       </p>
                     </div>
                     <Button variant="ghost" size="sm" onClick={() => setStep(1)}>
-                      Edit
+                      تعديل
                     </Button>
                   </div>
                 </div>
@@ -291,15 +291,15 @@ const Checkout = () => {
                 <div className="space-y-4">
                   {vendorGroups.map((group) => (
                     <div key={group.vendorId}>
-                      <p className="text-sm font-medium mb-2">From {group.vendorName}:</p>
+                      <p className="text-sm font-medium mb-2">من {group.vendorName}:</p>
                       {group.items.map(({ productId, quantity, product }) => (
                         <div key={productId} className="flex gap-3 py-2">
                           <img src={product.images[0]} alt="" className="w-12 h-12 rounded object-cover" />
                           <div className="flex-1">
                             <p className="text-sm font-medium line-clamp-1">{product.title}</p>
-                            <p className="text-xs text-muted-foreground">Qty: {quantity}</p>
+                            <p className="text-xs text-muted-foreground">الكمية: {quantity}</p>
                           </div>
-                          <p className="font-medium">${(product.price * quantity).toFixed(2)}</p>
+                          <p className="font-medium">ج.م {(product.price * quantity).toFixed(2)}</p>
                         </div>
                       ))}
                     </div>
@@ -308,10 +308,10 @@ const Checkout = () => {
 
                 <div className="flex gap-3 mt-6">
                   <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
-                    Back
+                    رجوع
                   </Button>
                   <Button onClick={handlePlaceOrder} className="flex-1" disabled={isProcessing}>
-                    {isProcessing ? 'Processing...' : 'Place Order'}
+                    {isProcessing ? 'جاري المعالجة...' : 'تأكيد الطلب'}
                   </Button>
                 </div>
               </div>
@@ -321,32 +321,32 @@ const Checkout = () => {
           {/* Order Summary Sidebar */}
           <div className="lg:col-span-1">
             <div className="bg-card rounded-xl shadow-card p-6 sticky top-24">
-              <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+              <h2 className="text-lg font-semibold mb-4">ملخص الطلب</h2>
               
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Subtotal ({items.length} items)</span>
-                  <span className="font-medium">${subtotal.toFixed(2)}</span>
+                  <span className="text-muted-foreground">الإجمالي الفرعي ({items.length} منتج)</span>
+                  <span className="font-medium">ج.م {subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Shipping</span>
+                  <span className="text-muted-foreground">الشحن</span>
                   <span className="font-medium">
                     {shipping === 0 ? (
-                      <span className="text-marketplace-success">FREE</span>
+                      <span className="text-marketplace-success">مجاني</span>
                     ) : (
-                      `$${shipping.toFixed(2)}`
+                      `ج.م ${shipping.toFixed(2)}`
                     )}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tax</span>
-                  <span className="font-medium">${tax.toFixed(2)}</span>
+                  <span className="text-muted-foreground">الضريبة</span>
+                  <span className="font-medium">ج.م {tax.toFixed(2)}</span>
                 </div>
                 
                 <div className="border-t border-border pt-3 mt-3">
                   <div className="flex justify-between text-lg font-bold">
-                    <span>Total</span>
-                    <span className="text-primary">${total.toFixed(2)}</span>
+                    <span>الإجمالي</span>
+                    <span className="text-primary">ج.م {total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>

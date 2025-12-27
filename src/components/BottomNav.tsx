@@ -11,11 +11,11 @@ export const BottomNav: React.FC = () => {
   const cartCount = getCartCount();
 
   const navItems = [
-    { path: '/', icon: Home, label: 'Home' },
-    { path: '/search', icon: Search, label: 'Search' },
-    { path: '/cart', icon: ShoppingCart, label: 'Cart', badge: cartCount },
-    { path: isAuthenticated ? '/account' : '/login', icon: User, label: isAuthenticated ? 'Account' : 'Login' },
-    { path: '/menu', icon: Menu, label: 'More' },
+    { path: '/', icon: Home, label: 'الرئيسية' },
+    { path: '/search', icon: Search, label: 'بحث' },
+    { path: '/cart', icon: ShoppingCart, label: 'العربة', badge: cartCount },
+    { path: isAuthenticated ? '/account' : '/login', icon: User, label: isAuthenticated ? 'حسابي' : 'تسجيل' },
+    { path: '/menu', icon: Menu, label: 'المزيد' },
   ];
 
   return (

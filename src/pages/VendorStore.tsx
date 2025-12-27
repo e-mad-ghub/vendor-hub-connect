@@ -16,9 +16,9 @@ const VendorStore = () => {
     return (
       <Layout>
         <div className="container py-12 text-center">
-          <h1 className="text-2xl font-bold mb-4">Vendor Not Found</h1>
+          <h1 className="text-2xl font-bold mb-4">التاجر غير موجود</h1>
           <Link to="/">
-            <Button>Back to Home</Button>
+            <Button>رجوع للرئيسية</Button>
           </Link>
         </div>
       </Layout>
@@ -26,9 +26,9 @@ const VendorStore = () => {
   }
 
   const stats = [
-    { label: 'Products', value: products.length, icon: Package },
-    { label: 'Orders', value: vendor.totalOrders.toLocaleString(), icon: ShoppingBag },
-    { label: 'Rating', value: vendor.rating.toFixed(1), icon: Store },
+    { label: 'منتجات', value: products.length, icon: Package },
+    { label: 'طلبات', value: vendor.totalOrders.toLocaleString(), icon: ShoppingBag },
+    { label: 'تقييم', value: vendor.rating.toFixed(1), icon: Store },
   ];
 
   return (
@@ -56,7 +56,7 @@ const VendorStore = () => {
                     <RatingStars rating={vendor.rating} reviewCount={vendor.reviewCount} size="md" />
                     <span className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
-                      Joined {vendor.createdAt}
+                      انضم في {vendor.createdAt}
                     </span>
                   </div>
                   <p className="text-muted-foreground max-w-2xl">{vendor.description}</p>
@@ -65,10 +65,10 @@ const VendorStore = () => {
                 <div className="flex gap-2">
                   <Button variant="outline">
                     <MessageCircle className="h-4 w-4 mr-2" />
-                    Contact
+                    تواصل
                   </Button>
                   <Button>
-                    Follow Store
+                    تابع المتجر
                   </Button>
                 </div>
               </div>
@@ -91,7 +91,7 @@ const VendorStore = () => {
 
         {/* Products */}
         <div className="mt-8 mb-8">
-          <h2 className="text-xl font-bold mb-4">All Products ({products.length})</h2>
+          <h2 className="text-xl font-bold mb-4">كل المنتجات ({products.length})</h2>
           
           {products.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -101,7 +101,7 @@ const VendorStore = () => {
             </div>
           ) : (
             <div className="text-center py-12 bg-card rounded-xl">
-              <p className="text-muted-foreground">No products available yet</p>
+              <p className="text-muted-foreground">مافيش منتجات متاحة لسه</p>
             </div>
           )}
         </div>

@@ -33,14 +33,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: true };
     }
     
-    return { success: false, error: 'Invalid email or password' };
+    return { success: false, error: 'الإيميل أو كلمة السر مش صح' };
   }, []);
 
   const register = useCallback(async (email: string, password: string, name: string, role: UserRole) => {
     // Check if email already exists
     const existingUser = users.find(u => u.email === email);
     if (existingUser) {
-      return { success: false, error: 'Email already registered' };
+      return { success: false, error: 'الإيميل مسجل قبل كده' };
     }
 
     // Create new user (mock)
@@ -65,7 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const registerVendor = useCallback(async (storeName: string, description: string) => {
     if (!user) {
-      return { success: false, error: 'Must be logged in to register as vendor' };
+      return { success: false, error: 'لازم تسجل دخول الأول عشان تبقى بائع' };
     }
 
     const newVendor: Vendor = {

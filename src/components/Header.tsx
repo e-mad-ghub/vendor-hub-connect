@@ -35,14 +35,14 @@ export const Header: React.FC = () => {
             {/* Logo */}
             <Link to="/" className="flex-shrink-0">
               <h1 className="text-xl md:text-2xl font-bold tracking-tight">
-                ​Alaadin<span className="text-primary">​Market</span>
+                سوق <span className="text-primary">علاء الدين</span>
               </h1>
             </Link>
 
             {/* Search Bar - Desktop */}
             <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-2xl">
               <div className="flex w-full">
-                <Input type="search" placeholder="Search products, brands, and more..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="rounded-r-none border-r-0 bg-background text-foreground focus-visible:ring-0 focus-visible:ring-offset-0" />
+                <Input type="search" placeholder="دور على منتجات، براندات وحاجات تانية..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="rounded-r-none border-r-0 bg-background text-foreground focus-visible:ring-0 focus-visible:ring-offset-0" />
                 <Button type="submit" className="rounded-l-none px-6">
                   <Search className="h-4 w-4" />
                 </Button>
@@ -58,18 +58,18 @@ export const Header: React.FC = () => {
                   </Link>
                   {user?.role === 'vendor' && <Link to="/vendor/dashboard">
                       <Button variant="outline" size="sm" className="ml-2 border-primary/30 text-marketplace-header-foreground hover:bg-primary/10">
-                        Vendor Dashboard
+                        لوحة البائع
                       </Button>
                     </Link>}
                   {user?.role === 'admin' && <Link to="/admin">
                       <Button variant="outline" size="sm" className="ml-2 border-primary/30 text-marketplace-header-foreground hover:bg-primary/10">
-                        Admin Panel
+                        لوحة الإدارة
                       </Button>
                     </Link>}
                 </div> : <Link to="/login">
                   <Button variant="ghost" className="text-marketplace-header-foreground hover:bg-primary/10">
                     <User className="h-5 w-5 mr-2" />
-                    Login
+                    تسجيل الدخول
                   </Button>
                 </Link>}
               
@@ -87,12 +87,12 @@ export const Header: React.FC = () => {
           {/* Mobile Search */}
           <form onSubmit={handleSearch} className="mt-2 md:hidden">
             <div className="flex">
-              <Input type="search" placeholder="Search products..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="rounded-r-none border-r-0 bg-background text-foreground focus-visible:ring-0" />
-              <Button type="submit" className="rounded-l-none px-4">
-                <Search className="h-4 w-4" />
-              </Button>
-            </div>
-          </form>
+                <Input type="search" placeholder="دور على المنتجات..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="rounded-r-none border-r-0 bg-background text-foreground focus-visible:ring-0" />
+                <Button type="submit" className="rounded-l-none px-4">
+                  <Search className="h-4 w-4" />
+                </Button>
+              </div>
+            </form>
         </div>
       </div>
 
@@ -104,12 +104,12 @@ export const Header: React.FC = () => {
               <SheetTrigger asChild>
                 <button className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors">
                   <Menu className="h-4 w-4" />
-                  All Categories
+                  كل الفئات
                 </button>
               </SheetTrigger>
               <SheetContent side="left" className="w-80">
                 <div className="py-4">
-                  <h2 className="font-semibold text-lg mb-4">Categories</h2>
+                  <h2 className="font-semibold text-lg mb-4">الفئات</h2>
                   <div className="space-y-1">
                     {categories.map(cat => <Link key={cat.id} to={`/category/${encodeURIComponent(cat.name)}`} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors" onClick={() => setIsMenuOpen(false)}>
                         <span className="text-xl">{cat.icon}</span>
@@ -125,7 +125,7 @@ export const Header: React.FC = () => {
               </Link>)}
             
             <Link to="/vendor/register" className="text-sm whitespace-nowrap text-primary font-medium hover:underline">
-              Sell on MarketHub
+              بيع على سوق علاء الدين
             </Link>
           </div>
         </div>
