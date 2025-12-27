@@ -51,9 +51,9 @@ const Index = () => {
             </div>
             <div className="flex-1 hidden md:block">
               <img
-                src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&h=400&fit=crop"
-                alt="Shopping"
-                className="rounded-xl shadow-card-hover"
+                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDBAELcCBZvFeMrydahzOwchiBAohWXYTgmA&s"
+                alt="ميكانيكي بيصلح عربية داخل ورشة"
+                className="rounded-xl shadow-card-hover object-cover w-full h-full"
               />
             </div>
           </div>
