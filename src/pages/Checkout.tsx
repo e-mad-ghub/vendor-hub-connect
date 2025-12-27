@@ -16,6 +16,7 @@ const Checkout = () => {
   const { isAuthenticated } = useAuth();
   const [step, setStep] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState('card');
+  const [instapayHandle, setInstapayHandle] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
 
@@ -229,6 +230,10 @@ const Checkout = () => {
                     <RadioGroupItem value="paypal" />
                     <span className="font-bold text-blue-600">PayPal</span>
                   </label>
+                  <label className="flex items-center gap-3 p-4 border border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
+                    <RadioGroupItem value="instapay" />
+                    <span className="font-medium">إنستا باي (IPN)</span>
+                  </label>
                 </RadioGroup>
 
                 {paymentMethod === 'card' && (
@@ -246,6 +251,21 @@ const Checkout = () => {
                         <Label htmlFor="cvv">CVV</Label>
                         <Input id="cvv" placeholder="123" />
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {paymentMethod === 'instapay' && (
+                  <div className="mt-6 space-y-4">
+                    <div>
+                      <Label htmlFor="instapay">هاندل إنستا باي</Label>
+                      <Input
+                        id="instapay"
+                        placeholder="مثال: yourname@bank"
+                        value={instapayHandle}
+                        onChange={(e) => setInstapayHandle(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">المدفوعات فورية عبر شبكة IPN. ده نموذج تجريبي.</p>
                     </div>
                   </div>
                 )}
