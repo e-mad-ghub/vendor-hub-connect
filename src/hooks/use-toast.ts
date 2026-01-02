@@ -126,7 +126,14 @@ const listeners: Array<(state: State) => void> = [];
 let memoryState: State = { toasts: [] };
 
 function dispatch(action: Action) {
+  if (import.meta.env.DEV) {
+    // Dev-only trace for toast state transitions
+    console.info('[toast:action]', action);
+  }
   memoryState = reducer(memoryState, action);
+  if (import.meta.env.DEV) {
+    console.info('[toast:state]', memoryState);
+  }
   listeners.forEach((listener) => {
     listener(memoryState);
   });

@@ -14,6 +14,7 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { items, getCartTotal, getItemsByVendor, clearCart } = useCart();
   const { isAuthenticated } = useAuth();
+  const isDev = import.meta.env.DEV;
   const [step, setStep] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [instapayHandle, setInstapayHandle] = useState('');
@@ -51,6 +52,9 @@ const Checkout = () => {
   }
 
   const handlePlaceOrder = async () => {
+    if (isDev) {
+      console.info('[checkout:placeOrder:start]', { items: items.length, total });
+    }
     setIsProcessing(true);
     
     // Simulate order processing
@@ -60,7 +64,22 @@ const Checkout = () => {
     clearCart();
     toast.success('تم تأكيد طلبك بنجاح!');
     setIsProcessing(false);
+    if (isDev) {
+      console.info('[checkout:placeOrder:complete]', { clearedCart: true, total });
+    }
   };
+
+  React.useEffect(() => {
+    if (isDev) {
+      console.info('[checkout:step]', step);
+    }
+  }, [isDev, step]);
+
+  React.useEffect(() => {
+    if (isDev) {
+      console.info('[checkout:payment]', paymentMethod);
+    }
+  }, [isDev, paymentMethod]);
 
   if (orderPlaced) {
     return (
