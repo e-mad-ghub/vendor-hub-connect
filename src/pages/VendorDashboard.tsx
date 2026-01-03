@@ -3,23 +3,34 @@ import { Link } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAvailabilityRequests } from '@/contexts/RequestContext';
 import { getProductsByVendor, getOrdersByVendor, payoutRequests } from '@/data/mockData';
 import { Package, ShoppingBag, DollarSign, TrendingUp, Plus, Store, CreditCard, Clock } from 'lucide-react';
 import { toast } from 'sonner';
+import { products as productsStore } from '@/data/mockData';
 
 const VendorDashboard = () => {
   const { vendor } = useAuth();
   const { requests, respondToRequest } = useAvailabilityRequests();
-  const products = vendor ? getProductsByVendor(vendor.id) : [];
+  const [products, setProducts] = React.useState(() => vendor ? getProductsByVendor(vendor.id) : []);
   const orders = vendor ? getOrdersByVendor(vendor.id) : [];
   const payouts = vendor ? payoutRequests.filter(p => p.vendorId === vendor.id) : [];
   const [quoteValues, setQuoteValues] = React.useState<Record<string, string>>({});
   const incomingRequests = vendor
     ? requests.filter(r => (!r.vendorId || r.vendorId === vendor.id) && (r.status === 'pending' || r.status === 'quoted'))
     : [];
+  const [isAdding, setIsAdding] = React.useState(false);
+  const [newProduct, setNewProduct] = React.useState({
+    title: '',
+    description: '',
+    price: '',
+    stock: '',
+    category: 'كهرباء',
+    image: '',
+  });
 
   const getSuggestedTotal = (requestId: string) => {
     const req = requests.find(r => r.id === requestId);
@@ -45,6 +56,41 @@ const VendorDashboard = () => {
   const handleMarkUnavailable = (requestId: string) => {
     respondToRequest(requestId, { status: 'unavailable', sellerNote: 'غير متاح حالياً' });
     toast.info('تم الإبلاغ بعدم التوفر');
+  };
+
+  const handleAddProduct = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!vendor) return;
+    if (!newProduct.title.trim() || !newProduct.price || !newProduct.image.trim()) {
+      toast.error('اكمل البيانات المطلوبة');
+      return;
+    }
+    const priceValue = Number(newProduct.price);
+    const stockValue = Number(newProduct.stock || 0);
+    if (!Number.isFinite(priceValue) || priceValue <= 0) {
+      toast.error('سعر غير صالح');
+      return;
+    }
+    const id = `p${Date.now()}`;
+    const productRecord = {
+      id,
+      vendorId: vendor.id,
+      title: newProduct.title,
+      description: newProduct.description || 'بدون وصف',
+      price: priceValue,
+      stock: stockValue,
+      category: newProduct.category,
+      images: [newProduct.image],
+      rating: 0,
+      reviewCount: 0,
+      sold: 0,
+      createdAt: new Date().toISOString(),
+    };
+    productsStore.push(productRecord as any);
+    setProducts(prev => [productRecord as any, ...prev]);
+    setIsAdding(false);
+    setNewProduct({ title: '', description: '', price: '', stock: '', category: 'كهرباء', image: '' });
+    toast.success('تم إضافة المنتج');
   };
 
   if (!vendor || vendor.status !== 'approved') {
@@ -116,8 +162,42 @@ const VendorDashboard = () => {
             <div className="bg-card rounded-xl shadow-card p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-semibold">منتجاتك ({products.length})</h3>
-                <Button size="sm"><Plus className="h-4 w-4 mr-2" />أضف منتج</Button>
+                <Button size="sm" onClick={() => setIsAdding(v => !v)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {isAdding ? 'إلغاء' : 'أضف منتج'}
+                </Button>
               </div>
+              {isAdding && (
+                <form onSubmit={handleAddProduct} className="grid md:grid-cols-2 gap-3 mb-4 p-4 border border-border rounded-lg bg-muted/30">
+                  <div className="md:col-span-2">
+                    <Label>اسم المنتج</Label>
+                    <Input value={newProduct.title} onChange={(e) => setNewProduct(p => ({ ...p, title: e.target.value }))} required />
+                  </div>
+                  <div>
+                    <Label>السعر (ج.م)</Label>
+                    <Input type="number" value={newProduct.price} onChange={(e) => setNewProduct(p => ({ ...p, price: e.target.value }))} required />
+                  </div>
+                  <div>
+                    <Label>المخزون</Label>
+                    <Input type="number" value={newProduct.stock} onChange={(e) => setNewProduct(p => ({ ...p, stock: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label>الفئة</Label>
+                    <Input value={newProduct.category} onChange={(e) => setNewProduct(p => ({ ...p, category: e.target.value }))} />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label>رابط الصورة</Label>
+                    <Input value={newProduct.image} onChange={(e) => setNewProduct(p => ({ ...p, image: e.target.value }))} placeholder="https://..." required />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label>الوصف</Label>
+                    <Textarea rows={3} value={newProduct.description} onChange={(e) => setNewProduct(p => ({ ...p, description: e.target.value }))} />
+                  </div>
+                  <div className="md:col-span-2 flex justify-end">
+                    <Button type="submit" size="sm">حفظ المنتج</Button>
+                  </div>
+                </form>
+              )}
               <div className="space-y-3">
                 {products.slice(0, 5).map(p => (
                   <div key={p.id} className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
@@ -126,7 +206,7 @@ const VendorDashboard = () => {
                       <p className="font-medium truncate">{p.title}</p>
                       <p className="text-sm text-muted-foreground">ج.م {p.price} • {p.stock} متاح</p>
                     </div>
-                    <Button variant="ghost" size="sm">تعديل</Button>
+                    <Button variant="ghost" size="sm" disabled>تعديل</Button>
                   </div>
                 ))}
               </div>
