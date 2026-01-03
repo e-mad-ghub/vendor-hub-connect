@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { User, UserRole, Vendor } from '@/types/marketplace';
-import { users, vendors } from '@/data/mockData';
+import { vendors } from '@/data/mockData';
+import { api } from '@/lib/api';
 
 interface AuthContextType {
   user: User | null;
@@ -27,26 +28,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = useCallback(async (email: string, password: string) => {
-    // Mock authentication - in real app, this would call an API
-    const foundUser = users.find(u => u.email === email);
-    
-    if (foundUser) {
-      setUser(foundUser);
-      logAuth('login', { userId: foundUser.id, role: foundUser.role });
-      
-      if (foundUser.role === 'vendor') {
-        const foundVendor = vendors.find(v => v.userId === foundUser.id);
-        setVendor(foundVendor || null);
-        logAuth('vendorLoaded', { vendorId: foundVendor?.id, status: foundVendor?.status });
-      }
-      
+    try {
+      const response = await api.login(email, password);
+      setUser(response.user);
+      if (response.vendor) setVendor(response.vendor);
+      logAuth('login', { userId: response.user.id, role: response.user.role });
       return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message || 'فشل تسجيل الدخول' };
     }
-    
-    return { success: false, error: 'الإيميل أو كلمة السر مش صح' };
   }, []);
 
-  const register = useCallback(async (email: string, password: string, name: string, role: UserRole) => {
+  const register = useCallback(async (_email: string, _password: string, _name: string, _role: UserRole) => {
     return { success: false, error: 'التسجيل مقفول. استخدم حساب بائع أو أدمن موجود.' };
   }, []);
 
@@ -54,6 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logAuth('logout', { userId: user?.id });
     setUser(null);
     setVendor(null);
+    api.logout().catch(() => {});
   }, [user]);
 
   const registerVendor = useCallback(async (storeName: string, description: string) => {

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCart } from '@/contexts/CartContext';
 import { useAvailabilityRequests } from '@/contexts/RequestContext';
+import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { CreditCard, Truck, ShieldCheck, ChevronRight, CheckCircle, AlertTriangle } from 'lucide-react';
 
@@ -19,6 +20,7 @@ const Checkout = () => {
   const [instapayHandle, setInstapayHandle] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [orderId, setOrderId] = useState<string | null>(null);
 
   const vendorGroups = getItemsByVendor();
   const subtotal = getCartTotal();
@@ -64,16 +66,20 @@ const Checkout = () => {
       console.info('[checkout:placeOrder:start]', { items: items.length, total });
     }
     setIsProcessing(true);
-    
-    // Simulate order processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setOrderPlaced(true);
-    clearCart();
-    toast.success('تم تأكيد طلبك بنجاح!');
-    setIsProcessing(false);
-    if (isDev) {
-      console.info('[checkout:placeOrder:complete]', { clearedCart: true, total });
+    try {
+      const order = await api.createOrder(matchingRequest!.id);
+      const paid = await api.payOrderInstapay(order.id);
+      setOrderId(paid.id);
+      setOrderPlaced(true);
+      clearCart();
+      toast.success('تم تأكيد الطلب والدفع عبر إنستا باي (وهمي)');
+    } catch (e: any) {
+      toast.error(e.message || 'فشل تأكيد الطلب');
+    } finally {
+      setIsProcessing(false);
+      if (isDev) {
+        console.info('[checkout:placeOrder:complete]', { clearedCart: true, total });
+      }
     }
   };
 
@@ -128,7 +134,7 @@ const Checkout = () => {
               شكرًا لطلبك. هيوصلك إيميل تأكيد قريب.
             </p>
             <p className="text-sm text-muted-foreground mb-6">
-              Order #ORD-{Date.now().toString().slice(-8)}
+              رقم الطلب: {orderId || 'جارٍ التوليد'}
             </p>
             <div className="flex flex-col gap-2">
               <Link to="/account">

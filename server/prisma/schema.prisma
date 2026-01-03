@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // Default to SQLite for local dev; switch to "postgresql" and update DATABASE_URL when deploying.
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      UserRole
+  vendor    Vendor?
+  createdAt DateTime @default(now())
+}
+
+model Vendor {
+  id          String   @id @default(cuid())
+  storeName   String
+  description String
+  logo        String
+  banner      String
+  status      VendorStatus @default(approved)
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  products    Product[]
+  requests    AvailabilityRequest[]
+  orders      Order[]
+  createdAt   DateTime @default(now())
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  vendorId    String
+  vendor      Vendor   @relation(fields: [vendorId], references: [id])
+  title       String
+  description String
+  price       Float
+  stock       Int
+  category    String
+  images      ProductImage[]
+  createdAt   DateTime @default(now())
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  url       String
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model AvailabilityRequest {
+  id           String   @id @default(cuid())
+  vendorId     String
+  vendor       Vendor   @relation(fields: [vendorId], references: [id])
+  buyerPhone   String
+  status       RequestStatus @default(pending)
+  quotedTotal  Float?
+  sellerNote   String?
+  cartSignature String
+  items        RequestItem[]
+  order        Order?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model RequestItem {
+  id        String   @id @default(cuid())
+  requestId String
+  request   AvailabilityRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  productId String
+  title     String
+  quantity  Int
+  price     Float
+  image     String
+}
+
+model Order {
+  id         String   @id @default(cuid())
+  vendorId   String
+  vendor     Vendor   @relation(fields: [vendorId], references: [id])
+  requestId  String  @unique
+  request    AvailabilityRequest @relation(fields: [requestId], references: [id])
+  total      Float
+  paymentRef String?
+  status     OrderStatus @default(pending)
+  createdAt  DateTime @default(now())
+}
+
+enum UserRole {
+  admin
+  vendor
+}
+
+enum VendorStatus {
+  pending
+  approved
+  rejected
+}
+
+enum RequestStatus {
+  pending
+  quoted
+  accepted
+  declined
+  cancelled
+  unavailable
+}
+
+enum OrderStatus {
+  pending
+  paid
+  failed
+}

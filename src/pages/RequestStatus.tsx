@@ -3,8 +3,8 @@ import { Layout } from '@/components/Layout';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useAvailabilityRequests } from '@/contexts/RequestContext';
 import { ArrowRight, Phone } from 'lucide-react';
+import { api } from '@/lib/api';
 
 const statusLabels: Record<string, string> = {
   pending: 'قيد المراجعة',
@@ -25,17 +25,16 @@ const statusColors: Record<string, string> = {
 };
 
 const RequestStatus = () => {
-  const { requests } = useAvailabilityRequests();
   const [phone, setPhone] = React.useState(localStorage.getItem('vhc_buyer_phone') || '');
+  const [requests, setRequests] = React.useState<any[]>([]);
 
-  const filtered = React.useMemo(
-    () => requests.filter(r => phone && r.buyerPhone === phone.trim()),
-    [requests, phone]
-  );
-
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem('vhc_buyer_phone', phone.trim());
+    const trimmed = phone.trim();
+    if (!trimmed) return;
+    localStorage.setItem('vhc_buyer_phone', trimmed);
+    const data = await api.requestsByPhone(trimmed);
+    setRequests(data);
   };
 
   return (
@@ -62,15 +61,15 @@ const RequestStatus = () => {
           </Button>
         </form>
 
-        {phone && filtered.length === 0 && (
+        {phone && requests.length === 0 && (
           <div className="bg-muted/40 border border-border rounded-xl p-6 text-center text-muted-foreground">
             مافيش طلبات مرتبطة بالرقم ده حتى الآن.
           </div>
         )}
 
-        {filtered.length > 0 && (
+        {requests.length > 0 && (
           <div className="space-y-4">
-            {filtered.map((req) => (
+            {requests.map((req) => (
               <div key={req.id} className="p-4 border border-border rounded-xl shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>

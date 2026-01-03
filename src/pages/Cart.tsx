@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/contexts/CartContext';
 import { useAvailabilityRequests } from '@/contexts/RequestContext';
+import { api } from '@/lib/api';
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Store, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -32,7 +33,7 @@ const Cart = () => {
   const lastRequest = requests[0];
   const hasStaleRequest = !matchingRequest && !!lastRequest;
 
-  const handleRequestAvailability = () => {
+  const handleRequestAvailability = async () => {
     if (items.length === 0) return;
     if (!buyerPhone.trim()) {
       toast.error('من فضلك أدخل رقم التليفون للمتابعة');
@@ -53,14 +54,18 @@ const Cart = () => {
       ? { vendorId: vendorGroups[0].vendorId, vendorName: vendorGroups[0].vendorName }
       : { vendorName: 'عدة تجار' };
 
-    createRequest({
-      items: snapshotItems,
-      cartSignature,
-      buyerPhone: buyerPhone.trim(),
-      ...vendorMeta,
-    });
-    localStorage.setItem('vhc_buyer_phone', buyerPhone.trim());
-    toast.success('تم إرسال طلب التوفر والسعر للتاجر');
+    try {
+      await createRequest({
+        items: snapshotItems,
+        cartSignature,
+        buyerPhone: buyerPhone.trim(),
+        ...vendorMeta,
+      });
+      localStorage.setItem('vhc_buyer_phone', buyerPhone.trim());
+      toast.success('تم إرسال طلب التوفر والسعر للتاجر');
+    } catch (e: any) {
+      toast.error(e.message || 'فشل إرسال الطلب');
+    }
   };
 
   const handleCancelRequest = () => {
@@ -69,15 +74,17 @@ const Cart = () => {
     toast('تم إلغاء الطلب');
   };
 
-  const handleAcceptQuote = () => {
+  const handleAcceptQuote = async () => {
     if (!matchingRequest) return;
+    await api.updateRequestStatus(matchingRequest.id, 'accepted');
     acceptRequest(matchingRequest.id);
     toast.success('تم تأكيد السعر - تابع للدفع عبر إنستا باي');
     navigate('/checkout');
   };
 
-  const handleDeclineQuote = () => {
+  const handleDeclineQuote = async () => {
     if (!matchingRequest) return;
+    await api.updateRequestStatus(matchingRequest.id, 'declined');
     declineRequest(matchingRequest.id, 'السعر غير مناسب');
     toast.info('تم رفض السعر. يمكنك طلب عرض جديد بعد التعديل');
   };

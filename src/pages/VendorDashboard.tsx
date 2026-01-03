@@ -7,21 +7,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAvailabilityRequests } from '@/contexts/RequestContext';
-import { getProductsByVendor, getOrdersByVendor, payoutRequests } from '@/data/mockData';
 import { Package, ShoppingBag, DollarSign, TrendingUp, Plus, Store, CreditCard, Clock } from 'lucide-react';
 import { toast } from 'sonner';
-import { products as productsStore } from '@/data/mockData';
+import { api } from '@/lib/api';
 
 const VendorDashboard = () => {
   const { vendor } = useAuth();
   const { requests, respondToRequest } = useAvailabilityRequests();
-  const [products, setProducts] = React.useState(() => vendor ? getProductsByVendor(vendor.id) : []);
-  const orders = vendor ? getOrdersByVendor(vendor.id) : [];
-  const payouts = vendor ? payoutRequests.filter(p => p.vendorId === vendor.id) : [];
+  const [products, setProducts] = React.useState<any[]>([]);
+  const [orders, setOrders] = React.useState<any[]>([]);
+  const [payouts] = React.useState<any[]>([]);
   const [quoteValues, setQuoteValues] = React.useState<Record<string, string>>({});
-  const incomingRequests = vendor
-    ? requests.filter(r => (!r.vendorId || r.vendorId === vendor.id) && (r.status === 'pending' || r.status === 'quoted'))
-    : [];
+  const [incomingRequests, setIncomingRequests] = React.useState<any[]>([]);
   const [isAdding, setIsAdding] = React.useState(false);
   const [newProduct, setNewProduct] = React.useState({
     title: '',
@@ -32,14 +29,21 @@ const VendorDashboard = () => {
     image: '',
   });
 
+  React.useEffect(() => {
+    if (!vendor) return;
+    api.listProducts().then(setProducts).catch(console.error);
+    api.vendorRequests().then(setIncomingRequests).catch(console.error);
+    api.vendorOrders().then(setOrders).catch(console.error);
+  }, [vendor]);
+
   const getSuggestedTotal = (requestId: string) => {
-    const req = requests.find(r => r.id === requestId);
+    const req = incomingRequests.find(r => r.id === requestId) || requests.find(r => r.id === requestId);
     if (!req) return 0;
     const snapshotTotal = req.items.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
     return req.quotedTotal ?? snapshotTotal;
   };
 
-  const handleSendQuote = (requestId: string) => {
+  const handleSendQuote = async (requestId: string) => {
     const suggested = getSuggestedTotal(requestId);
     const draftValue = quoteValues[requestId];
     const total = draftValue ? Number(draftValue) : suggested;
@@ -49,16 +53,20 @@ const VendorDashboard = () => {
       return;
     }
 
+    await api.quoteRequest(requestId, total);
     respondToRequest(requestId, { status: 'quoted', quotedTotal: total });
+    setIncomingRequests((prev) => prev.map(r => r.id === requestId ? { ...r, status: 'quoted', quotedTotal: total } : r));
     toast.success('تم إرسال السعر للعميل');
   };
 
-  const handleMarkUnavailable = (requestId: string) => {
+  const handleMarkUnavailable = async (requestId: string) => {
+    await api.updateRequestStatus(requestId, 'unavailable');
     respondToRequest(requestId, { status: 'unavailable', sellerNote: 'غير متاح حالياً' });
+    setIncomingRequests((prev) => prev.map(r => r.id === requestId ? { ...r, status: 'unavailable' } : r));
     toast.info('تم الإبلاغ بعدم التوفر');
   };
 
-  const handleAddProduct = (e: React.FormEvent) => {
+  const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!vendor) return;
     if (!newProduct.title.trim() || !newProduct.price || !newProduct.image.trim()) {
@@ -71,23 +79,16 @@ const VendorDashboard = () => {
       toast.error('سعر غير صالح');
       return;
     }
-    const id = `p${Date.now()}`;
-    const productRecord = {
-      id,
-      vendorId: vendor.id,
-      title: newProduct.title,
-      description: newProduct.description || 'بدون وصف',
-      price: priceValue,
-      stock: stockValue,
-      category: newProduct.category,
-      images: [newProduct.image],
-      rating: 0,
-      reviewCount: 0,
-      sold: 0,
-      createdAt: new Date().toISOString(),
-    };
-    productsStore.push(productRecord as any);
-    setProducts(prev => [productRecord as any, ...prev]);
+    const form = new FormData();
+    form.append('title', newProduct.title);
+    form.append('description', newProduct.description);
+    form.append('price', String(priceValue));
+    form.append('stock', String(stockValue));
+    form.append('category', newProduct.category);
+    form.append('imageUrl', newProduct.image);
+
+    const created = await api.createProduct(form);
+    setProducts(prev => [created, ...prev]);
     setIsAdding(false);
     setNewProduct({ title: '', description: '', price: '', stock: '', category: 'كهرباء', image: '' });
     toast.success('تم إضافة المنتج');

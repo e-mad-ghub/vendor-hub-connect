@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { AvailabilityRequest, AvailabilityRequestItem, AvailabilityRequestStatus } from '@/types/marketplace';
+import { api } from '@/lib/api';
 
 interface RequestContextType {
   requests: AvailabilityRequest[];
@@ -43,7 +44,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  const createRequest = useCallback((input: {
+  const createRequest = useCallback(async (input: {
     items: AvailabilityRequestItem[];
     cartSignature: string;
     buyerPhone: string;
@@ -51,20 +52,22 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     vendorId?: string;
     vendorName?: string;
   }) => {
-    const newRequest: AvailabilityRequest = {
-      id: `req-${Date.now()}`,
-      status: 'pending',
-      requestedAt: new Date().toISOString(),
-      cartSignature: input.cartSignature,
-      items: input.items,
+    const payload = {
+      vendorId: input.vendorId || 'v1',
       buyerPhone: input.buyerPhone,
-      customerId: input.customerId,
-      vendorId: input.vendorId,
-      vendorName: input.vendorName,
+      cartSignature: input.cartSignature,
+      items: input.items.map(i => ({
+        productId: i.productId,
+        title: i.title,
+        quantity: i.quantity,
+        price: i.price || 0,
+        image: i.image,
+      })),
     };
-    setRequests(prev => [newRequest, ...prev]);
-    logRequest('create', newRequest);
-    return newRequest;
+    const created = await api.createAvailabilityRequest(payload);
+    setRequests(prev => [created, ...prev]);
+    logRequest('create', created);
+    return created;
   }, []);
 
   const updateRequest = useCallback((id: string, updater: (req: AvailabilityRequest) => AvailabilityRequest) => {
