@@ -4,28 +4,36 @@ import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAvailabilityRequests } from '@/contexts/RequestContext';
 import { toast } from 'sonner';
-import { CreditCard, Truck, ShieldCheck, ChevronRight, CheckCircle } from 'lucide-react';
+import { CreditCard, Truck, ShieldCheck, ChevronRight, CheckCircle, AlertTriangle } from 'lucide-react';
 
 const Checkout = () => {
   const navigate = useNavigate();
   const { items, getCartTotal, getItemsByVendor, clearCart } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { requests } = useAvailabilityRequests();
   const isDev = import.meta.env.DEV;
   const [step, setStep] = useState(1);
-  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [paymentMethod, setPaymentMethod] = useState('instapay');
   const [instapayHandle, setInstapayHandle] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
 
   const vendorGroups = getItemsByVendor();
   const subtotal = getCartTotal();
-  const shipping = subtotal > 50 ? 0 : 5.99;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
+  const cartSignature = React.useMemo(
+    () => items.map(item => `${item.productId}:${item.quantity}`).sort().join('|'),
+    [items]
+  );
+  const matchingRequest = React.useMemo(
+    () => requests.find(r => r.cartSignature === cartSignature),
+    [requests, cartSignature]
+  );
+  const pricedSubtotal = matchingRequest?.quotedTotal ?? subtotal;
+  const shipping = pricedSubtotal > 50 ? 0 : 5.99;
+  const tax = pricedSubtotal * 0.08;
+  const total = pricedSubtotal + shipping + tax;
 
   const [shippingInfo, setShippingInfo] = useState({
     fullName: '',
@@ -80,6 +88,34 @@ const Checkout = () => {
       console.info('[checkout:payment]', paymentMethod);
     }
   }, [isDev, paymentMethod]);
+
+  if (!orderPlaced && (!matchingRequest || matchingRequest.status !== 'accepted')) {
+    let message = 'لازم تبعت طلب توفر وسعر وتاخد رد بالموافقة قبل الدفع.';
+    if (matchingRequest?.status === 'pending') {
+      message = 'طلبك في انتظار رد التاجر على التوفر والسعر.';
+    } else if (matchingRequest?.status === 'quoted') {
+      message = 'راجع السعر اللي أرسله التاجر في صفحة العربة، وقبله أو ارفضه.';
+    } else if (matchingRequest?.status === 'unavailable') {
+      message = 'التاجر بلغ إن القطعة مش متاحة حالياً. عدل السلة أو اطلب بديل.';
+    } else if (matchingRequest?.status === 'cancelled' || matchingRequest?.status === 'declined') {
+      message = 'الطلب متوقف. ابعت طلب جديد من صفحة العربة بعد التعديل.';
+    }
+
+    return (
+      <Layout>
+        <div className="container py-12 max-w-lg mx-auto text-center">
+          <div className="bg-card rounded-xl p-8 shadow-card">
+            <AlertTriangle className="h-12 w-12 mx-auto text-primary mb-3" />
+            <h1 className="text-xl font-bold mb-2">محتاج موافقة التاجر قبل الدفع</h1>
+            <p className="text-muted-foreground mb-4">{message}</p>
+            <Link to="/cart">
+              <Button>الرجوع لعربة التسوق</Button>
+            </Link>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   if (orderPlaced) {
     return (
@@ -234,71 +270,39 @@ const Checkout = () => {
 
             {step === 2 && (
               <div className="bg-card rounded-xl shadow-card p-6 animate-fade-in">
-                <div className="flex items-center gap-2 mb-6">
+                <div className="flex items-center gap-2 mb-4">
                   <CreditCard className="h-5 w-5 text-primary" />
-                  <h2 className="text-lg font-semibold">طريقة الدفع</h2>
+                  <h2 className="text-lg font-semibold">الدفع عبر إنستا باي</h2>
                 </div>
 
-                <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
-                  <label className="flex items-center gap-3 p-4 border border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
-                    <RadioGroupItem value="card" />
-                    <CreditCard className="h-5 w-5" />
-                    <span className="font-medium">كريدت/ديبت كارد</span>
-                  </label>
-                  <label className="flex items-center gap-3 p-4 border border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
-                    <RadioGroupItem value="paypal" />
-                    <span className="font-bold text-blue-600">PayPal</span>
-                  </label>
-                  <label className="flex items-center gap-3 p-4 border border-border rounded-lg cursor-pointer hover:border-primary transition-colors">
-                    <RadioGroupItem value="instapay" />
-                    <span className="font-medium">إنستا باي (IPN)</span>
-                  </label>
-                </RadioGroup>
+                <p className="text-sm text-muted-foreground mb-4">
+                  الدفع متاح عبر إنستا باي فقط بعد موافقة التاجر على السعر.
+                </p>
 
-                {paymentMethod === 'card' && (
-                  <div className="mt-6 space-y-4">
-                    <div>
-                      <Label htmlFor="cardNumber">رقم الكارت</Label>
-                      <Input id="cardNumber" placeholder="1234 5678 9012 3456" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="expiry">تاريخ الانتهاء</Label>
-                        <Input id="expiry" placeholder="MM/YY" />
-                      </div>
-                      <div>
-                        <Label htmlFor="cvv">CVV</Label>
-                        <Input id="cvv" placeholder="123" />
-                      </div>
-                    </div>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="instapay">هاندل إنستا باي</Label>
+                    <Input
+                      id="instapay"
+                      placeholder="مثال: yourname@bank"
+                      value={instapayHandle}
+                      onChange={(e) => setInstapayHandle(e.target.value)}
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">لن يتم تنفيذ دفعة حقيقية - ده نموذج تجريبي.</p>
                   </div>
-                )}
-
-                {paymentMethod === 'instapay' && (
-                  <div className="mt-6 space-y-4">
-                    <div>
-                      <Label htmlFor="instapay">هاندل إنستا باي</Label>
-                      <Input
-                        id="instapay"
-                        placeholder="مثال: yourname@bank"
-                        value={instapayHandle}
-                        onChange={(e) => setInstapayHandle(e.target.value)}
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">المدفوعات فورية عبر شبكة IPN. ده نموذج تجريبي.</p>
-                    </div>
-                  </div>
-                )}
+                </div>
 
                 <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1">
                   <ShieldCheck className="h-4 w-4" />
-                  ده نموذج تجريبي، مافيش دفع حقيقي هيتم.
+                  تفاصيل الدفع هنا للعرض فقط.
                 </p>
 
                 <div className="flex gap-3 mt-6">
                   <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
                     رجوع
                   </Button>
-                  <Button onClick={() => setStep(3)} className="flex-1">
+                  <Button onClick={() => setStep(3)} className="flex-1" disabled={!instapayHandle}>
                     مراجعة الطلب
                   </Button>
                 </div>
@@ -324,6 +328,16 @@ const Checkout = () => {
                       تعديل
                     </Button>
                   </div>
+                </div>
+
+                <div className="mb-6 p-4 bg-muted/50 rounded-lg flex items-start justify-between">
+                  <div>
+                    <p className="font-medium">طريقة الدفع</p>
+                    <p className="text-sm text-muted-foreground">إنستا باي • {instapayHandle || 'لم يتم إدخال الهاندل'}</p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setStep(2)}>
+                    تعديل
+                  </Button>
                 </div>
 
                 {/* Items */}
@@ -364,8 +378,8 @@ const Checkout = () => {
               
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">الإجمالي الفرعي ({items.length} منتج)</span>
-                  <span className="font-medium">ج.م {subtotal.toFixed(2)}</span>
+                  <span className="text-muted-foreground">إجمالي المنتجات ({items.length} منتج)</span>
+                  <span className="font-medium">ج.م {pricedSubtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">الشحن</span>
@@ -389,6 +403,11 @@ const Checkout = () => {
                   </div>
                 </div>
               </div>
+              {matchingRequest?.quotedTotal && (
+                <p className="text-xs text-muted-foreground mt-3">
+                  السعر المعروض مبني على عرض السعر الأخير المعتمد من التاجر.
+                </p>
+              )}
             </div>
           </div>
         </div>

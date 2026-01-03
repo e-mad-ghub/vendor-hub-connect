@@ -10,14 +10,17 @@ export const Footer: React.FC = () => {
       { label: 'الاسترجاع', path: '/refund-policy' },
     ],
     'عنّا': [
-      { label: 'عن سوق علاء الدين', path: '/about' },
+      { label: 'عن سوق الحرفيين', path: '/about' },
       { label: 'الوظائف', path: '/about' },
       { label: 'الصحافة', path: '/about' },
     ],
-    'بيع على سوق علاء الدين': [
-      { label: 'ابدا كبائع', path: '/vendor/register' },
+    'تتبع الطلبات': [
+      { label: 'تتبع حالة طلب السعر', path: '/requests' },
+    ],
+    'بيع على سوق الحرفيين': [
+      { label: 'إدارة المتجر (أدمن)', path: '/admin' },
       { label: 'سياسة البائعين', path: '/vendor-policy' },
-      { label: 'تسجيل دخول البائع', path: '/login' },
+      { label: 'تسجيل دخول البائع/الأدمن', path: '/login' },
     ],
     'بنود قانونية': [
       { label: 'الشروط والأحكام', path: '/terms' },
@@ -53,7 +56,7 @@ export const Footer: React.FC = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-center md:text-left">
               <h2 className="text-xl font-bold">
-                سوق <span className="text-primary">علاء الدين</span>
+                سوق <span className="text-primary">الحرفيين</span>
               </h2>
               <p className="text-xs text-muted-foreground mt-1">
                 منصتك الموثوقة للتجار المتعددين
@@ -67,7 +70,7 @@ export const Footer: React.FC = () => {
             </div>
             
             <p className="text-xs text-muted-foreground">
-              © 2024 سوق علاء الدين. كل الحقوق محفوظة. (نموذج تجريبي)
+              © 2024 سوق الحرفيين. كل الحقوق محفوظة. (نموذج تجريبي)
             </p>
           </div>
         </div>

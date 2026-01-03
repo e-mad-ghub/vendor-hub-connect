@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { RatingStars } from '@/components/RatingStars';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -48,7 +49,8 @@ const ProductDetail = () => {
 
   const handleBuyNow = () => {
     addToCart(product, quantity);
-    window.location.href = '/checkout';
+    toast.success('تمت الإضافة - اطلب التوفر والسعر من العربة قبل الدفع');
+    navigate('/cart');
   };
 
   return (
@@ -158,7 +160,7 @@ const ProductDetail = () => {
             {/* Actions */}
             <div className="flex gap-3">
               <Button onClick={handleBuyNow} size="lg" className="flex-1">
-                اشتري دلوقتي
+                أضف واطلب التوفر
               </Button>
               <Button onClick={handleAddToCart} size="lg" variant="outline" className="flex-1">
                 <ShoppingCart className="h-4 w-4 mr-2" />
@@ -278,7 +280,7 @@ const ProductDetail = () => {
             <ShoppingCart className="h-4 w-4" />
           </Button>
           <Button onClick={handleBuyNow} size="sm" className="px-6">
-            اشتري دلوقتي
+            اطلب التوفر
           </Button>
         </div>
       </div>

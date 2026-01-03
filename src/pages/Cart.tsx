@@ -2,18 +2,85 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useCart } from '@/contexts/CartContext';
-import { getProductById } from '@/data/mockData';
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Store } from 'lucide-react';
+import { useAvailabilityRequests } from '@/contexts/RequestContext';
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Store, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { items, removeFromCart, updateQuantity, getCartTotal, getItemsByVendor, clearCart } = useCart();
+  const { items, removeFromCart, updateQuantity, getCartTotal, getItemsByVendor } = useCart();
+  const { requests, createRequest, cancelRequest, acceptRequest, declineRequest } = useAvailabilityRequests();
+  const [buyerPhone, setBuyerPhone] = React.useState(() => localStorage.getItem('vhc_buyer_phone') || '');
   const vendorGroups = getItemsByVendor();
+  const cartSignature = React.useMemo(
+    () => items.map(item => `${item.productId}:${item.quantity}`).sort().join('|'),
+    [items]
+  );
+  const matchingRequest = React.useMemo(
+    () => requests.find(req => req.cartSignature === cartSignature),
+    [requests, cartSignature]
+  );
   const subtotal = getCartTotal();
-  const shipping = subtotal > 50 ? 0 : 5.99;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
+  const quotedSubtotal = matchingRequest?.quotedTotal ?? subtotal;
+  const shipping = quotedSubtotal > 50 ? 0 : 5.99;
+  const tax = quotedSubtotal * 0.08;
+  const total = quotedSubtotal + shipping + tax;
+  const quotedTotal = matchingRequest?.quotedTotal ?? subtotal;
+  const canCheckout = matchingRequest?.status === 'accepted';
+  const lastRequest = requests[0];
+  const hasStaleRequest = !matchingRequest && !!lastRequest;
+
+  const handleRequestAvailability = () => {
+    if (items.length === 0) return;
+    if (!buyerPhone.trim()) {
+      toast.error('من فضلك أدخل رقم التليفون للمتابعة');
+      return;
+    }
+
+    const snapshotItems = vendorGroups.flatMap(group =>
+      group.items.map(({ productId, quantity, product }) => ({
+        productId,
+        quantity,
+        title: product.title,
+        image: product.images[0],
+        price: product.price,
+      }))
+    );
+
+    const vendorMeta = vendorGroups.length === 1
+      ? { vendorId: vendorGroups[0].vendorId, vendorName: vendorGroups[0].vendorName }
+      : { vendorName: 'عدة تجار' };
+
+    createRequest({
+      items: snapshotItems,
+      cartSignature,
+      buyerPhone: buyerPhone.trim(),
+      ...vendorMeta,
+    });
+    localStorage.setItem('vhc_buyer_phone', buyerPhone.trim());
+    toast.success('تم إرسال طلب التوفر والسعر للتاجر');
+  };
+
+  const handleCancelRequest = () => {
+    if (!matchingRequest) return;
+    cancelRequest(matchingRequest.id, 'تم الإلغاء من العميل');
+    toast('تم إلغاء الطلب');
+  };
+
+  const handleAcceptQuote = () => {
+    if (!matchingRequest) return;
+    acceptRequest(matchingRequest.id);
+    toast.success('تم تأكيد السعر - تابع للدفع عبر إنستا باي');
+    navigate('/checkout');
+  };
+
+  const handleDeclineQuote = () => {
+    if (!matchingRequest) return;
+    declineRequest(matchingRequest.id, 'السعر غير مناسب');
+    toast.info('تم رفض السعر. يمكنك طلب عرض جديد بعد التعديل');
+  };
 
   if (items.length === 0) {
     return (
@@ -139,16 +206,107 @@ const Cart = () => {
                 </div>
               </div>
 
-              {subtotal < 50 && (
+              {quotedSubtotal < 50 && (
                 <p className="text-xs text-muted-foreground mt-3">
-                  اشتري بـ {(50 - subtotal).toFixed(2)} ج.م كمان عشان الشحن يبقى مجاني!
+                  اشتري بـ {(50 - quotedSubtotal).toFixed(2)} ج.م كمان عشان الشحن يبقى مجاني!
                 </p>
               )}
 
-              <Button onClick={() => navigate('/checkout')} className="w-full mt-6" size="lg">
-                إتمام الشراء
+              <div className="mt-6 p-4 bg-muted/40 border border-border rounded-lg space-y-3">
+                <div>
+                  <p className="text-sm font-medium mb-1">رقم التليفون للمتابعة</p>
+                  <Input
+                    type="tel"
+                    placeholder="مثال: 01XXXXXXXXX"
+                    value={buyerPhone}
+                    onChange={(e) => setBuyerPhone(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">هنستخدم الرقم ده لربط طلبات التوفر والمتابعة لاحقًا.</p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-primary" />
+                  <div>
+                    <p className="font-semibold text-sm">تأكيد التوفر والسعر من التاجر</p>
+                    <p className="text-xs text-muted-foreground">لازم تبعت طلب وتاخد رد قبل الدفع.</p>
+                  </div>
+                </div>
+
+                {matchingRequest ? (
+                  <>
+                    {matchingRequest.status === 'pending' && (
+                      <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <span>تم إرسال الطلب، في انتظار رد التاجر.</span>
+                        <Button size="sm" variant="ghost" onClick={handleCancelRequest}>إلغاء</Button>
+                      </div>
+                    )}
+
+                    {matchingRequest.status === 'quoted' && (
+                      <div className="space-y-3">
+                        <p className="text-sm">
+                          السعر المرسل: <span className="font-semibold text-primary">ج.م {quotedTotal.toFixed(2)}</span>
+                        </p>
+                        <div className="flex gap-2">
+                          <Button size="sm" className="flex-1" onClick={handleAcceptQuote}>
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            موافق - تابع للدفع
+                          </Button>
+                          <Button size="sm" variant="outline" className="flex-1" onClick={handleDeclineQuote}>
+                            غير مناسب
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {matchingRequest.status === 'accepted' && (
+                      <div className="flex items-center gap-2 text-sm text-green-700">
+                        <CheckCircle className="h-4 w-4" />
+                        <span>تم قبول السعر، جاهز للدفع عبر إنستا باي.</span>
+                      </div>
+                    )}
+
+                    {matchingRequest.status === 'unavailable' && (
+                      <div className="space-y-2 text-sm text-amber-700">
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4" />
+                          <span>التاجر أبلغ أن القطعة غير متاحة.</span>
+                        </div>
+                        <Button size="sm" className="w-full" onClick={handleRequestAvailability}>
+                          طلب تحقق جديد بعد التعديل
+                        </Button>
+                      </div>
+                    )}
+
+                    {(matchingRequest.status === 'cancelled' || matchingRequest.status === 'declined') && (
+                      <div className="space-y-2 text-sm text-muted-foreground">
+                        <span>تم إيقاف الطلب. تقدر تبعت طلب جديد بعد تعديل السلة.</span>
+                        <Button size="sm" className="w-full" onClick={handleRequestAvailability}>
+                          أرسل طلب جديد
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="space-y-2 text-sm">
+                    {hasStaleRequest ? (
+                      <p className="text-muted-foreground">السلة اتغيرت بعد آخر طلب. ابعت طلب جديد بالسلة الحالية.</p>
+                    ) : (
+                      <p className="text-muted-foreground">اضغط لإرسال طلب توفر وسعر للتاجر قبل الدفع.</p>
+                    )}
+                    <Button size="sm" className="w-full" onClick={handleRequestAvailability}>
+                      اطلب التأكيد من التاجر
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <Button onClick={() => navigate('/checkout')} className="w-full mt-4" size="lg" disabled={!canCheckout}>
+                {canCheckout ? 'الدفع عبر إنستا باي' : 'بانتظار تأكيد السعر'}
               </Button>
-              
+              <p className="text-xs text-muted-foreground mt-2">
+                لازم يقبل التاجر السعر/التوفر قبل الدفع.
+              </p>
+
               <Link to="/search">
                 <Button variant="ghost" className="w-full mt-2">
                   كمل تسوق

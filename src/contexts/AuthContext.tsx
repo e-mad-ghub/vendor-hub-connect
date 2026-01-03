@@ -47,26 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const register = useCallback(async (email: string, password: string, name: string, role: UserRole) => {
-    // Check if email already exists
-    const existingUser = users.find(u => u.email === email);
-    if (existingUser) {
-      return { success: false, error: 'الإيميل مسجل قبل كده' };
-    }
-
-    // Create new user (mock)
-    const newUser: User = {
-      id: `u${Date.now()}`,
-      email,
-      name,
-      role,
-      createdAt: new Date().toISOString(),
-    };
-
-    users.push(newUser);
-    setUser(newUser);
-    logAuth('register', { userId: newUser.id, role: newUser.role });
-
-    return { success: true };
+    return { success: false, error: 'التسجيل مقفول. استخدم حساب بائع أو أدمن موجود.' };
   }, []);
 
   const logout = useCallback(() => {
@@ -76,34 +57,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user]);
 
   const registerVendor = useCallback(async (storeName: string, description: string) => {
-    if (!user) {
-      return { success: false, error: 'لازم تسجل دخول الأول عشان تبقى بائع' };
-    }
-
-    const newVendor: Vendor = {
-      id: `v${Date.now()}`,
-      userId: user.id,
-      storeName,
-      description,
-      logo: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=200&h=200&fit=crop',
-      banner: 'https://images.unsplash.com/photo-1557683316-973673baf926?w=1200&h=300&fit=crop',
-      status: 'pending',
-      totalSales: 0,
-      totalOrders: 0,
-      rating: 0,
-      reviewCount: 0,
-      createdAt: new Date().toISOString(),
-    };
-
-    vendors.push(newVendor);
-    
-    // Update user role
-    user.role = 'vendor';
-    setUser({ ...user });
-    setVendor(newVendor);
-    logAuth('registerVendor', { vendorId: newVendor.id, status: newVendor.status });
-
-    return { success: true };
+    logAuth('registerVendor:block');
+    return { success: false, error: 'التسجيل للبائعين مغلق - تواصل مع الأدمن لو محتاج صلاحية' };
   }, [user]);
 
   useEffect(() => {

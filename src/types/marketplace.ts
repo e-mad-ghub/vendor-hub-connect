@@ -2,6 +2,13 @@ export type UserRole = 'customer' | 'vendor' | 'admin';
 export type VendorStatus = 'pending' | 'approved' | 'rejected';
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 export type PayoutStatus = 'pending' | 'approved' | 'paid' | 'rejected';
+export type AvailabilityRequestStatus =
+  | 'pending'
+  | 'quoted'
+  | 'accepted'
+  | 'declined'
+  | 'cancelled'
+  | 'unavailable';
 
 export interface User {
   id: string;
@@ -128,4 +135,28 @@ export interface Notification {
   message: string;
   read: boolean;
   createdAt: string;
+}
+
+export interface AvailabilityRequestItem {
+  productId: string;
+  quantity: number;
+  title: string;
+  image: string;
+  price?: number;
+}
+
+export interface AvailabilityRequest {
+  id: string;
+  customerId?: string;
+  buyerPhone: string;
+  vendorId?: string;
+  vendorName?: string;
+  items: AvailabilityRequestItem[];
+  status: AvailabilityRequestStatus;
+  cartSignature: string;
+  requestedAt: string;
+  respondedAt?: string;
+  quotedTotal?: number;
+  sellerNote?: string;
+  buyerNote?: string;
 }

@@ -35,7 +35,7 @@ export const Header: React.FC = () => {
             {/* Logo */}
             <Link to="/" className="flex-shrink-0">
               <h1 className="text-xl md:text-2xl font-bold tracking-tight">
-                سوق <span className="text-primary">علاء الدين</span>
+                سوق <span className="text-primary">الحرفيين</span>
               </h1>
             </Link>
 
@@ -51,6 +51,11 @@ export const Header: React.FC = () => {
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-4">
+              <Link to="/requests">
+                <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">
+                  تتبع طلب السعر
+                </Button>
+              </Link>
               {isAuthenticated ? <div className="flex items-center gap-2">
                   <Link to="/account" className="flex items-center gap-2 hover:text-primary transition-colors">
                     <User className="h-5 w-5" />
@@ -93,6 +98,15 @@ export const Header: React.FC = () => {
                 </Button>
               </div>
             </form>
+
+          {/* Mobile actions */}
+          <div className="mt-2 md:hidden">
+            <Link to="/requests" className="block">
+              <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+                تتبع طلب السعر
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -123,10 +137,6 @@ export const Header: React.FC = () => {
             {categories.slice(0, 6).map(cat => <Link key={cat.id} to={`/category/${encodeURIComponent(cat.name)}`} className="text-sm whitespace-nowrap hover:text-primary transition-colors">
                 {cat.name}
               </Link>)}
-            
-            <Link to="/vendor/register" className="text-sm whitespace-nowrap text-primary font-medium hover:underline">
-              بيع على سوق علاء الدين
-            </Link>
           </div>
         </div>
       </div>

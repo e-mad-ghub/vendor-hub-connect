@@ -53,6 +53,31 @@ Diagram:
 Selectors read totals/groups; checkout reads items, emptiness gate.
 ```
 
+## Availability/price requests (`src/contexts/RequestContext.tsx`, Cart, VendorDashboard, Checkout)
+- **State**: `requests[]` with snapshot items, `cartSignature`, `status` (`pending|quoted|accepted|declined|cancelled|unavailable`), optional `quotedTotal`.
+- **Events**: Cart triggers `createRequest`; vendor dashboard uses `respondToRequest` (quote or unavailable); buyer can `acceptRequest`, `declineRequest`, or `cancelRequest`.
+- **Guards/logic**: Checkout is blocked unless there is an `accepted` request matching the current cart signature; cart shows stale warning if items change after requesting.
+- **UI impact**: Cart summary shows request status/actions; vendor dashboard "Requests" tab allows setting price or marking unavailable; checkout redirects back to cart until quote is accepted.
+- **Dev logging**: `[request:*]` traces in DEV.
+
+Diagram:
+```
+[No request]
+   | createRequest (cart) -> pending
+   v
+[pending]
+   | respondToRequest(quoted) -> quoted
+   | respondToRequest(unavailable) -> unavailable (stop)
+   | cancelRequest -> cancelled (stop)
+   v
+[quoted]
+   | acceptRequest -> accepted (checkout allowed)
+   | declineRequest -> declined (stop)
+   v
+[accepted] -> checkout
+Stale cart signature forces new request.
+```
+
 ## Checkout wizard (`src/pages/Checkout.tsx`)
 - **State**: `step` (1 shipping → 2 payment → 3 review), `paymentMethod`, `shippingInfo`, `isProcessing`, `orderPlaced`.
 - **Events**: Step buttons (`setStep`), payment radio select (`setPaymentMethod`), order submit (`handlePlaceOrder`).

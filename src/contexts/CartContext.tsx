@@ -96,7 +96,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!product) return;
       
       const vendor = getVendorById(item.vendorId);
-      const vendorName = vendor?.storeName || 'Unknown Vendor';
+      const vendorName = vendor?.storeName || 'بائع غير معروف';
       
       if (!vendorGroups[item.vendorId]) {
         vendorGroups[item.vendorId] = {

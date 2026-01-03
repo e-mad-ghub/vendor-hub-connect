@@ -42,9 +42,9 @@ const Index = () => {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-                <Link to="/vendor/register">
+                <Link to="/requests">
                   <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                    سجل كبائع
+                    تتبع حالة طلب السعر
                   </Button>
                 </Link>
               </div>
@@ -187,13 +187,11 @@ const Index = () => {
         <div className="bg-gradient-to-r from-primary to-primary/80 rounded-2xl p-8 md:p-12 text-center text-primary-foreground">
           <h3 className="text-2xl md:text-3xl font-bold mb-4">جاهز تبيع؟</h3>
           <p className="mb-6 opacity-90 max-w-md mx-auto">
-            انضم لآلاف التجار الناجحين على سوق علاء الدين. مصاريف قليلة، تسجيل سريع وملايين العملاء.
+            المنصة دلوقتي شغالة مع تاجر واحد بيتم إدارته عن طريق الأدمن. لو محتاج تضيف منتجات أو تحدث الأسعار، تواصل مع لوحة الإدارة المعتمدة.
           </p>
-          <Link to="/vendor/register">
-            <Button size="lg" variant="secondary" className="bg-card text-foreground hover:bg-card/90">
-              سجل كبائع
-            </Button>
-          </Link>
+          <p className="text-sm opacity-90">
+            التسجيل مقفول حاليًا - التاجر الحالي بيتدار من الأدمن.
+          </p>
         </div>
       </section>
     </Layout>

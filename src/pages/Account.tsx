@@ -93,11 +93,6 @@ const Account = () => {
                 <Button size="sm">لوحة الإدارة</Button>
               </Link>
             )}
-            {user.role === 'customer' && (
-              <Link to="/vendor/register">
-                <Button size="sm" variant="outline">ابدا تبيع</Button>
-              </Link>
-            )}
             <Button size="sm" variant="outline" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />
               تسجيل خروج
