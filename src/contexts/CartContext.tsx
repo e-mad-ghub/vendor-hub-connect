@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { CartItem, Product } from '@/types/marketplace';
 import { getProductById, getVendorById } from '@/data/mockData';
 
@@ -17,17 +17,8 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
-  const isDev = import.meta.env.DEV;
-
-  const logCart = (event: string, payload: unknown) => {
-    if (isDev) {
-      // Dev-only trace to observe cart transitions during manual testing
-      console.info(`[cart:${event}]`, payload);
-    }
-  };
 
   const addToCart = useCallback((product: Product, quantity: number = 1) => {
-    logCart('add', { productId: product.id, quantity });
     setItems(prev => {
       const existing = prev.find(item => item.productId === product.id);
       
@@ -39,24 +30,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         );
       }
       
-      const next = [...prev, {
+      return [...prev, {
         productId: product.id,
         vendorId: product.vendorId,
         quantity,
         price: product.price,
       }];
-      logCart('add:newItem', next);
-      return next;
     });
   }, []);
 
   const removeFromCart = useCallback((productId: string) => {
-    logCart('remove', { productId });
     setItems(prev => prev.filter(item => item.productId !== productId));
   }, []);
 
   const updateQuantity = useCallback((productId: string, quantity: number) => {
-    logCart('updateQuantity', { productId, quantity });
     if (quantity <= 0) {
       removeFromCart(productId);
       return;
@@ -70,15 +57,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [removeFromCart]);
 
   const clearCart = useCallback(() => {
-    logCart('clear', {});
     setItems([]);
   }, []);
-
-  useEffect(() => {
-    if (isDev) {
-      console.info('[cart:state]', items);
-    }
-  }, [isDev, items]);
 
   const getCartTotal = useCallback(() => {
     return items.reduce((total, item) => total + (item.price * item.quantity), 0);

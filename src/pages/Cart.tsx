@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/contexts/CartContext';
 import { useAvailabilityRequests } from '@/contexts/RequestContext';
+import { validatePhone, sanitizePhoneForStorage } from '@/lib/validation';
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Store, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -12,7 +13,11 @@ const Cart = () => {
   const navigate = useNavigate();
   const { items, removeFromCart, updateQuantity, getCartTotal, getItemsByVendor } = useCart();
   const { requests, createRequest, cancelRequest, acceptRequest, declineRequest } = useAvailabilityRequests();
-  const [buyerPhone, setBuyerPhone] = React.useState(() => localStorage.getItem('vhc_buyer_phone') || '');
+  const [buyerPhone, setBuyerPhone] = React.useState(() => {
+    const stored = localStorage.getItem('vhc_buyer_phone');
+    return stored ? sanitizePhoneForStorage(stored) : '';
+  });
+  const [phoneError, setPhoneError] = React.useState<string | null>(null);
   const vendorGroups = getItemsByVendor();
   const cartSignature = React.useMemo(
     () => items.map(item => `${item.productId}:${item.quantity}`).sort().join('|'),
@@ -32,12 +37,24 @@ const Cart = () => {
   const lastRequest = requests[0];
   const hasStaleRequest = !matchingRequest && !!lastRequest;
 
+  const handlePhoneChange = (value: string) => {
+    // Only allow digits
+    const digitsOnly = value.replace(/\D/g, '').slice(0, 11);
+    setBuyerPhone(digitsOnly);
+    setPhoneError(null);
+  };
+
   const handleRequestAvailability = () => {
     if (items.length === 0) return;
-    if (!buyerPhone.trim()) {
-      toast.error('من فضلك أدخل رقم التليفون للمتابعة');
+    
+    const validation = validatePhone(buyerPhone);
+    if (!validation.valid) {
+      setPhoneError(validation.error || 'رقم غير صالح');
+      toast.error(validation.error || 'رقم التليفون غير صالح');
       return;
     }
+
+    const sanitizedPhone = validation.sanitized!;
 
     const snapshotItems = vendorGroups.flatMap(group =>
       group.items.map(({ productId, quantity, product }) => ({
@@ -56,10 +73,10 @@ const Cart = () => {
     createRequest({
       items: snapshotItems,
       cartSignature,
-      buyerPhone: buyerPhone.trim(),
+      buyerPhone: sanitizedPhone,
       ...vendorMeta,
     });
-    localStorage.setItem('vhc_buyer_phone', buyerPhone.trim());
+    localStorage.setItem('vhc_buyer_phone', sanitizedPhone);
     toast.success('تم إرسال طلب التوفر والسعر للتاجر');
   };
 
@@ -219,8 +236,13 @@ const Cart = () => {
                     type="tel"
                     placeholder="مثال: 01XXXXXXXXX"
                     value={buyerPhone}
-                    onChange={(e) => setBuyerPhone(e.target.value)}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    maxLength={11}
+                    className={phoneError ? 'border-destructive' : ''}
                   />
+                  {phoneError && (
+                    <p className="text-xs text-destructive mt-1">{phoneError}</p>
+                  )}
                   <p className="text-xs text-muted-foreground mt-1">هنستخدم الرقم ده لربط طلبات التوفر والمتابعة لاحقًا.</p>
                 </div>
 

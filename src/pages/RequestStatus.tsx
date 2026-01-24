@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAvailabilityRequests } from '@/contexts/RequestContext';
+import { validatePhone, sanitizePhoneForStorage } from '@/lib/validation';
 import { ArrowRight, Phone } from 'lucide-react';
 
 const statusLabels: Record<string, string> = {
@@ -26,16 +27,36 @@ const statusColors: Record<string, string> = {
 
 const RequestStatus = () => {
   const { requests } = useAvailabilityRequests();
-  const [phone, setPhone] = React.useState(localStorage.getItem('vhc_buyer_phone') || '');
+  const [phone, setPhone] = React.useState(() => {
+    const stored = localStorage.getItem('vhc_buyer_phone');
+    return stored ? sanitizePhoneForStorage(stored) : '';
+  });
+  const [phoneError, setPhoneError] = React.useState<string | null>(null);
+  const [searchedPhone, setSearchedPhone] = React.useState(phone);
 
   const filtered = React.useMemo(
-    () => requests.filter(r => phone && r.buyerPhone === phone.trim()),
-    [requests, phone]
+    () => requests.filter(r => searchedPhone && r.buyerPhone === searchedPhone),
+    [requests, searchedPhone]
   );
+
+  const handlePhoneChange = (value: string) => {
+    const digitsOnly = value.replace(/\D/g, '').slice(0, 11);
+    setPhone(digitsOnly);
+    setPhoneError(null);
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem('vhc_buyer_phone', phone.trim());
+    
+    const validation = validatePhone(phone);
+    if (!validation.valid) {
+      setPhoneError(validation.error || 'رقم غير صالح');
+      return;
+    }
+    
+    const sanitized = validation.sanitized!;
+    setSearchedPhone(sanitized);
+    localStorage.setItem('vhc_buyer_phone', sanitized);
   };
 
   return (
@@ -52,9 +73,14 @@ const RequestStatus = () => {
               type="tel"
               placeholder="01XXXXXXXXX"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => handlePhoneChange(e.target.value)}
+              maxLength={11}
+              className={phoneError ? 'border-destructive' : ''}
               required
             />
+            {phoneError && (
+              <p className="text-xs text-destructive mt-1">{phoneError}</p>
+            )}
           </div>
           <Button type="submit" className="flex items-center gap-2">
             <Phone className="h-4 w-4" />
@@ -62,7 +88,7 @@ const RequestStatus = () => {
           </Button>
         </form>
 
-        {phone && filtered.length === 0 && (
+        {searchedPhone && filtered.length === 0 && (
           <div className="bg-muted/40 border border-border rounded-xl p-6 text-center text-muted-foreground">
             مافيش طلبات مرتبطة بالرقم ده حتى الآن.
           </div>
