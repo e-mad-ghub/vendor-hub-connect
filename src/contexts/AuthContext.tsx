@@ -44,7 +44,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const logout = useCallback(() => {
-    logAuth('logout', { userId: user?.id });
     setUser(null);
   }, [user]);
 
