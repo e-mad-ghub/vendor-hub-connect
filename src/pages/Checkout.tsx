@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCart } from '@/contexts/CartContext';
 import { useAvailabilityRequests } from '@/contexts/RequestContext';
+import { validatePhone } from '@/lib/validation';
 import { toast } from 'sonner';
 import { CreditCard, Truck, ShieldCheck, ChevronRight, CheckCircle, AlertTriangle } from 'lucide-react';
 
@@ -13,12 +14,12 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { items, getCartTotal, getItemsByVendor, clearCart } = useCart();
   const { requests } = useAvailabilityRequests();
-  const isDev = import.meta.env.DEV;
   const [step, setStep] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState('instapay');
   const [instapayHandle, setInstapayHandle] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   const vendorGroups = getItemsByVendor();
   const subtotal = getCartTotal();
@@ -46,6 +47,23 @@ const Checkout = () => {
     country: 'مصر',
   });
 
+  const handlePhoneChange = (value: string) => {
+    const digitsOnly = value.replace(/\D/g, '').slice(0, 11);
+    setShippingInfo({ ...shippingInfo, phone: digitsOnly });
+    setPhoneError(null);
+  };
+
+  const validateShippingStep = (): boolean => {
+    if (shippingInfo.phone) {
+      const validation = validatePhone(shippingInfo.phone);
+      if (!validation.valid) {
+        setPhoneError(validation.error || 'رقم غير صالح');
+        return false;
+      }
+    }
+    return true;
+  };
+
   if (items.length === 0 && !orderPlaced) {
     return (
       <Layout>
@@ -60,9 +78,6 @@ const Checkout = () => {
   }
 
   const handlePlaceOrder = async () => {
-    if (isDev) {
-      console.info('[checkout:placeOrder:start]', { items: items.length, total });
-    }
     setIsProcessing(true);
     
     // Simulate order processing
@@ -72,22 +87,7 @@ const Checkout = () => {
     clearCart();
     toast.success('تم تأكيد طلبك بنجاح!');
     setIsProcessing(false);
-    if (isDev) {
-      console.info('[checkout:placeOrder:complete]', { clearedCart: true, total });
-    }
   };
-
-  React.useEffect(() => {
-    if (isDev) {
-      console.info('[checkout:step]', step);
-    }
-  }, [isDev, step]);
-
-  React.useEffect(() => {
-    if (isDev) {
-      console.info('[checkout:payment]', paymentMethod);
-    }
-  }, [isDev, paymentMethod]);
 
   if (!orderPlaced && (!matchingRequest || matchingRequest.status !== 'accepted')) {
     let message = 'لازم تبعت طلب توفر وسعر وتاخد رد بالموافقة قبل الدفع.';
@@ -210,10 +210,16 @@ const Checkout = () => {
                     <Label htmlFor="phone">التليفون</Label>
                     <Input
                       id="phone"
+                      type="tel"
                       value={shippingInfo.phone}
-                      onChange={(e) => setShippingInfo({ ...shippingInfo, phone: e.target.value })}
-                      placeholder="+20 1X XXX XXXX"
+                      onChange={(e) => handlePhoneChange(e.target.value)}
+                      placeholder="01XXXXXXXXX"
+                      maxLength={11}
+                      className={phoneError ? 'border-destructive' : ''}
                     />
+                    {phoneError && (
+                      <p className="text-xs text-destructive mt-1">{phoneError}</p>
+                    )}
                   </div>
                   <div className="md:col-span-2">
                     <Label htmlFor="street">عنوان الشارع</Label>
@@ -262,7 +268,14 @@ const Checkout = () => {
                   </div>
                 </div>
 
-                <Button onClick={() => setStep(2)} className="w-full mt-6">
+                <Button 
+                  onClick={() => {
+                    if (validateShippingStep()) {
+                      setStep(2);
+                    }
+                  }} 
+                  className="w-full mt-6"
+                >
                   اكمل للدفع
                 </Button>
               </div>

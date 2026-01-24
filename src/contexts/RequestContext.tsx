@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { AvailabilityRequest, AvailabilityRequestItem, AvailabilityRequestStatus } from '@/types/marketplace';
+import { sanitizePhoneForStorage } from '@/lib/validation';
 
 interface RequestContextType {
   requests: AvailabilityRequest[];
@@ -28,20 +29,12 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const raw = localStorage.getItem(STORAGE_KEY);
       const parsed = raw ? (JSON.parse(raw) as AvailabilityRequest[]) : [];
       return parsed.map(req => ({ buyerPhone: '', ...req }));
-    } catch (e) {
-      console.warn('[request:load:error]', e);
+    } catch {
       return [];
     }
   });
-  const isDev = import.meta.env.DEV;
 
   const latestRequest = useMemo(() => requests[0] || null, [requests]);
-
-  const logRequest = (event: string, payload: unknown) => {
-    if (isDev) {
-      console.info(`[request:${event}]`, payload);
-    }
-  };
 
   const createRequest = useCallback((input: {
     items: AvailabilityRequestItem[];
@@ -57,13 +50,12 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       requestedAt: new Date().toISOString(),
       cartSignature: input.cartSignature,
       items: input.items,
-      buyerPhone: input.buyerPhone,
+      buyerPhone: sanitizePhoneForStorage(input.buyerPhone),
       customerId: input.customerId,
       vendorId: input.vendorId,
       vendorName: input.vendorName,
     };
     setRequests(prev => [newRequest, ...prev]);
-    logRequest('create', newRequest);
     return newRequest;
   }, []);
 
@@ -80,7 +72,6 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         sellerNote: response.sellerNote,
         respondedAt: new Date().toISOString(),
       }));
-      logRequest('respond', { id, ...response });
     },
     [updateRequest]
   );
@@ -88,7 +79,6 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const acceptRequest = useCallback(
     (id: string) => {
       updateRequest(id, req => ({ ...req, status: 'accepted' }));
-      logRequest('accept', { id });
     },
     [updateRequest]
   );
@@ -96,7 +86,6 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const declineRequest = useCallback(
     (id: string, note?: string) => {
       updateRequest(id, req => ({ ...req, status: 'declined', buyerNote: note }));
-      logRequest('decline', { id, note });
     },
     [updateRequest]
   );
@@ -104,21 +93,17 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const cancelRequest = useCallback(
     (id: string, note?: string) => {
       updateRequest(id, req => ({ ...req, status: 'cancelled', buyerNote: note }));
-      logRequest('cancel', { id, note });
     },
     [updateRequest]
   );
 
   useEffect(() => {
-    if (isDev) {
-      console.info('[request:state]', requests);
-    }
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(requests));
-    } catch (e) {
-      console.warn('[request:save:error]', e);
+    } catch {
+      // Silent fail for storage issues
     }
-  }, [isDev, requests]);
+  }, [requests]);
 
   return (
     <RequestContext.Provider
