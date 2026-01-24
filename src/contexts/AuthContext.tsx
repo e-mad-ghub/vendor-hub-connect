@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { User, UserRole } from '@/types/marketplace';
-import { api } from '@/lib/api';
 
 interface AuthContextType {
   user: User | null;
@@ -24,14 +23,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = useCallback(async (email: string, password: string) => {
-    try {
-      const response = await api.login(email, password);
-      setUser(response.user);
-      logAuth('login', { userId: response.user.id, role: response.user.role });
-      return { success: true };
-    } catch (e: any) {
-      return { success: false, error: e.message || 'فشل تسجيل الدخول' };
+    const isAdmin = email.trim().toLowerCase() === 'admin@marketplace.com';
+    if (!isAdmin || !password.trim()) {
+      return { success: false, error: 'الدخول متاح للأدمن فقط' };
     }
+    const adminUser: User = {
+      id: 'admin_local',
+      email: 'admin@marketplace.com',
+      name: 'الأدمن',
+      role: 'admin',
+      createdAt: new Date().toISOString(),
+    };
+    setUser(adminUser);
+    logAuth('login', { userId: adminUser.id, role: adminUser.role });
+    return { success: true };
   }, []);
 
   const register = useCallback(async (_email: string, _password: string, _name: string, _role: UserRole) => {
@@ -41,7 +46,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = useCallback(() => {
     logAuth('logout', { userId: user?.id });
     setUser(null);
-    api.logout().catch(() => {});
   }, [user]);
 
   useEffect(() => {

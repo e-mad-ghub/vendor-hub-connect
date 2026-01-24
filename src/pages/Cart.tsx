@@ -41,12 +41,14 @@ const Cart = () => {
               <div className="divide-y divide-border">
                 {detailedItems.map(({ productId, quantity, product }) => (
                   <div key={productId} className="p-4 flex gap-4">
-                    <Link to={`/product/${productId}`}>
-                      <img
-                        src={product.images[0]}
-                        alt={product.title}
-                        className="w-20 h-20 md:w-24 md:h-24 object-cover rounded-lg"
-                      />
+                    <Link to={`/product/${productId}`} className="w-20 h-20 md:w-24 md:h-24">
+                      <div className="w-full h-full rounded-lg bg-muted flex items-center justify-center text-[10px] text-muted-foreground overflow-hidden">
+                        {product.imageDataUrl ? (
+                          <img src={product.imageDataUrl} alt={product.title} className="w-full h-full object-cover" />
+                        ) : (
+                          'صورة'
+                        )}
+                      </div>
                     </Link>
 
                     <div className="flex-1 min-w-0">

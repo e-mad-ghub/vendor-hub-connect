@@ -1,32 +1,75 @@
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:6500/api';
+const STORAGE_KEY = 'vhc_frontend_settings';
+const REQUESTS_KEY = 'vhc_quote_requests';
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-    ...options,
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || `Request failed: ${res.status}`);
+type WhatsAppSettings = { phoneNumber: string };
+type QuoteRequest = {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  message: string;
+  items: Array<{ productId: string; title: string; quantity: number; price: number; image: string }>;
+  status: 'pending' | 'cancelled' | 'followed_up';
+  createdAt: string;
+};
+
+const defaultSettings: WhatsAppSettings = {
+  phoneNumber: '201000000000',
+};
+
+const loadSettings = (): WhatsAppSettings => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? { ...defaultSettings, ...(JSON.parse(raw) as WhatsAppSettings) } : defaultSettings;
+  } catch {
+    return defaultSettings;
   }
-  return res.json();
-}
+};
+
+const saveSettings = (settings: WhatsAppSettings) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+};
+
+const loadRequests = (): QuoteRequest[] => {
+  try {
+    const raw = localStorage.getItem(REQUESTS_KEY);
+    const parsed = raw ? (JSON.parse(raw) as QuoteRequest[]) : [];
+    return parsed.map((req) => ({
+      ...req,
+      status: req.status || 'pending',
+    }));
+  } catch {
+    return [];
+  }
+};
+
+const saveRequests = (requests: QuoteRequest[]) => {
+  localStorage.setItem(REQUESTS_KEY, JSON.stringify(requests));
+};
 
 export const api = {
-  login: (email: string, password: string) =>
-    request('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
-  logout: () => request('/auth/logout', { method: 'POST' }),
-  listProducts: () => request('/products'),
-  createProduct: (data: FormData) =>
-    fetch(`${API_BASE}/products`, { method: 'POST', body: data, credentials: 'include' }).then(async (res) => {
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Upload failed');
-      return res.json();
-    }),
-  createQuoteRequest: (payload: any) =>
-    request('/quotes', { method: 'POST', body: JSON.stringify(payload) }),
-  listQuoteRequests: () => request('/quotes'),
-  getWhatsAppSettings: () => request('/settings/whatsapp'),
-  updateWhatsAppSettings: (payload: { phoneNumber: string; messageTemplate: string }) =>
-    request('/settings/whatsapp', { method: 'PUT', body: JSON.stringify(payload) }),
+  getWhatsAppSettings: async (): Promise<WhatsAppSettings> => loadSettings(),
+  updateWhatsAppSettings: async (payload: WhatsAppSettings): Promise<WhatsAppSettings> => {
+    const next = { ...defaultSettings, ...payload };
+    saveSettings(next);
+    return next;
+  },
+  listQuoteRequests: async (): Promise<QuoteRequest[]> => loadRequests(),
+  createQuoteRequest: async (payload: Omit<QuoteRequest, 'id' | 'createdAt' | 'status'>): Promise<QuoteRequest> => {
+    const next: QuoteRequest = {
+      ...payload,
+      id: `qr_${Date.now()}`,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+    };
+    const current = loadRequests();
+    current.unshift(next);
+    saveRequests(current);
+    return next;
+  },
+  updateQuoteRequestStatus: async (id: string, status: QuoteRequest['status']): Promise<QuoteRequest | null> => {
+    const current = loadRequests();
+    const next = current.map((req) => (req.id === id ? { ...req, status } : req));
+    saveRequests(next);
+    return next.find((req) => req.id === id) || null;
+  },
 };

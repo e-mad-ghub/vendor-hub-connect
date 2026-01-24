@@ -51,20 +51,15 @@ export const Header: React.FC = () => {
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-4">
               {isAuthenticated ? <div className="flex items-center gap-2">
-                  <Link to="/account" className="flex items-center gap-2 hover:text-primary transition-colors">
-                    <User className="h-5 w-5" />
-                    <span className="text-sm">{user?.name}</span>
-                  </Link>
                   {user?.role === 'admin' && <Link to="/admin">
-                      <Button variant="outline" size="sm" className="ml-2 border-primary/30 text-marketplace-header-foreground hover:bg-primary/10">
+                      <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">
                         لوحة الإدارة
                       </Button>
                     </Link>}
                 </div> : <Link to="/login">
-                  <Button variant="ghost" className="text-marketplace-header-foreground hover:bg-primary/10">
-                    <User className="h-5 w-5 mr-2" />
-                    تسجيل الدخول
-                  </Button>
+                  <button className="text-xs text-marketplace-header-foreground/70 hover:text-marketplace-header-foreground transition-colors">
+                    دخول الأدمن
+                  </button>
                 </Link>}
               
               <Link to="/cart" className="relative">

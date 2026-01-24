@@ -14,15 +14,11 @@ export interface Product {
   title: string;
   description: string;
   price: number;
-  originalPrice?: number;
-  stock: number;
   category: string;
-  subcategory?: string;
-  images: string[];
-  rating: number;
-  reviewCount: number;
-  sold: number;
-  tags?: string[];
+  carBrands?: string[];
+  imageDataUrl?: string;
+  ownerId?: string;
+  ownerName?: string;
   createdAt: string;
 }
 
@@ -30,18 +26,6 @@ export interface CartItem {
   productId: string;
   quantity: number;
   price: number;
-}
-
-export interface Review {
-  id: string;
-  productId: string;
-  customerId: string;
-  customerName: string;
-  rating: number;
-  comment: string;
-  images?: string[];
-  helpful: number;
-  createdAt: string;
 }
 
 export interface Category {
@@ -70,5 +54,16 @@ export interface QuoteRequest {
 
 export interface WhatsAppSettings {
   phoneNumber: string;
-  messageTemplate: string;
+}
+
+export type QuoteRequestStatus = 'pending' | 'cancelled' | 'followed_up';
+
+export interface QuoteRequest {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  message: string;
+  items: Array<{ productId: string; title: string; quantity: number; price: number; image: string }>;
+  status: QuoteRequestStatus;
+  createdAt: string;
 }

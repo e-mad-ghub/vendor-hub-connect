@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
-import { RatingStars } from '@/components/RatingStars';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCart } from '@/contexts/CartContext';
-import { getProductById, getReviewsByProduct, getProductsByCategory } from '@/data/mockData';
-import { ShoppingCart, Heart, Share2, Truck, Shield, RefreshCw, Minus, Plus, ChevronRight, ThumbsUp } from 'lucide-react';
+import { getProductById, getProductsByCategory } from '@/data/productsStore';
+import { ShoppingCart, Heart, Share2, Truck, Shield, RefreshCw, Minus, Plus, ChevronRight } from 'lucide-react';
 import { ProductCard } from '@/components/ProductCard';
 import { toast } from 'sonner';
 
@@ -16,10 +13,7 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
-  const [selectedImage, setSelectedImage] = useState(0);
-
   const product = getProductById(id || '');
-  const reviews = product ? getReviewsByProduct(product.id) : [];
   const relatedProducts = product
     ? getProductsByCategory(product.category).filter(p => p.id !== product?.id).slice(0, 4)
     : [];
@@ -36,10 +30,6 @@ const ProductDetail = () => {
       </Layout>
     );
   }
-
-  const discount = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-    : null;
 
   const handleAddToCart = () => {
     addToCart(product, quantity);
@@ -67,54 +57,34 @@ const ProductDetail = () => {
         </nav>
 
         <div className="grid md:grid-cols-2 gap-6 lg:gap-10">
-          {/* Product Images */}
+          {/* Product Image */}
           <div className="space-y-4">
-            <div className="aspect-square bg-muted rounded-xl overflow-hidden">
-              <img
-                src={product.images[selectedImage]}
-                alt={product.title}
-                className="w-full h-full object-cover"
-              />
+            <div className="aspect-square bg-muted rounded-xl flex items-center justify-center text-sm text-muted-foreground overflow-hidden">
+              {product.imageDataUrl ? (
+                <img src={product.imageDataUrl} alt={product.title} className="w-full h-full object-cover" />
+              ) : (
+                'صورة المنتج'
+              )}
             </div>
-            {product.images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto hide-scrollbar">
-                {product.images.map((img, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setSelectedImage(idx)}
-                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 flex-shrink-0 ${
-                      selectedImage === idx ? 'border-primary' : 'border-transparent'
-                    }`}
-                  >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Product Info */}
           <div className="space-y-4">
-            {/* Title & Rating */}
+            {/* Title */}
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">{product.title}</h1>
-              <div className="flex items-center gap-4">
-                <RatingStars rating={product.rating} reviewCount={product.reviewCount} size="md" />
-                <span className="text-sm text-muted-foreground">{product.sold.toLocaleString()} مبيعات</span>
-              </div>
             </div>
 
             {/* Price */}
             <div className="bg-muted/50 rounded-xl p-4">
               <div className="flex items-baseline gap-3">
                 <span className="text-3xl font-bold text-primary">ج.م {product.price.toFixed(2)}</span>
-                {product.originalPrice && (
-                  <>
-                    <span className="text-lg text-muted-foreground line-through">ج.م {product.originalPrice.toFixed(2)}</span>
-                    <Badge className="deal-badge text-primary-foreground">-{discount}% خصم</Badge>
-                  </>
-                )}
               </div>
+            </div>
+
+            <div className="bg-card rounded-xl p-4 border border-border text-sm text-muted-foreground">
+              <p>الفئة: {product.category}</p>
+              <p>الماركات: {product.carBrands && product.carBrands.length > 0 ? product.carBrands.join('، ') : 'مش متحدد'}</p>
             </div>
 
             {/* Quantity */}
@@ -129,13 +99,12 @@ const ProductDetail = () => {
                 </button>
                 <span className="w-12 text-center font-medium">{quantity}</span>
                 <button
-                  onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                  onClick={() => setQuantity(quantity + 1)}
                   className="p-2 hover:bg-muted transition-colors"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
               </div>
-              <span className="text-sm text-muted-foreground">{product.stock} متاح</span>
             </div>
 
             {/* Actions */}
@@ -173,63 +142,10 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* Tabs */}
-        <Tabs defaultValue="description" className="mt-8">
-          <TabsList className="w-full justify-start">
-            <TabsTrigger value="description">الوصف</TabsTrigger>
-            <TabsTrigger value="reviews">التقييمات ({reviews.length})</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="description" className="mt-4">
-            <div className="bg-card rounded-xl p-6 shadow-card">
-              <h3 className="font-semibold mb-3">وصف المنتج</h3>
-              <p className="text-muted-foreground leading-relaxed">{product.description}</p>
-              
-              {product.tags && (
-                <div className="mt-4 pt-4 border-t border-border">
-                  <h4 className="font-medium mb-2">كلمات دلالية</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {product.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary">{tag}</Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="reviews" className="mt-4">
-            <div className="bg-card rounded-xl p-6 shadow-card">
-              {reviews.length > 0 ? (
-                <div className="space-y-6">
-                  {reviews.map((review) => (
-                    <div key={review.id} className="pb-6 border-b border-border last:border-0 last:pb-0">
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-semibold text-primary">
-                          {review.customerName.charAt(0)}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium">{review.customerName}</span>
-                            <RatingStars rating={review.rating} showCount={false} />
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-2">{review.createdAt}</p>
-                          <p className="text-foreground">{review.comment}</p>
-                          <button className="flex items-center gap-1 mt-2 text-sm text-muted-foreground hover:text-primary">
-                            <ThumbsUp className="h-4 w-4" />
-                            مفيد ({review.helpful})
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-center py-8">لسه مافيش تقييمات</p>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
+        <div className="mt-8 bg-card rounded-xl p-6 shadow-card">
+          <h3 className="font-semibold mb-3">وصف المنتج</h3>
+          <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+        </div>
 
         {/* Related Products */}
         {relatedProducts.length > 0 && (

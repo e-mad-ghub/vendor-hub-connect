@@ -9,7 +9,8 @@ import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SlidersHorizontal, X } from 'lucide-react';
-import { products, categories } from '@/data/mockData';
+import { categories } from '@/data/mockData';
+import { useProducts } from '@/data/productsStore';
 
 const Search = () => {
   const [searchParams] = useSearchParams();
@@ -17,9 +18,11 @@ const Search = () => {
   
   const [priceRange, setPriceRange] = useState([0, 500]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedRating, setSelectedRating] = useState<number | null>(null);
+  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('relevance');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  const { products } = useProducts();
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
@@ -42,9 +45,9 @@ const Search = () => {
       result = result.filter(p => selectedCategories.includes(p.category));
     }
 
-    // Rating filter
-    if (selectedRating) {
-      result = result.filter(p => p.rating >= selectedRating);
+    // Brand filter
+    if (selectedBrands.length > 0) {
+      result = result.filter(p => (p.carBrands || []).some(brand => selectedBrands.includes(brand)));
     }
 
     // Sort
@@ -55,19 +58,13 @@ const Search = () => {
       case 'price-high':
         result.sort((a, b) => b.price - a.price);
         break;
-      case 'rating':
-        result.sort((a, b) => b.rating - a.rating);
-        break;
       case 'newest':
         result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        break;
-      case 'bestselling':
-        result.sort((a, b) => b.sold - a.sold);
         break;
     }
 
     return result;
-  }, [query, priceRange, selectedCategories, selectedRating, sortBy]);
+  }, [products, query, priceRange, selectedCategories, selectedBrands, sortBy]);
 
   const toggleCategory = (category: string) => {
     setSelectedCategories(prev =>
@@ -80,10 +77,26 @@ const Search = () => {
   const clearFilters = () => {
     setPriceRange([0, 500]);
     setSelectedCategories([]);
-    setSelectedRating(null);
+    setSelectedBrands([]);
   };
 
-  const hasActiveFilters = priceRange[0] > 0 || priceRange[1] < 500 || selectedCategories.length > 0 || selectedRating;
+  const hasActiveFilters = priceRange[0] > 0 || priceRange[1] < 500 || selectedCategories.length > 0 || selectedBrands.length > 0;
+
+  const allBrands = useMemo(() => {
+    const set = new Set<string>();
+    products.forEach((product) => {
+      (product.carBrands || []).forEach((brand) => set.add(brand));
+    });
+    return Array.from(set);
+  }, [products]);
+
+  const toggleBrand = (brand: string) => {
+    setSelectedBrands(prev =>
+      prev.includes(brand)
+        ? prev.filter(b => b !== brand)
+        : [...prev, brand]
+    );
+  };
 
   const FilterContent = () => (
     <div className="space-y-6">
@@ -120,23 +133,23 @@ const Search = () => {
         </div>
       </div>
 
-      {/* Rating */}
-      <div>
-        <h4 className="font-medium mb-3">أقل تقييم</h4>
-        <div className="space-y-2">
-          {[4, 3, 2, 1].map((rating) => (
-            <label key={rating} className="flex items-center gap-2 cursor-pointer">
-              <Checkbox
-                checked={selectedRating === rating}
-                onCheckedChange={() => setSelectedRating(selectedRating === rating ? null : rating)}
-              />
-              <span className="text-sm flex items-center gap-1">
-                {'⭐'.repeat(rating)} وأكثر
-              </span>
-            </label>
-          ))}
+      {/* Car Brands */}
+      {allBrands.length > 0 && (
+        <div>
+          <h4 className="font-medium mb-3">ماركات السيارات</h4>
+          <div className="space-y-2">
+            {allBrands.map((brand) => (
+              <label key={brand} className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={selectedBrands.includes(brand)}
+                  onCheckedChange={() => toggleBrand(brand)}
+                />
+                <span className="text-sm">{brand}</span>
+              </label>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {hasActiveFilters && (
         <Button variant="outline" onClick={clearFilters} className="w-full">
@@ -198,8 +211,6 @@ const Search = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="relevance">الأكثر صلة</SelectItem>
-                <SelectItem value="bestselling">الأكثر مبيعًا</SelectItem>
-                <SelectItem value="rating">أعلى تقييم</SelectItem>
                 <SelectItem value="newest">الأحدث</SelectItem>
                 <SelectItem value="price-low">السعر: من الأقل للأعلى</SelectItem>
                 <SelectItem value="price-high">السعر: من الأعلى للأقل</SelectItem>

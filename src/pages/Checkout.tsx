@@ -11,7 +11,7 @@ import { MessageCircle, AlertTriangle } from 'lucide-react';
 import type { WhatsAppSettings } from '@/types/marketplace';
 
 const DEFAULT_TEMPLATE =
-  'Hello, my name is [Customer Name]. I would like a quote for the following items:\n[Items]\nPlease confirm price and availability. Thank you.';
+  'أهلًا، أنا اسمي [Customer Name]. عايز عرض سعر للقطع التالية:\n[Items]\nمن فضلك أكد السعر والتوفر. شكرًا.';
 
 const Checkout = () => {
   const { items, getCartTotal, getDetailedItems, clearCart } = useCart();
@@ -43,7 +43,7 @@ const Checkout = () => {
   }, [detailedItems]);
 
   const buildMessage = () => {
-    const template = settings?.messageTemplate || DEFAULT_TEMPLATE;
+    const template = DEFAULT_TEMPLATE;
     let message = template
       .replace(/\[Customer Name\]/g, customerName.trim())
       .replace(/\[Customer Phone\]/g, customerPhone.trim())
@@ -52,9 +52,7 @@ const Checkout = () => {
     if (!template.includes('[Items]')) {
       message = `${message}\n${itemsText}`;
     }
-    if (!template.includes('[Customer Phone]')) {
-      message = `${message}\nPhone: ${customerPhone.trim()}`;
-    }
+    message = `${message}\nرقم التليفون: ${customerPhone.trim()}`;
 
     return message.trim();
   };
@@ -88,17 +86,19 @@ const Checkout = () => {
     const message = buildMessage();
 
     try {
+      const items = detailedItems.map(({ product, quantity }) => ({
+        productId: product.id,
+        title: product.title,
+        quantity,
+        price: product.price,
+        image: '',
+      }));
+
       await api.createQuoteRequest({
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
         message,
-        items: detailedItems.map(({ product, quantity }) => ({
-          productId: product.id,
-          title: product.title,
-          quantity,
-          price: product.price,
-          image: product.images[0],
-        })),
+        items,
       });
 
       const waUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
