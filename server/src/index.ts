@@ -8,8 +8,8 @@ import path from 'path';
 import { PrismaClient } from '@prisma/client';
 import { authRouter } from './routes/auth';
 import { productRouter } from './routes/products';
-import { requestRouter } from './routes/requests';
-import { orderRouter } from './routes/orders';
+import { quoteRouter } from './routes/quotes';
+import { settingsRouter } from './routes/settings';
 import { storageDir } from './utils/storage';
 
 const app = express();
@@ -27,8 +27,8 @@ app.use('/uploads', express.static(path.resolve(storageDir)));
 
 app.use('/api/auth', authRouter(prisma));
 app.use('/api/products', productRouter(prisma, upload));
-app.use('/api/requests', requestRouter(prisma));
-app.use('/api/orders', orderRouter(prisma));
+app.use('/api/quotes', quoteRouter(prisma));
+app.use('/api/settings', settingsRouter(prisma));
 
 const port = Number(process.env.API_PORT || 4000);
 app.listen(port, () => {

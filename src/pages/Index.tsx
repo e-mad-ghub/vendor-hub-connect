@@ -6,7 +6,7 @@ import { CategoryChips } from '@/components/CategoryChips';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Truck, Shield, RefreshCw, Headphones } from 'lucide-react';
-import { products, categories, vendors } from '@/data/mockData';
+import { products, categories } from '@/data/mockData';
 
 const Index = () => {
   const featuredProducts = products.slice(0, 8);
@@ -14,10 +14,10 @@ const Index = () => {
   const newArrivals = [...products].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 6);
 
   const features = [
-    { icon: Truck, title: 'شحن مجاني', desc: 'على الطلبات فوق ٥٠ ج.م' },
-    { icon: Shield, title: 'دفع آمن', desc: 'عملية دفع محمية ١٠٠٪' },
-    { icon: RefreshCw, title: 'استرجاع سهل', desc: 'سياسة رجوع ٣٠ يوم' },
-    { icon: Headphones, title: 'دعم ٢٤/٧', desc: 'فريق دعم متاح دايمًا' },
+    { icon: Truck, title: 'شحن مرن', desc: 'ننسق معاك بعد تأكيد العرض' },
+    { icon: Shield, title: 'طلبات موثوقة', desc: 'تأكيد يدوي للأسعار والتوافر' },
+    { icon: RefreshCw, title: 'تعديلات سهلة', desc: 'عدّل السلة واطلب عرض جديد' },
+    { icon: Headphones, title: 'دعم سريع', desc: 'نتواصل معاك عبر واتساب' },
   ];
 
   return (
@@ -29,11 +29,11 @@ const Index = () => {
             <div className="flex-1 text-center md:text-left">
               <Badge className="bg-primary/10 text-primary mb-4">🔥 عروض سخنة</Badge>
               <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4 leading-tight">
-                اكتشف منتجات رهيبة من{' '}
-                <span className="text-primary">أحسن التجار</span>
+                اكتشف منتجات جاهزة مع{' '}
+                <span className="text-primary">طلب عرض سعر عبر واتساب</span>
               </h2>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto md:mx-0">
-                تسوق من آلاف البايعين الموثوقين. منتجات بجودة عالية، أسعار منافسة وخدمة ممتازة.
+                منتجات مختارة من فريق واحد موثوق. اطلب عرض سعر وتأكد من التوافر بسرعة عبر واتساب.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
                 <Link to="/search">
@@ -42,9 +42,9 @@ const Index = () => {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-                <Link to="/requests">
+                <Link to="/cart">
                   <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                    تتبع حالة طلب السعر
+                    اطلب عرض سعر
                   </Button>
                 </Link>
               </div>
@@ -122,46 +122,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Top Vendors */}
-      <section className="bg-muted/50 py-10">
-        <div className="container">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-xl md:text-2xl font-bold text-foreground">أحسن التجار</h3>
-              <p className="text-sm text-muted-foreground">تسوق من بايعين موثوقين</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {vendors.filter(v => v.status === 'approved').map((vendor) => (
-              <Link
-                key={vendor.id}
-                to={`/vendor/${vendor.id}`}
-                className="bg-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover transition-shadow group"
-              >
-                <div className="h-24 bg-cover bg-center" style={{ backgroundImage: `url(${vendor.banner})` }} />
-                <div className="p-4 relative">
-                  <img
-                    src={vendor.logo}
-                    alt={vendor.storeName}
-                    className="w-16 h-16 rounded-full border-4 border-card absolute -top-8 left-4 object-cover"
-                  />
-                  <div className="ml-20 -mt-4">
-                    <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                      {vendor.storeName}
-                    </h4>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span>⭐ {vendor.rating}</span>
-                      <span>•</span>
-                      <span>{vendor.totalOrders} طلب</span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* New Arrivals */}
       <section className="container my-10">
         <div className="flex items-center justify-between mb-4">
@@ -185,12 +145,12 @@ const Index = () => {
       {/* CTA Banner */}
       <section className="container my-10">
         <div className="bg-gradient-to-r from-primary to-primary/80 rounded-2xl p-8 md:p-12 text-center text-primary-foreground">
-          <h3 className="text-2xl md:text-3xl font-bold mb-4">جاهز تبيع؟</h3>
+          <h3 className="text-2xl md:text-3xl font-bold mb-4">جاهز تطلب عرض سعر؟</h3>
           <p className="mb-6 opacity-90 max-w-md mx-auto">
-            المنصة دلوقتي شغالة مع تاجر واحد بيتم إدارته عن طريق الأدمن. لو محتاج تضيف منتجات أو تحدث الأسعار، تواصل مع لوحة الإدارة المعتمدة.
+            المنصة دلوقتي شغالة كبائع واحد. أضف منتجاتك للسلة واطلب عرض سعر عبر واتساب لتأكيد السعر والتوافر.
           </p>
           <p className="text-sm opacity-90">
-            التسجيل مقفول حاليًا - التاجر الحالي بيتدار من الأدمن.
+            التواصل والمتابعة بيتموا يدويًا عبر واتساب.
           </p>
         </div>
       </section>

@@ -14,29 +14,11 @@ model User {
   name      String
   password  String
   role      UserRole
-  vendor    Vendor?
   createdAt DateTime @default(now())
-}
-
-model Vendor {
-  id          String   @id @default(cuid())
-  storeName   String
-  description String
-  logo        String
-  banner      String
-  status      VendorStatus @default(approved)
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id])
-  products    Product[]
-  requests    AvailabilityRequest[]
-  orders      Order[]
-  createdAt   DateTime @default(now())
 }
 
 model Product {
   id          String   @id @default(cuid())
-  vendorId    String
-  vendor      Vendor   @relation(fields: [vendorId], references: [id])
   title       String
   description String
   price       Float
@@ -53,25 +35,19 @@ model ProductImage {
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
-model AvailabilityRequest {
+model QuoteRequest {
   id           String   @id @default(cuid())
-  vendorId     String
-  vendor       Vendor   @relation(fields: [vendorId], references: [id])
-  buyerPhone   String
-  status       RequestStatus @default(pending)
-  quotedTotal  Float?
-  sellerNote   String?
-  cartSignature String
-  items        RequestItem[]
-  order        Order?
+  customerName String
+  customerPhone String
+  message      String
+  items        QuoteRequestItem[]
   createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
 }
 
-model RequestItem {
+model QuoteRequestItem {
   id        String   @id @default(cuid())
   requestId String
-  request   AvailabilityRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  request   QuoteRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
   productId String
   title     String
   quantity  Int
@@ -79,40 +55,14 @@ model RequestItem {
   image     String
 }
 
-model Order {
-  id         String   @id @default(cuid())
-  vendorId   String
-  vendor     Vendor   @relation(fields: [vendorId], references: [id])
-  requestId  String  @unique
-  request    AvailabilityRequest @relation(fields: [requestId], references: [id])
-  total      Float
-  paymentRef String?
-  status     OrderStatus @default(pending)
+model WhatsAppSettings {
+  id             String @id @default(cuid())
+  phoneNumber    String
+  messageTemplate String
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 enum UserRole {
   admin
-  vendor
-}
-
-enum VendorStatus {
-  pending
-  approved
-  rejected
-}
-
-enum RequestStatus {
-  pending
-  quoted
-  accepted
-  declined
-  cancelled
-  unavailable
-}
-
-enum OrderStatus {
-  pending
-  paid
-  failed
 }

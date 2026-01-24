@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, User, Menu, X, ChevronDown } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -14,8 +14,7 @@ export const Header: React.FC = () => {
   } = useCart();
   const {
     isAuthenticated,
-    user,
-    logout
+    user
   } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -51,21 +50,11 @@ export const Header: React.FC = () => {
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-4">
-              <Link to="/requests">
-                <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm">
-                  تتبع طلب السعر
-                </Button>
-              </Link>
               {isAuthenticated ? <div className="flex items-center gap-2">
                   <Link to="/account" className="flex items-center gap-2 hover:text-primary transition-colors">
                     <User className="h-5 w-5" />
                     <span className="text-sm">{user?.name}</span>
                   </Link>
-                  {user?.role === 'vendor' && <Link to="/vendor/dashboard">
-                      <Button variant="outline" size="sm" className="ml-2 border-primary/30 text-marketplace-header-foreground hover:bg-primary/10">
-                        لوحة البائع
-                      </Button>
-                    </Link>}
                   {user?.role === 'admin' && <Link to="/admin">
                       <Button variant="outline" size="sm" className="ml-2 border-primary/30 text-marketplace-header-foreground hover:bg-primary/10">
                         لوحة الإدارة
@@ -101,9 +90,9 @@ export const Header: React.FC = () => {
 
           {/* Mobile actions */}
           <div className="mt-2 md:hidden">
-            <Link to="/requests" className="block">
+            <Link to="/cart" className="block">
               <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                تتبع طلب السعر
+                طلب عرض سعر عبر واتساب
               </Button>
             </Link>
           </div>

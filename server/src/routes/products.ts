@@ -16,14 +16,10 @@ export function productRouter(prisma: PrismaClient, upload: any) {
     res.json(products);
   });
 
-  router.post('/', authGuard(['vendor', 'admin']), upload.single('image'), async (req, res) => {
+  router.post('/', authGuard(['admin']), upload.single('image'), async (req, res) => {
     try {
       const { title, description, price, stock, category } = req.body;
       if (!title || !price || !category) return res.status(400).json({ error: 'Missing fields' });
-      const user = (req as any).user;
-      const vendor = await prisma.vendor.findFirst({ where: { userId: user.userId } });
-      if (!vendor) return res.status(400).json({ error: 'Vendor not found' });
-
       let imageUrl = req.body.imageUrl || '';
       if (req.file) {
         const dest = ensureStorageDir();
@@ -35,7 +31,6 @@ export function productRouter(prisma: PrismaClient, upload: any) {
 
       const product = await prisma.product.create({
         data: {
-          vendorId: vendor.id,
           title,
           description: description || '',
           price: Number(price),

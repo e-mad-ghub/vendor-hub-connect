@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Product } from '@/types/marketplace';
 import { RatingStars } from './RatingStars';
-import { getVendorById } from '@/data/mockData';
 import { Badge } from '@/components/ui/badge';
 
 interface ProductCardProps {
@@ -10,7 +9,6 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const vendor = getVendorById(product.vendorId);
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : null;
@@ -47,11 +45,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           )}
         </div>
         
-        {vendor && (
-          <p className="text-xs text-muted-foreground truncate">
-            من {vendor.storeName}
-          </p>
-        )}
+        <p className="text-xs text-muted-foreground truncate">
+          من فريق المتجر
+        </p>
         
         <p className="text-xs text-muted-foreground mt-1">
           {product.sold.toLocaleString()}+ مبيعات

@@ -23,15 +23,10 @@ export const api = {
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || 'Upload failed');
       return res.json();
     }),
-  createAvailabilityRequest: (payload: any) =>
-    request('/requests', { method: 'POST', body: JSON.stringify(payload) }),
-  vendorRequests: () => request('/requests/vendor'),
-  requestsByPhone: (phone: string) => request(`/requests/by-phone/${encodeURIComponent(phone)}`),
-  quoteRequest: (id: string, quotedTotal: number, sellerNote?: string) =>
-    request(`/requests/${id}/quote`, { method: 'PATCH', body: JSON.stringify({ quotedTotal, sellerNote }) }),
-  updateRequestStatus: (id: string, status: string) =>
-    request(`/requests/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
-  createOrder: (requestId: string) => request('/orders', { method: 'POST', body: JSON.stringify({ requestId }) }),
-  payOrderInstapay: (orderId: string) => request(`/orders/${orderId}/pay/instapay`, { method: 'POST' }),
-  vendorOrders: () => request('/orders/vendor'),
+  createQuoteRequest: (payload: any) =>
+    request('/quotes', { method: 'POST', body: JSON.stringify(payload) }),
+  listQuoteRequests: () => request('/quotes'),
+  getWhatsAppSettings: () => request('/settings/whatsapp'),
+  updateWhatsAppSettings: (payload: { phoneNumber: string; messageTemplate: string }) =>
+    request('/settings/whatsapp', { method: 'PUT', body: JSON.stringify(payload) }),
 };

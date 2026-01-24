@@ -1,4 +1,4 @@
-import { User, Vendor, Product, Category, Order, Review, PayoutRequest, PlatformSettings } from '@/types/marketplace';
+import { User, Product, Category, Review } from '@/types/marketplace';
 
 export const categories: Category[] = [
   { id: '1', name: 'ميكانيكا', icon: '🛠️', subcategories: ['ماتور', 'فتيس', 'دبرياج', 'تربو'] },
@@ -7,57 +7,38 @@ export const categories: Category[] = [
   { id: '4', name: 'كماليات', icon: '🎯', subcategories: ['اكسسوارات', 'كيتات', 'فرش', 'مساحات'] },
 ];
 
-export const vendors: Vendor[] = [
-  {
-    id: 'v1',
-    userId: 'u2',
-    storeName: 'التاجر الرئيسي',
-    logo: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=200&h=200&fit=crop',
-    banner: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&h=300&fit=crop',
-    description: 'كل المنتجات بتتباع من تاجر واحد معتمد. الأسعار والتوافر بيتموا من خلال الأدمن/التاجر الوحيد.',
-    status: 'approved',
-    commissionRate: 10,
-    totalSales: 150000,
-    totalOrders: 2000,
-    rating: 4.8,
-    reviewCount: 500,
-    createdAt: '2024-01-01',
-  },
-];
-
 export const products: Product[] = [
   // كهرباء
-  { id: 'p1', vendorId: 'v1', title: 'بطارية فارتا 70 أمبير', description: 'بطارية جافة موثوقة 70 أمبير لعمر أطول وتشغيل سريع في كل الأجواء.', price: 1950, originalPrice: 2150, stock: 40, category: 'كهرباء', subcategory: 'بطارية', images: ['https://upload.wikimedia.org/wikipedia/commons/6/6e/Car_Battery.jpg'], rating: 4.7, reviewCount: 210, sold: 950, tags: ['بطارية', 'كهرباء', 'فارتا'], createdAt: '2024-07-01' },
-  { id: 'p2', vendorId: 'v1', title: 'كشاف أمامي ليد كورولا', description: 'كشاف أمامي ليد كامل إضاءة بيضاء قوية مع عدسة بروجكتر لمدى رؤية أوضح.', price: 3100, originalPrice: 3499, stock: 25, category: 'كهرباء', subcategory: 'فوانيس', images: ['https://images.unsplash.com/photo-1517949908112-4907f1d54f68?w=900&auto=format&fit=crop'], rating: 4.8, reviewCount: 145, sold: 620, tags: ['فانوس', 'كورولا', 'ليد'], createdAt: '2024-07-05' },
-  { id: 'p3', vendorId: 'v1', title: 'حساسات ركن خلفية 4 عين', description: 'طقم حساسات ركن مع شاشة وصوت تنبيه، تركيب سهل وتوصيل مباشر.', price: 750, stock: 120, category: 'كهرباء', subcategory: 'حساسات', images: ['https://images.unsplash.com/photo-1604177091072-3bbf3b2dfe11?w=900&auto=format&fit=crop'], rating: 4.5, reviewCount: 98, sold: 870, tags: ['حساس', 'ركن', 'أمان'], createdAt: '2024-07-08' },
-  { id: 'p4', vendorId: 'v1', title: 'كاسيت أندرويد 9 بوصة', description: 'شاشة أندرويد 9" مع GPS وCarPlay/Android Auto وصوت نقي وبلوتوث.', price: 4200, stock: 35, category: 'كهرباء', subcategory: 'كاسيت', images: ['https://images.unsplash.com/photo-1542362567-b07e54358753?w=900&auto=format&fit=crop'], rating: 4.6, reviewCount: 132, sold: 540, tags: ['كاسيت', 'اندرويد', 'كار بلاي'], createdAt: '2024-07-10' },
-  { id: 'p5', vendorId: 'v1', title: 'طقم فوانيس شبورة ليد', description: 'فوانيس شبورة ليد ضد المطر مع سلكة جاهزة ومفتاح تشغيل.', price: 650, originalPrice: 820, stock: 60, category: 'كهرباء', subcategory: 'فوانيس', images: ['https://images.unsplash.com/photo-1489515217757-5fd1be406fef?w=900&auto=format&fit=crop'], rating: 4.4, reviewCount: 76, sold: 430, tags: ['شبورة', 'ليد', 'فوانيس'], createdAt: '2024-07-12' },
+  { id: 'p1', title: 'بطارية فارتا 70 أمبير', description: 'بطارية جافة موثوقة 70 أمبير لعمر أطول وتشغيل سريع في كل الأجواء.', price: 1950, originalPrice: 2150, stock: 40, category: 'كهرباء', subcategory: 'بطارية', images: ['https://upload.wikimedia.org/wikipedia/commons/6/6e/Car_Battery.jpg'], rating: 4.7, reviewCount: 210, sold: 950, tags: ['بطارية', 'كهرباء', 'فارتا'], createdAt: '2024-07-01' },
+  { id: 'p2', title: 'كشاف أمامي ليد كورولا', description: 'كشاف أمامي ليد كامل إضاءة بيضاء قوية مع عدسة بروجكتر لمدى رؤية أوضح.', price: 3100, originalPrice: 3499, stock: 25, category: 'كهرباء', subcategory: 'فوانيس', images: ['https://images.unsplash.com/photo-1517949908112-4907f1d54f68?w=900&auto=format&fit=crop'], rating: 4.8, reviewCount: 145, sold: 620, tags: ['فانوس', 'كورولا', 'ليد'], createdAt: '2024-07-05' },
+  { id: 'p3', title: 'حساسات ركن خلفية 4 عين', description: 'طقم حساسات ركن مع شاشة وصوت تنبيه، تركيب سهل وتوصيل مباشر.', price: 750, stock: 120, category: 'كهرباء', subcategory: 'حساسات', images: ['https://images.unsplash.com/photo-1604177091072-3bbf3b2dfe11?w=900&auto=format&fit=crop'], rating: 4.5, reviewCount: 98, sold: 870, tags: ['حساس', 'ركن', 'أمان'], createdAt: '2024-07-08' },
+  { id: 'p4', title: 'كاسيت أندرويد 9 بوصة', description: 'شاشة أندرويد 9" مع GPS وCarPlay/Android Auto وصوت نقي وبلوتوث.', price: 4200, stock: 35, category: 'كهرباء', subcategory: 'كاسيت', images: ['https://images.unsplash.com/photo-1542362567-b07e54358753?w=900&auto=format&fit=crop'], rating: 4.6, reviewCount: 132, sold: 540, tags: ['كاسيت', 'اندرويد', 'كار بلاي'], createdAt: '2024-07-10' },
+  { id: 'p5', title: 'طقم فوانيس شبورة ليد', description: 'فوانيس شبورة ليد ضد المطر مع سلكة جاهزة ومفتاح تشغيل.', price: 650, originalPrice: 820, stock: 60, category: 'كهرباء', subcategory: 'فوانيس', images: ['https://images.unsplash.com/photo-1489515217757-5fd1be406fef?w=900&auto=format&fit=crop'], rating: 4.4, reviewCount: 76, sold: 430, tags: ['شبورة', 'ليد', 'فوانيس'], createdAt: '2024-07-12' },
 
   // عفشة
-  { id: 'p6', vendorId: 'v1', title: 'تيل فرامل سيراميك أمامي', description: 'تيل سيراميك يقلل صوت الفرامل ويزود عمر الطنابير وثبات الفرامل.', price: 950, originalPrice: 1100, stock: 90, category: 'عفشة', subcategory: 'تيل فرامل', images: ['https://images.unsplash.com/photo-1478682670697-0f89e6be7f81?w=900&auto=format&fit=crop'], rating: 4.6, reviewCount: 188, sold: 1200, tags: ['تيل', 'فرامل', 'سيراميك'], createdAt: '2024-06-28' },
-  { id: 'p7', vendorId: 'v1', title: 'مساعدين أمامية غاز KYB', description: 'مساعدين أمامية غاز ياباني تحكم أفضل وثبات عالي على السرعات.', price: 3200, stock: 30, category: 'عفشة', subcategory: 'مساعدين', images: ['https://images.unsplash.com/photo-1517511620798-cec17d428bc0?w=900&auto=format&fit=crop'], rating: 4.7, reviewCount: 140, sold: 640, tags: ['مساعد', 'عفشة', 'kyb'], createdAt: '2024-07-03' },
-  { id: 'p8', vendorId: 'v1', title: 'مقص أمامي كامل كورولا', description: 'مقص أمامي كامل ببلي وجلب جاهزة للتركيب لراحة وسهولة.', price: 1850, stock: 40, category: 'عفشة', subcategory: 'مقصات', images: ['https://images.unsplash.com/photo-1493236296276-d17357e288d2?w=900&auto=format&fit=crop'], rating: 4.5, reviewCount: 88, sold: 410, tags: ['مقص', 'كورولا', 'عفشة'], createdAt: '2024-07-06' },
-  { id: 'p9', vendorId: 'v1', title: 'طقم بلي عجل أمامي أصلي', description: 'بلي عجل أمامي أصلي بضمان صوت هادي وعزم ثابت.', price: 1400, stock: 55, category: 'عفشة', subcategory: 'بلي عجل', images: ['https://images.unsplash.com/photo-1523419400524-fc1e0a21159f?w=900&auto=format&fit=crop'], rating: 4.4, reviewCount: 92, sold: 520, tags: ['بلي', 'عجل', 'أمامي'], createdAt: '2024-07-09' },
-  { id: 'p10', vendorId: 'v1', title: 'طقم مساعدين خلفي مونرو', description: 'مساعدين خلفي مونرو للراحة وتقليل النط على المطبات.', price: 2600, stock: 28, category: 'عفشة', subcategory: 'مساعدين', images: ['https://images.unsplash.com/photo-1493236296276-d17357e288d2?w=900&auto=format&fit=crop'], rating: 4.6, reviewCount: 74, sold: 330, tags: ['مساعد', 'خلفي', 'مونرو'], createdAt: '2024-07-02' },
+  { id: 'p6', title: 'تيل فرامل سيراميك أمامي', description: 'تيل سيراميك يقلل صوت الفرامل ويزود عمر الطنابير وثبات الفرامل.', price: 950, originalPrice: 1100, stock: 90, category: 'عفشة', subcategory: 'تيل فرامل', images: ['https://images.unsplash.com/photo-1478682670697-0f89e6be7f81?w=900&auto=format&fit=crop'], rating: 4.6, reviewCount: 188, sold: 1200, tags: ['تيل', 'فرامل', 'سيراميك'], createdAt: '2024-06-28' },
+  { id: 'p7', title: 'مساعدين أمامية غاز KYB', description: 'مساعدين أمامية غاز ياباني تحكم أفضل وثبات عالي على السرعات.', price: 3200, stock: 30, category: 'عفشة', subcategory: 'مساعدين', images: ['https://images.unsplash.com/photo-1517511620798-cec17d428bc0?w=900&auto=format&fit=crop'], rating: 4.7, reviewCount: 140, sold: 640, tags: ['مساعد', 'عفشة', 'kyb'], createdAt: '2024-07-03' },
+  { id: 'p8', title: 'مقص أمامي كامل كورولا', description: 'مقص أمامي كامل ببلي وجلب جاهزة للتركيب لراحة وسهولة.', price: 1850, stock: 40, category: 'عفشة', subcategory: 'مقصات', images: ['https://images.unsplash.com/photo-1493236296276-d17357e288d2?w=900&auto=format&fit=crop'], rating: 4.5, reviewCount: 88, sold: 410, tags: ['مقص', 'كورولا', 'عفشة'], createdAt: '2024-07-06' },
+  { id: 'p9', title: 'طقم بلي عجل أمامي أصلي', description: 'بلي عجل أمامي أصلي بضمان صوت هادي وعزم ثابت.', price: 1400, stock: 55, category: 'عفشة', subcategory: 'بلي عجل', images: ['https://images.unsplash.com/photo-1523419400524-fc1e0a21159f?w=900&auto=format&fit=crop'], rating: 4.4, reviewCount: 92, sold: 520, tags: ['بلي', 'عجل', 'أمامي'], createdAt: '2024-07-09' },
+  { id: 'p10', title: 'طقم مساعدين خلفي مونرو', description: 'مساعدين خلفي مونرو للراحة وتقليل النط على المطبات.', price: 2600, stock: 28, category: 'عفشة', subcategory: 'مساعدين', images: ['https://images.unsplash.com/photo-1493236296276-d17357e288d2?w=900&auto=format&fit=crop'], rating: 4.6, reviewCount: 74, sold: 330, tags: ['مساعد', 'خلفي', 'مونرو'], createdAt: '2024-07-02' },
 
   // ميكانيكا
-  { id: 'p11', vendorId: 'v1', title: 'كوبلن خارجي يمين', description: 'كوبلن خارجي يمين بجلبه وجراب شحم، مناسب لغالبية السيارات السيدان.', price: 1750, stock: 45, category: 'ميكانيكا', subcategory: 'فتيس', images: ['https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=900&auto=format&fit=crop'], rating: 4.5, reviewCount: 80, sold: 290, tags: ['كوبلن', 'أكس', 'فتيس'], createdAt: '2024-07-04' },
-  { id: 'p12', vendorId: 'v1', title: 'طقم دبرياج أصلي', description: 'طنابير وديسك واسطوانة دبرياج أصلي لعزم أفضل وعمر أطول.', price: 2900, originalPrice: 3300, stock: 32, category: 'ميكانيكا', subcategory: 'دبرياج', images: ['https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=900&auto=format&fit=crop'], rating: 4.7, reviewCount: 102, sold: 360, tags: ['دبرياج', 'ميكانيكا', 'اسطوانة'], createdAt: '2024-07-07' },
-  { id: 'p13', vendorId: 'v1', title: 'سير كاتينة + شداد', description: 'سير كاتينة مع شداد وبلي لضمان توقيت محرك ثابت وصوت هادي.', price: 1150, stock: 70, category: 'ميكانيكا', subcategory: 'ماتور', images: ['https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=900&auto=format&fit=crop'], rating: 4.4, reviewCount: 95, sold: 540, tags: ['سير', 'كاتينة', 'ماتور'], createdAt: '2024-07-08' },
-  { id: 'p14', vendorId: 'v1', title: 'تربو تشارجر رياضي', description: 'تربو تشارجر أداء عالي لتحسين القوة والعزم مع إعداد مناسب.', price: 6200, originalPrice: 6800, stock: 18, category: 'ميكانيكا', subcategory: 'تربو', images: ['https://images.unsplash.com/photo-1489515217757-5fd1be406fef?w=900&auto=format&fit=crop'], rating: 4.6, reviewCount: 54, sold: 180, tags: ['تربو', 'أداء', 'ماتور'], createdAt: '2024-07-11' },
-  { id: 'p15', vendorId: 'v1', title: 'زيت فتيس أوتوماتيك Dex VI', description: 'زيت فتيس أوتوماتيك Dexron VI حماية ونقل ناعم مع حرارة أقل.', price: 450, stock: 120, category: 'ميكانيكا', subcategory: 'فتيس', images: ['https://images.unsplash.com/photo-1472586662442-3eec04b9dbda?w=900&auto=format&fit=crop'], rating: 4.3, reviewCount: 110, sold: 730, tags: ['زيت', 'فتيس', 'Dex VI'], createdAt: '2024-07-01' },
+  { id: 'p11', title: 'كوبلن خارجي يمين', description: 'كوبلن خارجي يمين بجلبه وجراب شحم، مناسب لغالبية السيارات السيدان.', price: 1750, stock: 45, category: 'ميكانيكا', subcategory: 'فتيس', images: ['https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=900&auto=format&fit=crop'], rating: 4.5, reviewCount: 80, sold: 290, tags: ['كوبلن', 'أكس', 'فتيس'], createdAt: '2024-07-04' },
+  { id: 'p12', title: 'طقم دبرياج أصلي', description: 'طنابير وديسك واسطوانة دبرياج أصلي لعزم أفضل وعمر أطول.', price: 2900, originalPrice: 3300, stock: 32, category: 'ميكانيكا', subcategory: 'دبرياج', images: ['https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=900&auto=format&fit=crop'], rating: 4.7, reviewCount: 102, sold: 360, tags: ['دبرياج', 'ميكانيكا', 'اسطوانة'], createdAt: '2024-07-07' },
+  { id: 'p13', title: 'سير كاتينة + شداد', description: 'سير كاتينة مع شداد وبلي لضمان توقيت محرك ثابت وصوت هادي.', price: 1150, stock: 70, category: 'ميكانيكا', subcategory: 'ماتور', images: ['https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=900&auto=format&fit=crop'], rating: 4.4, reviewCount: 95, sold: 540, tags: ['سير', 'كاتينة', 'ماتور'], createdAt: '2024-07-08' },
+  { id: 'p14', title: 'تربو تشارجر رياضي', description: 'تربو تشارجر أداء عالي لتحسين القوة والعزم مع إعداد مناسب.', price: 6200, originalPrice: 6800, stock: 18, category: 'ميكانيكا', subcategory: 'تربو', images: ['https://images.unsplash.com/photo-1489515217757-5fd1be406fef?w=900&auto=format&fit=crop'], rating: 4.6, reviewCount: 54, sold: 180, tags: ['تربو', 'أداء', 'ماتور'], createdAt: '2024-07-11' },
+  { id: 'p15', title: 'زيت فتيس أوتوماتيك Dex VI', description: 'زيت فتيس أوتوماتيك Dexron VI حماية ونقل ناعم مع حرارة أقل.', price: 450, stock: 120, category: 'ميكانيكا', subcategory: 'فتيس', images: ['https://images.unsplash.com/photo-1472586662442-3eec04b9dbda?w=900&auto=format&fit=crop'], rating: 4.3, reviewCount: 110, sold: 730, tags: ['زيت', 'فتيس', 'Dex VI'], createdAt: '2024-07-01' },
 
   // كماليات
-  { id: 'p16', vendorId: 'v1', title: 'فرش جلد رياضي كامل', description: 'طقم فرش جلد رياضي مضاد للمياه مع خياطة حمراء وتثبيت محكم.', price: 2100, stock: 50, category: 'كماليات', subcategory: 'فرش', images: ['https://images.unsplash.com/photo-1523419400524-fc1e0a21159f?w=900&auto=format&fit=crop'], rating: 4.7, reviewCount: 160, sold: 670, tags: ['فرش', 'جلد', 'صالون'], createdAt: '2024-07-03' },
-  { id: 'p17', vendorId: 'v1', title: 'كيت اكصدام وسبويلر', description: 'كيت بادي سبويلر أمامي وخلفي مع جانبي لثبات شكل رياضي.', price: 3400, stock: 22, category: 'كماليات', subcategory: 'كيتات', images: ['https://images.unsplash.com/photo-1545239351-1141bd82e8a6?w=900&auto=format&fit=crop'], rating: 4.5, reviewCount: 70, sold: 260, tags: ['اكصدام', 'كيت', 'سبويلر'], createdAt: '2024-07-09' },
-  { id: 'p18', vendorId: 'v1', title: 'طقم مساحات سيليكون', description: 'مساحات سيليكون هادئة تمسح بدون خطوط ومعها أداة تركيب سريعة.', price: 350, stock: 140, category: 'كماليات', subcategory: 'مساحات', images: ['https://images.unsplash.com/photo-1493236296276-d17357e288d2?w=900&auto=format&fit=crop'], rating: 4.4, reviewCount: 115, sold: 890, tags: ['مساحات', 'سيليكون', 'كماليات'], createdAt: '2024-07-06' },
-  { id: 'p19', vendorId: 'v1', title: 'ستارة شمس ممغنطة', description: 'ستارة جانبية مغناطيسية بفتحات للتهوية، حماية من الشمس والحرارة.', price: 180, stock: 200, category: 'كماليات', subcategory: 'اكسسوارات', images: ['https://images.unsplash.com/photo-1517949908112-4907f1d54f68?w=900&auto=format&fit=crop'], rating: 4.3, reviewCount: 90, sold: 760, tags: ['ستارة', 'شمس', 'اكسسوار'], createdAt: '2024-07-04' },
-  { id: 'p20', vendorId: 'v1', title: 'معطر هواء برو برائحة فانيليا', description: 'معطر سيارة قوي يدوم أطول برائحة فانيليا مهدئة.', price: 95, stock: 260, category: 'كماليات', subcategory: 'اكسسوارات', images: ['https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=900&auto=format&fit=crop'], rating: 4.2, reviewCount: 84, sold: 1020, tags: ['معطر', 'فانيليا', 'كماليات'], createdAt: '2024-07-02' },
+  { id: 'p16', title: 'فرش جلد رياضي كامل', description: 'طقم فرش جلد رياضي مضاد للمياه مع خياطة حمراء وتثبيت محكم.', price: 2100, stock: 50, category: 'كماليات', subcategory: 'فرش', images: ['https://images.unsplash.com/photo-1523419400524-fc1e0a21159f?w=900&auto=format&fit=crop'], rating: 4.7, reviewCount: 160, sold: 670, tags: ['فرش', 'جلد', 'صالون'], createdAt: '2024-07-03' },
+  { id: 'p17', title: 'كيت اكصدام وسبويلر', description: 'كيت بادي سبويلر أمامي وخلفي مع جانبي لثبات شكل رياضي.', price: 3400, stock: 22, category: 'كماليات', subcategory: 'كيتات', images: ['https://images.unsplash.com/photo-1545239351-1141bd82e8a6?w=900&auto=format&fit=crop'], rating: 4.5, reviewCount: 70, sold: 260, tags: ['اكصدام', 'كيت', 'سبويلر'], createdAt: '2024-07-09' },
+  { id: 'p18', title: 'طقم مساحات سيليكون', description: 'مساحات سيليكون هادئة تمسح بدون خطوط ومعها أداة تركيب سريعة.', price: 350, stock: 140, category: 'كماليات', subcategory: 'مساحات', images: ['https://images.unsplash.com/photo-1493236296276-d17357e288d2?w=900&auto=format&fit=crop'], rating: 4.4, reviewCount: 115, sold: 890, tags: ['مساحات', 'سيليكون', 'كماليات'], createdAt: '2024-07-06' },
+  { id: 'p19', title: 'ستارة شمس ممغنطة', description: 'ستارة جانبية مغناطيسية بفتحات للتهوية، حماية من الشمس والحرارة.', price: 180, stock: 200, category: 'كماليات', subcategory: 'اكسسوارات', images: ['https://images.unsplash.com/photo-1517949908112-4907f1d54f68?w=900&auto=format&fit=crop'], rating: 4.3, reviewCount: 90, sold: 760, tags: ['ستارة', 'شمس', 'اكسسوار'], createdAt: '2024-07-04' },
+  { id: 'p20', title: 'معطر هواء برو برائحة فانيليا', description: 'معطر سيارة قوي يدوم أطول برائحة فانيليا مهدئة.', price: 95, stock: 260, category: 'كماليات', subcategory: 'اكسسوارات', images: ['https://images.unsplash.com/photo-1503736334956-4c8f8e92946d?w=900&auto=format&fit=crop'], rating: 4.2, reviewCount: 84, sold: 1020, tags: ['معطر', 'فانيليا', 'كماليات'], createdAt: '2024-07-02' },
 ];
 
 export const users: User[] = [
   { id: 'u1', email: 'admin@marketplace.com', name: 'Admin User', role: 'admin', createdAt: '2024-01-01' },
-  { id: 'u2', email: 'techhub@vendor.com', name: 'Tech Hub', role: 'vendor', createdAt: '2024-01-15' },
   { id: 'u3', email: 'fashion@vendor.com', name: 'Fashion Forward', role: 'customer', createdAt: '2024-02-20' },
   { id: 'u4', email: 'homestyle@vendor.com', name: 'HomeStyle', role: 'customer', createdAt: '2024-03-10' },
   { id: 'u5', email: 'customer@test.com', name: 'John Customer', role: 'customer', createdAt: '2024-04-01' },
@@ -71,56 +52,6 @@ export const reviews: Review[] = [
   { id: 'r5', productId: 'p21', customerId: 'u5', customerName: 'Emma W.', rating: 4, comment: 'Beautiful lamp, perfect for my bedside table.', helpful: 8, createdAt: '2024-07-10' },
 ];
 
-export const orders: Order[] = [
-  {
-    id: 'o1',
-    customerId: 'u5',
-    items: [
-      { productId: 'p1', vendorId: 'v1', quantity: 1, price: 1950, title: 'بطارية فارتا 70 أمبير', image: 'https://source.unsplash.com/featured/?car%20battery%20auto%20parts' },
-      { productId: 'p11', vendorId: 'v1', quantity: 2, price: 1750, title: 'كوبلن خارجي يمين', image: 'https://source.unsplash.com/featured/?cv%20axle%20shaft' },
-    ],
-    subtotal: 5450,
-    shipping: 150,
-    tax: 0,
-    total: 5600,
-    status: 'delivered',
-    shippingAddress: { fullName: 'John Customer', phone: '+1234567890', street: '123 Main St', city: 'New York', state: 'NY', zipCode: '10001', country: 'USA' },
-    createdAt: '2024-07-01',
-    updatedAt: '2024-07-05',
-  },
-  {
-    id: 'o2',
-    customerId: 'u5',
-    items: [
-      { productId: 'p21', vendorId: 'v1', quantity: 1, price: 49.99, title: 'Modern Table Lamp', image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=500' },
-    ],
-    subtotal: 49.99,
-    shipping: 5.99,
-    tax: 4.00,
-    total: 59.98,
-    status: 'shipped',
-    shippingAddress: { fullName: 'John Customer', phone: '+1234567890', street: '123 Main St', city: 'New York', state: 'NY', zipCode: '10001', country: 'USA' },
-    createdAt: '2024-07-10',
-    updatedAt: '2024-07-12',
-  },
-];
-
-export const payoutRequests: PayoutRequest[] = [
-  { id: 'pay1', vendorId: 'v1', amount: 5000, status: 'paid', requestedAt: '2024-06-01', processedAt: '2024-06-05' },
-  { id: 'pay2', vendorId: 'v1', amount: 3500, status: 'approved', requestedAt: '2024-07-01', processedAt: '2024-07-03' },
-  { id: 'pay3', vendorId: 'v1', amount: 2000, status: 'pending', requestedAt: '2024-07-15' },
-];
-
-export const platformSettings: PlatformSettings = {
-  defaultCommissionRate: 15,
-  minPayoutAmount: 50,
-  currency: 'USD',
-};
-
-export const getVendorById = (id: string): Vendor | undefined => vendors.find(v => v.id === id);
 export const getProductById = (id: string): Product | undefined => products.find(p => p.id === id);
-export const getProductsByVendor = (vendorId: string): Product[] => products.filter(p => p.vendorId === vendorId);
 export const getProductsByCategory = (category: string): Product[] => products.filter(p => p.category === category);
 export const getReviewsByProduct = (productId: string): Review[] => reviews.filter(r => r.productId === productId);
-export const getOrdersByCustomer = (customerId: string): Order[] => orders.filter(o => o.customerId === customerId);
-export const getOrdersByVendor = (vendorId: string): Order[] => orders.filter(o => o.items.some(i => i.vendorId === vendorId));

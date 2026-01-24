@@ -9,7 +9,7 @@ import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SlidersHorizontal, X } from 'lucide-react';
-import { products, categories, vendors } from '@/data/mockData';
+import { products, categories } from '@/data/mockData';
 
 const Search = () => {
   const [searchParams] = useSearchParams();
@@ -18,7 +18,6 @@ const Search = () => {
   const [priceRange, setPriceRange] = useState([0, 500]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
-  const [selectedVendors, setSelectedVendors] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('relevance');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -48,11 +47,6 @@ const Search = () => {
       result = result.filter(p => p.rating >= selectedRating);
     }
 
-    // Vendor filter
-    if (selectedVendors.length > 0) {
-      result = result.filter(p => selectedVendors.includes(p.vendorId));
-    }
-
     // Sort
     switch (sortBy) {
       case 'price-low':
@@ -73,7 +67,7 @@ const Search = () => {
     }
 
     return result;
-  }, [query, priceRange, selectedCategories, selectedRating, selectedVendors, sortBy]);
+  }, [query, priceRange, selectedCategories, selectedRating, sortBy]);
 
   const toggleCategory = (category: string) => {
     setSelectedCategories(prev =>
@@ -83,22 +77,13 @@ const Search = () => {
     );
   };
 
-  const toggleVendor = (vendorId: string) => {
-    setSelectedVendors(prev =>
-      prev.includes(vendorId)
-        ? prev.filter(v => v !== vendorId)
-        : [...prev, vendorId]
-    );
-  };
-
   const clearFilters = () => {
     setPriceRange([0, 500]);
     setSelectedCategories([]);
     setSelectedRating(null);
-    setSelectedVendors([]);
   };
 
-  const hasActiveFilters = priceRange[0] > 0 || priceRange[1] < 500 || selectedCategories.length > 0 || selectedRating || selectedVendors.length > 0;
+  const hasActiveFilters = priceRange[0] > 0 || priceRange[1] < 500 || selectedCategories.length > 0 || selectedRating;
 
   const FilterContent = () => (
     <div className="space-y-6">
@@ -148,22 +133,6 @@ const Search = () => {
               <span className="text-sm flex items-center gap-1">
                 {'⭐'.repeat(rating)} وأكثر
               </span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Vendors */}
-      <div>
-        <h4 className="font-medium mb-3">التجار</h4>
-        <div className="space-y-2">
-          {vendors.filter(v => v.status === 'approved').map((vendor) => (
-            <label key={vendor.id} className="flex items-center gap-2 cursor-pointer">
-              <Checkbox
-                checked={selectedVendors.includes(vendor.id)}
-                onCheckedChange={() => toggleVendor(vendor.id)}
-              />
-              <span className="text-sm">{vendor.storeName}</span>
             </label>
           ))}
         </div>

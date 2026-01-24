@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 
 interface TokenPayload {
   userId: string;
-  role: 'admin' | 'vendor';
+  role: 'admin';
 }
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
@@ -12,7 +12,7 @@ export function signToken(payload: TokenPayload) {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
 }
 
-export function authGuard(roles?: Array<'admin' | 'vendor'>) {
+export function authGuard(roles?: Array<'admin'>) {
   return (req: Request, res: Response, next: NextFunction) => {
     const token = req.cookies?.auth;
     if (!token) return res.status(401).json({ error: 'unauthorized' });

@@ -14,13 +14,9 @@ export const Footer: React.FC = () => {
       { label: 'الوظائف', path: '/about' },
       { label: 'الصحافة', path: '/about' },
     ],
-    'تتبع الطلبات': [
-      { label: 'تتبع حالة طلب السعر', path: '/requests' },
-    ],
-    'بيع على سوق الحرفيين': [
-      { label: 'إدارة المتجر (أدمن)', path: '/admin' },
-      { label: 'سياسة البائعين', path: '/vendor-policy' },
-      { label: 'تسجيل دخول البائع/الأدمن', path: '/login' },
+    'لوحة الإدارة': [
+      { label: 'إدارة طلبات عروض السعر', path: '/admin' },
+      { label: 'تسجيل دخول الأدمن', path: '/login' },
     ],
     'بنود قانونية': [
       { label: 'الشروط والأحكام', path: '/terms' },
@@ -59,14 +55,8 @@ export const Footer: React.FC = () => {
                 سوق <span className="text-primary">الحرفيين</span>
               </h2>
               <p className="text-xs text-muted-foreground mt-1">
-                منصتك الموثوقة للتجار المتعددين
+                متجر واحد بعروض سعر فورية عبر واتساب
               </p>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=40&h=25&fit=crop" alt="Visa" className="h-6 rounded" />
-              <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=40&h=25&fit=crop" alt="Mastercard" className="h-6 rounded" />
-              <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=40&h=25&fit=crop" alt="PayPal" className="h-6 rounded" />
             </div>
             
             <p className="text-xs text-muted-foreground">

@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCart } from '@/contexts/CartContext';
-import { getProductById, getVendorById, getReviewsByProduct, getProductsByVendor } from '@/data/mockData';
-import { ShoppingCart, Heart, Share2, Truck, Shield, RefreshCw, Minus, Plus, Store, ChevronRight, ThumbsUp } from 'lucide-react';
+import { getProductById, getReviewsByProduct, getProductsByCategory } from '@/data/mockData';
+import { ShoppingCart, Heart, Share2, Truck, Shield, RefreshCw, Minus, Plus, ChevronRight, ThumbsUp } from 'lucide-react';
 import { ProductCard } from '@/components/ProductCard';
 import { toast } from 'sonner';
 
@@ -19,9 +19,10 @@ const ProductDetail = () => {
   const [selectedImage, setSelectedImage] = useState(0);
 
   const product = getProductById(id || '');
-  const vendor = product ? getVendorById(product.vendorId) : null;
   const reviews = product ? getReviewsByProduct(product.id) : [];
-  const vendorProducts = vendor ? getProductsByVendor(vendor.id).filter(p => p.id !== product?.id).slice(0, 4) : [];
+  const relatedProducts = product
+    ? getProductsByCategory(product.category).filter(p => p.id !== product?.id).slice(0, 4)
+    : [];
 
   if (!product) {
     return (
@@ -49,7 +50,7 @@ const ProductDetail = () => {
 
   const handleBuyNow = () => {
     addToCart(product, quantity);
-    toast.success('تمت الإضافة - اطلب التوفر والسعر من العربة قبل الدفع');
+    toast.success('تمت الإضافة - اطلب عرض سعر عبر واتساب من العربة');
     navigate('/cart');
   };
 
@@ -116,26 +117,6 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Vendor */}
-            {vendor && (
-              <Link
-                to={`/vendor/${vendor.id}`}
-                className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border hover:border-primary transition-colors"
-              >
-                <img src={vendor.logo} alt={vendor.storeName} className="w-12 h-12 rounded-full object-cover" />
-                <div className="flex-1">
-                  <p className="font-medium text-foreground flex items-center gap-2">
-                    <Store className="h-4 w-4 text-primary" />
-                    {vendor.storeName}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    ⭐ {vendor.rating} • {vendor.totalOrders} طلب
-                  </p>
-                </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground" />
-              </Link>
-            )}
-
             {/* Quantity */}
             <div className="flex items-center gap-4">
               <span className="font-medium">الكمية:</span>
@@ -160,7 +141,7 @@ const ProductDetail = () => {
             {/* Actions */}
             <div className="flex gap-3">
               <Button onClick={handleBuyNow} size="lg" className="flex-1">
-                أضف واطلب التوفر
+                أضف واطلب عرض سعر
               </Button>
               <Button onClick={handleAddToCart} size="lg" variant="outline" className="flex-1">
                 <ShoppingCart className="h-4 w-4 mr-2" />
@@ -178,11 +159,11 @@ const ProductDetail = () => {
             <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border">
               <div className="text-center p-3">
                 <Truck className="h-6 w-6 mx-auto text-primary mb-1" />
-                <p className="text-xs text-muted-foreground">شحن مجاني</p>
+                <p className="text-xs text-muted-foreground">شحن بعد التأكيد</p>
               </div>
               <div className="text-center p-3">
                 <Shield className="h-6 w-6 mx-auto text-primary mb-1" />
-                <p className="text-xs text-muted-foreground">دفع آمن</p>
+                <p className="text-xs text-muted-foreground">تأكيد يدوي</p>
               </div>
               <div className="text-center p-3">
                 <RefreshCw className="h-6 w-6 mx-auto text-primary mb-1" />
@@ -250,19 +231,14 @@ const ProductDetail = () => {
           </TabsContent>
         </Tabs>
 
-        {/* More from Vendor */}
-        {vendorProducts.length > 0 && (
+        {/* Related Products */}
+        {relatedProducts.length > 0 && (
           <section className="mt-10">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold">المزيد من {vendor?.storeName}</h3>
-              <Link to={`/vendor/${vendor?.id}`}>
-                <Button variant="ghost" size="sm" className="text-primary">
-                  زور المتجر <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              </Link>
+              <h3 className="text-xl font-bold">منتجات مشابهة</h3>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {vendorProducts.map((p) => (
+              {relatedProducts.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}
             </div>
@@ -280,7 +256,7 @@ const ProductDetail = () => {
             <ShoppingCart className="h-4 w-4" />
           </Button>
           <Button onClick={handleBuyNow} size="sm" className="px-6">
-            اطلب التوفر
+            اطلب عرض سعر
           </Button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { CartItem, Product } from '@/types/marketplace';
-import { getProductById, getVendorById } from '@/data/mockData';
+import { getProductById } from '@/data/mockData';
 
 interface CartContextType {
   items: CartItem[];
@@ -10,7 +10,7 @@ interface CartContextType {
   clearCart: () => void;
   getCartTotal: () => number;
   getCartCount: () => number;
-  getItemsByVendor: () => { vendorId: string; vendorName: string; items: (CartItem & { product: Product })[] }[];
+  getDetailedItems: () => (CartItem & { product: Product })[];
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -41,7 +41,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const next = [...prev, {
         productId: product.id,
-        vendorId: product.vendorId,
         quantity,
         price: product.price,
       }];
@@ -88,28 +87,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return items.reduce((count, item) => count + item.quantity, 0);
   }, [items]);
 
-  const getItemsByVendor = useCallback(() => {
-    const vendorGroups: { [key: string]: { vendorId: string; vendorName: string; items: (CartItem & { product: Product })[] } } = {};
-    
-    items.forEach(item => {
+  const getDetailedItems = useCallback(() => {
+    return items.reduce<(CartItem & { product: Product })[]>((acc, item) => {
       const product = getProductById(item.productId);
-      if (!product) return;
-      
-      const vendor = getVendorById(item.vendorId);
-      const vendorName = vendor?.storeName || 'بائع غير معروف';
-      
-      if (!vendorGroups[item.vendorId]) {
-        vendorGroups[item.vendorId] = {
-          vendorId: item.vendorId,
-          vendorName,
-          items: [],
-        };
-      }
-      
-      vendorGroups[item.vendorId].items.push({ ...item, product });
-    });
-    
-    return Object.values(vendorGroups);
+      if (!product) return acc;
+      acc.push({ ...item, product });
+      return acc;
+    }, []);
   }, [items]);
 
   return (
@@ -121,7 +105,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearCart,
       getCartTotal,
       getCartCount,
-      getItemsByVendor,
+      getDetailedItems,
     }}>
       {children}
     </CartContext.Provider>

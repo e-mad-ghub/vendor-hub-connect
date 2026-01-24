@@ -1,11 +1,10 @@
-import { PrismaClient, UserRole, VendorStatus } from '@prisma/client';
+import { PrismaClient, UserRole } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
   const adminEmail = 'admin@marketplace.com';
-  const sellerEmail = 'techhub@vendor.com';
   const password = await bcrypt.hash('password', 10);
 
   let admin = await prisma.user.findUnique({ where: { email: adminEmail } });
@@ -20,35 +19,17 @@ async function main() {
     });
   }
 
-  let seller = await prisma.user.findUnique({ where: { email: sellerEmail } });
-  if (!seller) {
-    seller = await prisma.user.create({
+  const existingSettings = await prisma.whatsAppSettings.findFirst();
+  if (!existingSettings) {
+    await prisma.whatsAppSettings.create({
       data: {
-        id: 'u_seller',
-        email: sellerEmail,
-        name: 'Main Seller',
-        password,
-        role: UserRole.vendor,
+        phoneNumber: '201000000000',
+        messageTemplate: 'Hello, my name is [Customer Name]. I would like a quote for the following items:\\n[Items]\\nPlease confirm price and availability. Thank you.',
       },
     });
   }
 
-  let vendor = await prisma.vendor.findFirst({ where: { userId: seller.id } });
-  if (!vendor) {
-    vendor = await prisma.vendor.create({
-      data: {
-        id: 'v1',
-        userId: seller.id,
-        storeName: 'التاجر الرئيسي',
-        description: 'كل المنتجات بتتباع من تاجر واحد معتمد.',
-        logo: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=200&h=200&fit=crop',
-        banner: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&h=300&fit=crop',
-        status: VendorStatus.approved,
-      },
-    });
-  }
-
-  console.log('Seeded users and vendor', { admin: admin.email, seller: seller.email, vendor: vendor.storeName });
+  console.log('Seeded admin and WhatsApp settings', { admin: admin.email });
 }
 
 main()

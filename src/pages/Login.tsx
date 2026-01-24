@@ -15,7 +15,6 @@ const Login = () => {
   const [loginData, setLoginData] = useState({ email: '', password: '' });
 
   const demoAccounts = [
-    { label: 'بائع', email: 'techhub@vendor.com' },
     { label: 'أدمن', email: 'admin@marketplace.com' },
   ];
 
@@ -42,7 +41,7 @@ const Login = () => {
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold">أهلا بيك في سوق الحرفيين</h1>
             <p className="text-muted-foreground mt-1">
-              الدخول متاح للبائع أو الأدمن فقط. العملاء مش محتاجين حساب.
+              الدخول متاح للأدمن فقط. العملاء مش محتاجين حساب.
             </p>
           </div>
 
@@ -85,8 +84,8 @@ const Login = () => {
           </form>
 
           <div className="mt-6 pt-6 border-t border-border">
-            <p className="text-sm font-medium mb-3 text-center">حسابات تجريبية للبائع/الأدمن</p>
-            <div className="grid grid-cols-2 gap-2">
+            <p className="text-sm font-medium mb-3 text-center">حساب تجريبي للأدمن</p>
+            <div className="grid grid-cols-1 gap-2">
               {demoAccounts.map((acct) => (
                 <Button
                   key={acct.email}
