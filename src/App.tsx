@@ -20,6 +20,7 @@ import Privacy from "./pages/Privacy";
 import RefundPolicy from "./pages/RefundPolicy";
 import Menu from "./pages/Menu";
 import NotFound from "./pages/NotFound";
+import SetupAdmin from "./pages/SetupAdmin";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/refund-policy" element={<RefundPolicy />} />
               <Route path="/menu" element={<Menu />} />
+              <Route path="/setup-admin" element={<SetupAdmin />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

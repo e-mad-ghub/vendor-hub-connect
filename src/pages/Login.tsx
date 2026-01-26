@@ -5,28 +5,30 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import { Mail, Lock } from 'lucide-react';
+import { Mail, Lock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isLoading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
 
-  const demoAccounts = [
-    { label: 'أدمن', email: 'admin@marketplace.com' },
-  ];
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!loginData.email.trim() || !loginData.password.trim()) {
+      toast.error('من فضلك اكتب الإيميل وكلمة السر');
+      return;
+    }
+
     setIsLoading(true);
 
     const result = await login(loginData.email, loginData.password);
     
     if (result.success) {
       toast.success('نورتنا!');
-      navigate('/');
+      navigate('/admin');
     } else {
       toast.error(result.error || 'فشل تسجيل الدخول');
     }
@@ -34,12 +36,22 @@ const Login = () => {
     setIsLoading(false);
   };
 
+  if (authLoading) {
+    return (
+      <Layout>
+        <div className="container py-12 flex justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="container py-8 md:py-12 max-w-md mx-auto">
         <div className="bg-card rounded-xl shadow-card p-6 md:p-8">
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold">أهلا بيك في سوق الحرفيين</h1>
+            <h1 className="text-2xl font-bold">دخول الأدمن</h1>
             <p className="text-muted-foreground mt-1">
               الدخول متاح للأدمن فقط. العملاء مش محتاجين حساب.
             </p>
@@ -53,11 +65,12 @@ const Login = () => {
                 <Input
                   id="login-email"
                   type="email"
-                  placeholder="example@email.com"
+                  placeholder="admin@example.com"
                   value={loginData.email}
                   onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                   className="pl-10"
                   required
+                  autoComplete="email"
                 />
               </div>
             </div>
@@ -74,33 +87,24 @@ const Login = () => {
                   onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                   className="pl-10"
                   required
+                  autoComplete="current-password"
                 />
               </div>
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'جاري تسجيل الدخول...' : 'تسجيل دخول'}
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  جاري تسجيل الدخول...
+                </>
+              ) : (
+                'تسجيل دخول'
+              )}
             </Button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-border">
-            <p className="text-sm font-medium mb-3 text-center">حساب تجريبي للأدمن</p>
-            <div className="grid grid-cols-1 gap-2">
-              {demoAccounts.map((acct) => (
-                <Button
-                  key={acct.email}
-                  variant="outline"
-                  size="sm"
-                  className="justify-start"
-                  onClick={() => setLoginData({ email: acct.email, password: 'password' })}
-                >
-                  {acct.label} ({acct.email})
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          <p className="text-xs text-muted-foreground text-center mt-4">
+          <p className="text-xs text-muted-foreground text-center mt-6">
             لو انت عميل، تقدر تستخدم الموقع وتطلب الأسعار بدون تسجيل دخول.
           </p>
         </div>

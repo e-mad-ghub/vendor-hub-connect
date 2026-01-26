@@ -8,13 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
-import { MessageCircle, FileDown, Settings, Package } from 'lucide-react';
+import { MessageCircle, FileDown, Settings, Package, Key, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useProducts } from '@/data/productsStore';
 import type { QuoteRequest } from '@/types/marketplace';
+import { PasswordChangeForm } from '@/components/PasswordChangeForm';
 
 const AdminPanel = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, isLoading: authLoading } = useAuth();
   const [requests, setRequests] = React.useState<QuoteRequest[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
   const [phoneNumber, setPhoneNumber] = React.useState('');
@@ -61,7 +62,17 @@ const AdminPanel = () => {
     };
   }, [user]);
 
-  if (user?.role !== 'admin') {
+  if (authLoading) {
+    return (
+      <Layout>
+        <div className="container py-12 flex justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!user || user.role !== 'admin') {
     return (
       <Layout>
         <div className="container py-12 text-center">
@@ -259,6 +270,7 @@ const AdminPanel = () => {
             <TabsTrigger value="requests">طلبات عروض السعر</TabsTrigger>
             <TabsTrigger value="products">المنتجات</TabsTrigger>
             <TabsTrigger value="settings">إعدادات واتساب</TabsTrigger>
+            <TabsTrigger value="security">الأمان</TabsTrigger>
           </TabsList>
 
           <TabsContent value="requests">
@@ -473,6 +485,16 @@ const AdminPanel = () => {
               <Button className="mt-6" onClick={handleSaveSettings} disabled={saving}>
                 {saving ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
               </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="security">
+            <div className="bg-card rounded-xl shadow-card p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <Key className="h-6 w-6 text-primary" />
+                <h3 className="font-semibold">تغيير كلمة السر</h3>
+              </div>
+              <PasswordChangeForm />
             </div>
           </TabsContent>
         </Tabs>
