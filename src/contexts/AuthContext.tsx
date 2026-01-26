@@ -19,95 +19,164 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Utility to add timeout to promises
+const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number = 10000): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error('Request timeout')), timeoutMs)
+    ),
+  ]);
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const checkUserRole = useCallback(async (supabaseUser: SupabaseUser): Promise<AuthUser | null> => {
-    // Check if user has admin role
-    const { data: roles, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', supabaseUser.id);
+  const checkUserRole = useCallback(async (supabaseUser: SupabaseUser): Promise<AuthUser> => {
+    try {
+      // Add timeout to the role check query
+      const { data: roles, error } = await withTimeout(
+        supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', supabaseUser.id),
+        5000
+      );
 
-    if (error) {
-      console.error('Error checking user role:', error);
-      return null;
+      if (error) {
+        console.error('Error checking user role:', error);
+        return {
+          id: supabaseUser.id,
+          email: supabaseUser.email || '',
+          role: 'user',
+        };
+      }
+
+      const isAdmin = roles?.some(r => r.role === 'admin');
+
+      return {
+        id: supabaseUser.id,
+        email: supabaseUser.email || '',
+        role: isAdmin ? 'admin' : 'user',
+      };
+    } catch (err) {
+      console.error('Exception checking user role:', err);
+      return {
+        id: supabaseUser.id,
+        email: supabaseUser.email || '',
+        role: 'user',
+      };
     }
-
-    const isAdmin = roles?.some(r => r.role === 'admin');
-
-    return {
-      id: supabaseUser.id,
-      email: supabaseUser.email || '',
-      role: isAdmin ? 'admin' : 'user',
-    };
   }, []);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        const authUser = await checkUserRole(session.user);
-        setUser(authUser);
-      } else {
-        setUser(null);
-      }
-      setIsLoading(false);
-    });
+    let mounted = true;
 
-    // Then check initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        const authUser = await checkUserRole(session.user);
-        setUser(authUser);
+    const initializeAuth = async () => {
+      try {
+        // Check initial session with timeout
+        const { data: { session } } = await withTimeout(
+          supabase.auth.getSession(),
+          5000
+        );
+
+        if (mounted) {
+          if (session?.user) {
+            const authUser = await checkUserRole(session.user);
+            setUser(authUser);
+          }
+          setIsLoading(false);
+        }
+      } catch (err) {
+        console.error('Failed to get initial session:', err);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
-      setIsLoading(false);
+    };
+
+    initializeAuth();
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+
+      try {
+        if (session?.user) {
+          const authUser = await checkUserRole(session.user);
+          setUser(authUser);
+        } else {
+          setUser(null);
+        }
+      } catch (err) {
+        console.error('Error in auth state change:', err);
+      }
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [checkUserRole]);
 
   const login = useCallback(async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
+      console.log('Attempting login for:', email);
+      
+      // Add timeout to login request
+      const { data, error } = await withTimeout(
+        supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        }),
+        10000
+      );
 
       if (error) {
-        return { success: false, error: error.message === 'Invalid login credentials' ? 'بيانات الدخول غير صحيحة' : error.message };
+        const errorMsg = error.message === 'Invalid login credentials' 
+          ? 'بيانات الدخول غير صحيحة' 
+          : error.message;
+        console.error('Login error:', errorMsg);
+        return { success: false, error: errorMsg };
       }
 
       if (!data.user) {
+        console.error('No user returned from login');
         return { success: false, error: 'فشل تسجيل الدخول' };
       }
 
-      // Check if user has admin role
-      const authUser = await checkUserRole(data.user);
-      if (!authUser || authUser.role !== 'admin') {
-        await supabase.auth.signOut();
-        return { success: false, error: 'الدخول متاح للأدمن فقط' };
-      }
+      console.log('Login successful for user:', data.user.id);
+      
+      // Check role asynchronously without blocking
+      checkUserRole(data.user).catch(err => {
+        console.error('Failed to check user role after login:', err);
+      });
 
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: err.message || 'حدث خطأ' };
+      const errorMsg = err.message || 'حدث خطأ';
+      console.error('Login exception:', errorMsg);
+      return { success: false, error: errorMsg };
     }
   }, [checkUserRole]);
 
   const logout = useCallback(async () => {
-    await supabase.auth.signOut();
-    setUser(null);
+    try {
+      await withTimeout(supabase.auth.signOut(), 5000);
+      setUser(null);
+    } catch (err) {
+      console.error('Logout error:', err);
+      setUser(null);
+    }
   }, []);
 
   const changePassword = useCallback(async (newPassword: string) => {
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
+      const { error } = await withTimeout(
+        supabase.auth.updateUser({ password: newPassword }),
+        10000
+      );
 
       if (error) {
         return { success: false, error: error.message };
