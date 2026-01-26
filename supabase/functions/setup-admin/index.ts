@@ -22,14 +22,20 @@ Deno.serve(async (req) => {
       )
     }
 
-    if (!email || !password) {
+    const initialEmail = Deno.env.get('ADMIN_INITIAL_EMAIL')?.trim()
+    const initialPassword = Deno.env.get('ADMIN_INITIAL_PASSWORD')
+    const useEnvCredentials = Boolean(initialEmail && initialPassword)
+    const resolvedEmail = useEnvCredentials ? initialEmail : email?.trim()
+    const resolvedPassword = useEnvCredentials ? initialPassword : password
+
+    if (!resolvedEmail || !resolvedPassword) {
       return new Response(
         JSON.stringify({ error: 'الإيميل وكلمة السر مطلوبين' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    if (password.length < 6) {
+    if (resolvedPassword.length < 6) {
       return new Response(
         JSON.stringify({ error: 'كلمة السر لازم تكون 6 حروف على الأقل' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -70,8 +76,8 @@ Deno.serve(async (req) => {
 
     // Create the user
     const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
+      email: resolvedEmail,
+      password: resolvedPassword,
       email_confirm: true,
     })
 
@@ -105,7 +111,8 @@ Deno.serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         message: 'تم إنشاء حساب الأدمن بنجاح',
-        email: userData.user.email 
+        email: userData.user.email,
+        credentialsSource: useEnvCredentials ? 'env' : 'request',
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

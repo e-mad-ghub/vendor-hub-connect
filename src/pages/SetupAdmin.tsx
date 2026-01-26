@@ -21,17 +21,25 @@ const SetupAdmin = () => {
   const handleSetup = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.email.trim() || !formData.password.trim() || !formData.setupKey.trim()) {
-      toast.error('من فضلك اكمل كل البيانات');
+    const hasEmail = !!formData.email.trim();
+    const hasPassword = !!formData.password.trim();
+
+    if (!formData.setupKey.trim()) {
+      toast.error('من فضلك ادخل مفتاح الإعداد');
       return;
     }
 
-    if (formData.password.length < 6) {
+    if ((hasEmail && !hasPassword) || (!hasEmail && hasPassword)) {
+      toast.error('الإيميل وكلمة السر لازم يكونوا مع بعض');
+      return;
+    }
+
+    if (hasPassword && formData.password.length < 6) {
       toast.error('كلمة السر لازم تكون 6 حروف على الأقل');
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (hasPassword && formData.password !== formData.confirmPassword) {
       toast.error('كلمتين السر مش متطابقين');
       return;
     }
@@ -101,7 +109,7 @@ const SetupAdmin = () => {
             </div>
 
             <div>
-              <Label htmlFor="admin-email">إيميل الأدمن</Label>
+              <Label htmlFor="admin-email">إيميل الأدمن (اختياري)</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -111,14 +119,16 @@ const SetupAdmin = () => {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="pl-10"
-                  required
                   autoComplete="email"
                 />
               </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                اتركه فارغًا لو الإيميل متخزن في السيرفر.
+              </p>
             </div>
 
             <div>
-              <Label htmlFor="admin-password">كلمة السر</Label>
+              <Label htmlFor="admin-password">كلمة السر (اختيارية)</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -128,16 +138,17 @@ const SetupAdmin = () => {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   className="pl-10"
-                  required
                   minLength={6}
                   autoComplete="new-password"
                 />
               </div>
-              <p className="text-xs text-muted-foreground mt-1">6 حروف على الأقل</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                6 حروف على الأقل. اتركها فارغة لو كلمة السر متخزنة في السيرفر.
+              </p>
             </div>
 
             <div>
-              <Label htmlFor="confirm-password">تأكيد كلمة السر</Label>
+              <Label htmlFor="confirm-password">تأكيد كلمة السر (اختياري)</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -147,7 +158,6 @@ const SetupAdmin = () => {
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   className="pl-10"
-                  required
                   minLength={6}
                   autoComplete="new-password"
                 />
