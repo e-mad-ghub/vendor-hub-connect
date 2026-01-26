@@ -1,65 +1,132 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { User, UserRole } from '@/types/marketplace';
+import { supabase } from '@/integrations/supabase/client';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
+
+interface AuthUser {
+  id: string;
+  email: string;
+  role: 'admin' | 'user';
+}
 
 interface AuthContextType {
-  user: User | null;
+  user: AuthUser | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (email: string, password: string, name: string, role: UserRole) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  changePassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const isDev = import.meta.env.DEV;
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const logAuth = (event: string, payload?: unknown) => {
-    if (isDev) {
-      // Dev-only trace to watch auth lifecycle transitions
-      console.info(`[auth:${event}]`, payload);
-    }
-  };
+  const checkUserRole = useCallback(async (supabaseUser: SupabaseUser): Promise<AuthUser | null> => {
+    // Check if user has admin role
+    const { data: roles, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', supabaseUser.id);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const isAdmin = email.trim().toLowerCase() === 'admin@marketplace.com';
-    if (!isAdmin || !password.trim()) {
-      return { success: false, error: 'الدخول متاح للأدمن فقط' };
+    if (error) {
+      console.error('Error checking user role:', error);
+      return null;
     }
-    const adminUser: User = {
-      id: 'admin_local',
-      email: 'admin@marketplace.com',
-      name: 'الأدمن',
-      role: 'admin',
-      createdAt: new Date().toISOString(),
+
+    const isAdmin = roles?.some(r => r.role === 'admin');
+
+    return {
+      id: supabaseUser.id,
+      email: supabaseUser.email || '',
+      role: isAdmin ? 'admin' : 'user',
     };
-    setUser(adminUser);
-    logAuth('login', { userId: adminUser.id, role: adminUser.role });
-    return { success: true };
   }, []);
-
-  const register = useCallback(async (_email: string, _password: string, _name: string, _role: UserRole) => {
-    return { success: false, error: 'التسجيل مقفول. استخدم حساب بائع أو أدمن موجود.' };
-  }, []);
-
-  const logout = useCallback(() => {
-    setUser(null);
-  }, [user]);
 
   useEffect(() => {
-    if (isDev) {
-      console.info('[auth:state]', { user });
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        const authUser = await checkUserRole(session.user);
+        setUser(authUser);
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
+
+    // Then check initial session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const authUser = await checkUserRole(session.user);
+        setUser(authUser);
+      }
+      setIsLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [checkUserRole]);
+
+  const login = useCallback(async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (error) {
+        return { success: false, error: error.message === 'Invalid login credentials' ? 'بيانات الدخول غير صحيحة' : error.message };
+      }
+
+      if (!data.user) {
+        return { success: false, error: 'فشل تسجيل الدخول' };
+      }
+
+      // Check if user has admin role
+      const authUser = await checkUserRole(data.user);
+      if (!authUser || authUser.role !== 'admin') {
+        await supabase.auth.signOut();
+        return { success: false, error: 'الدخول متاح للأدمن فقط' };
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'حدث خطأ' };
     }
-  }, [isDev, user]);
+  }, [checkUserRole]);
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  }, []);
+
+  const changePassword = useCallback(async (newPassword: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'حدث خطأ' };
+    }
+  }, []);
 
   return (
     <AuthContext.Provider value={{
       user,
       isAuthenticated: !!user,
+      isLoading,
       login,
-      register,
       logout,
+      changePassword,
     }}>
       {children}
     </AuthContext.Provider>
