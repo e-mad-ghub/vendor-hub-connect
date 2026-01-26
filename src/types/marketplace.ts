@@ -43,19 +43,6 @@ export interface QuoteRequestItem {
   price?: number;
 }
 
-export interface QuoteRequest {
-  id: string;
-  customerName: string;
-  customerPhone: string;
-  message: string;
-  items: QuoteRequestItem[];
-  createdAt: string;
-}
-
-export interface WhatsAppSettings {
-  phoneNumber: string;
-}
-
 export type QuoteRequestStatus = 'pending' | 'cancelled' | 'followed_up';
 
 export interface QuoteRequest {
@@ -63,7 +50,38 @@ export interface QuoteRequest {
   customerName: string;
   customerPhone: string;
   message: string;
-  items: Array<{ productId: string; title: string; quantity: number; price: number; image: string }>;
+  items: QuoteRequestItem[];
   status: QuoteRequestStatus;
   createdAt: string;
+}
+
+export interface WhatsAppSettings {
+  phoneNumber: string;
+}
+
+// Availability request types for price quote flow
+export type AvailabilityRequestStatus = 'pending' | 'quoted' | 'accepted' | 'declined' | 'cancelled' | 'unavailable';
+
+export interface AvailabilityRequestItem {
+  productId: string;
+  quantity: number;
+  title: string;
+  image: string;
+  price?: number;
+}
+
+export interface AvailabilityRequest {
+  id: string;
+  status: AvailabilityRequestStatus;
+  requestedAt: string;
+  respondedAt?: string;
+  cartSignature: string;
+  items: AvailabilityRequestItem[];
+  buyerPhone: string;
+  customerId?: string;
+  vendorId?: string;
+  vendorName?: string;
+  quotedTotal?: number;
+  sellerNote?: string;
+  buyerNote?: string;
 }
