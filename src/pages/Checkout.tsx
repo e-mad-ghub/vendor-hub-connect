@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,8 @@ import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { MessageCircle, AlertTriangle } from 'lucide-react';
 import type { WhatsAppSettings } from '@/types/marketplace';
+import { LoadingState } from '@/components/LoadingState';
+import { InlineError } from '@/components/InlineError';
 
 const DEFAULT_TEMPLATE =
   'أهلًا، أنا اسمي [Customer Name]. عايز عرض سعر للقطع التالية:\n[Items]\nمن فضلك أكد السعر والتوفر. شكرًا.';
@@ -21,20 +23,26 @@ const Checkout = () => {
   const [customerPhone, setCustomerPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [settings, setSettings] = useState<WhatsAppSettings | null>(null);
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+
+  const loadSettings = useCallback(async () => {
+    setSettingsLoading(true);
+    setSettingsError(null);
+    try {
+      const data = await api.getWhatsAppSettings();
+      setSettings(data);
+    } catch (e: any) {
+      setSettings(null);
+      setSettingsError(e?.message || 'تعذر تحميل إعدادات واتساب.');
+    } finally {
+      setSettingsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let isMounted = true;
-    api.getWhatsAppSettings()
-      .then((data) => {
-        if (isMounted) setSettings(data);
-      })
-      .catch(() => {
-        if (isMounted) setSettings(null);
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    loadSettings();
+  }, [loadSettings]);
 
   const itemsText = useMemo(() => {
     return detailedItems
@@ -70,7 +78,32 @@ const Checkout = () => {
     );
   }
 
+  if (settingsLoading) {
+    return (
+      <Layout>
+        <div className="container py-12 max-w-5xl">
+          <LoadingState title="جاري تحميل إعدادات واتساب" message="برجاء الانتظار..." />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (settingsError) {
+    return (
+      <Layout>
+        <div className="container py-12 max-w-5xl">
+          <InlineError
+            title="تعذر تحميل الإعدادات"
+            message={settingsError}
+            onRetry={loadSettings}
+          />
+        </div>
+      </Layout>
+    );
+  }
+
   const handleRequestQuote = async () => {
+    if (isSubmitting) return;
     if (!customerName.trim() || !customerPhone.trim()) {
       toast.error('من فضلك اكتب الاسم ورقم التليفون');
       return;

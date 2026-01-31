@@ -57,6 +57,21 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Environment Setup
+
+Copy `env.example` to `.env` locally (never commit it), or set variables in your deployment platform.
+
+Required variables:
+- `VITE_SUPABASE_URL` — Supabase project URL
+- `VITE_SUPABASE_PUBLISHABLE_KEY` — Supabase **anon** (public) key only
+
+### Vercel
+- Go to **Project Settings → Environment Variables**
+- Add the required variables for the appropriate environments (Development/Preview/Production)
+- Redeploy after updating environment variables
+
+**Important:** Secrets (service role keys, database passwords) must never be committed or exposed in frontend code.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.

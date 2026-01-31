@@ -17,6 +17,7 @@ export const PasswordChangeForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
 
     if (formData.newPassword.length < 6) {
       toast.error('كلمة السر لازم تكون 6 حروف على الأقل');

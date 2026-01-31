@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Search from "./pages/Search";
 import Category from "./pages/Category";
@@ -21,6 +22,7 @@ import RefundPolicy from "./pages/RefundPolicy";
 import Menu from "./pages/Menu";
 import NotFound from "./pages/NotFound";
 import SetupAdmin from "./pages/SetupAdmin";
+import NotAuthorized from "./pages/NotAuthorized";
 
 const queryClient = new QueryClient();
 
@@ -40,7 +42,14 @@ const App = () => (
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/admin" element={<AdminPanel />} />
+              <Route
+                path="/admin"
+                element={(
+                  <ProtectedRoute requireRole="admin">
+                    <AdminPanel />
+                  </ProtectedRoute>
+                )}
+              />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/terms" element={<Terms />} />
@@ -48,6 +57,7 @@ const App = () => (
               <Route path="/refund-policy" element={<RefundPolicy />} />
               <Route path="/menu" element={<Menu />} />
               <Route path="/setup-admin" element={<SetupAdmin />} />
+              <Route path="/not-authorized" element={<NotAuthorized />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

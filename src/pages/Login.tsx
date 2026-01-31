@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,15 +7,31 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { Mail, Lock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { LoadingState } from '@/components/LoadingState';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, isLoading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', password: '' });
+  const toastShownRef = useRef(false);
+
+  useEffect(() => {
+    if (toastShownRef.current) return;
+    const state = location.state as { reason?: string } | null;
+    if (state?.reason === 'expired') {
+      toast.error('انتهت الجلسة، من فضلك سجّل الدخول مرة أخرى.');
+      toastShownRef.current = true;
+    } else if (state?.reason === 'auth') {
+      toast.error('تسجيل الدخول مطلوب للوصول إلى هذه الصفحة.');
+      toastShownRef.current = true;
+    }
+  }, [location.state]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     
     if (!loginData.email.trim() || !loginData.password.trim()) {
       toast.error('من فضلك اكتب الإيميل وكلمة السر');
@@ -39,8 +55,8 @@ const Login = () => {
   if (authLoading) {
     return (
       <Layout>
-        <div className="container py-12 flex justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="container py-12">
+          <LoadingState title="جاري التحقق من الجلسة" message="برجاء الانتظار..." />
         </div>
       </Layout>
     );

@@ -20,6 +20,7 @@ const SetupAdmin = () => {
 
   const handleSetup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
 
     const hasEmail = !!formData.email.trim();
     const hasPassword = !!formData.password.trim();
@@ -104,7 +105,7 @@ const SetupAdmin = () => {
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                المفتاح الافتراضي: setup-first-admin-2024
+                اطلب مفتاح الإعداد من مسؤول النظام.
               </p>
             </div>
 

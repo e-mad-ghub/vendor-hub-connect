@@ -43,6 +43,7 @@ const Index = () => {
   };
 
   const handleCustomRequest = async () => {
+    if (isSending) return;
     if (!customerName.trim() || !customerPhone.trim()) {
       toast.error('من فضلك اكتب الاسم ورقم التليفون');
       return;

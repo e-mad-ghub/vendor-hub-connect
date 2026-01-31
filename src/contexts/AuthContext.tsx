@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
@@ -12,6 +12,8 @@ interface AuthContextType {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  sessionExpired: boolean;
+  clearSessionExpired: () => void;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   changePassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
@@ -32,6 +34,16 @@ const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number = 10000): Promis
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const hasUserRef = useRef(false);
+
+  useEffect(() => {
+    hasUserRef.current = !!user;
+  }, [user]);
+
+  const clearSessionExpired = useCallback(() => {
+    setSessionExpired(false);
+  }, []);
 
   const checkUserRole = useCallback(async (supabaseUser: SupabaseUser): Promise<AuthUser> => {
     try {
@@ -103,6 +115,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!mounted) return;
 
       try {
+        if (event === 'SIGNED_OUT' && hasUserRef.current) {
+          setSessionExpired(true);
+        }
         if (session?.user) {
           const authUser = await checkUserRole(session.user);
           setUser(authUser);
@@ -163,6 +178,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = useCallback(async () => {
     try {
+      hasUserRef.current = false;
+      setSessionExpired(false);
       await withTimeout(supabase.auth.signOut(), 5000);
       setUser(null);
     } catch (err) {
@@ -193,6 +210,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       user,
       isAuthenticated: !!user,
       isLoading,
+      sessionExpired,
+      clearSessionExpired,
       login,
       logout,
       changePassword,

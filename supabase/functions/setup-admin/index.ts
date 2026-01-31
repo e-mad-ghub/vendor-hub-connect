@@ -14,7 +14,13 @@ Deno.serve(async (req) => {
     const { email, password, setupKey } = await req.json()
 
     // Simple setup key verification (in production, use a more secure method)
-    const expectedKey = Deno.env.get('ADMIN_SETUP_KEY') || 'setup-first-admin-2024'
+    const expectedKey = Deno.env.get('ADMIN_SETUP_KEY')
+    if (!expectedKey) {
+      return new Response(
+        JSON.stringify({ error: 'مفتاح الإعداد غير متوفر على الخادم' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
     if (setupKey !== expectedKey) {
       return new Response(
         JSON.stringify({ error: 'مفتاح الإعداد غير صحيح' }),

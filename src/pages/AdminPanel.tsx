@@ -8,16 +8,21 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
-import { MessageCircle, FileDown, Settings, Package, Key, Loader2 } from 'lucide-react';
+import { MessageCircle, FileDown, Settings, Package, Key } from 'lucide-react';
 import { toast } from 'sonner';
 import { useProducts } from '@/data/productsStore';
 import type { QuoteRequest } from '@/types/marketplace';
 import { PasswordChangeForm } from '@/components/PasswordChangeForm';
+import { LoadingState } from '@/components/LoadingState';
+import { InlineError } from '@/components/InlineError';
+import { EmptyState } from '@/components/EmptyState';
 
 const AdminPanel = () => {
   const { user, logout, isLoading: authLoading } = useAuth();
   const [requests, setRequests] = React.useState<QuoteRequest[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [requestsError, setRequestsError] = React.useState<string | null>(null);
+  const [settingsError, setSettingsError] = React.useState<string | null>(null);
   const [phoneNumber, setPhoneNumber] = React.useState('');
   const [saving, setSaving] = React.useState(false);
   const { products, createProduct, deleteProduct, editProduct } = useProducts();
@@ -39,34 +44,36 @@ const AdminPanel = () => {
     imageDataUrl: '',
   });
 
-  React.useEffect(() => {
+  const loadAdminData = React.useCallback(async () => {
     if (user?.role !== 'admin') return;
-    let isMounted = true;
     setIsLoading(true);
-    Promise.all([api.listQuoteRequests(), api.getWhatsAppSettings()])
-      .then(([quotes, settings]) => {
-        if (!isMounted) return;
-        setRequests(quotes || []);
-        setPhoneNumber(settings?.phoneNumber || '');
-      })
-      .catch(() => {
-        if (!isMounted) return;
-        setRequests([]);
-      })
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
+    setRequestsError(null);
+    setSettingsError(null);
+    try {
+      const [quotes, settings] = await Promise.all([
+        api.listQuoteRequests(),
+        api.getWhatsAppSettings(),
+      ]);
+      setRequests(quotes || []);
+      setPhoneNumber(settings?.phoneNumber || '');
+    } catch (e: any) {
+      setRequests([]);
+      setRequestsError(e?.message || 'تعذر تحميل الطلبات.');
+      setSettingsError(e?.message || 'تعذر تحميل إعدادات واتساب.');
+    } finally {
+      setIsLoading(false);
+    }
   }, [user]);
+
+  React.useEffect(() => {
+    loadAdminData();
+  }, [loadAdminData]);
 
   if (authLoading) {
     return (
       <Layout>
-        <div className="container py-12 flex justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="container py-12">
+          <LoadingState title="جاري التحقق من الجلسة" message="برجاء الانتظار..." />
         </div>
       </Layout>
     );
@@ -84,6 +91,7 @@ const AdminPanel = () => {
   }
 
   const handleSaveSettings = async () => {
+    if (saving) return;
     setSaving(true);
     try {
       const updated = await api.updateWhatsAppSettings({
@@ -122,6 +130,7 @@ const AdminPanel = () => {
       toast.error('رقم العميل غير صالح');
       return;
     }
+    if (request.status === 'cancelled') return;
     await api.updateQuoteRequestStatus(request.id, 'followed_up');
     setRequests((prev) => prev.map((item) => (item.id === request.id ? { ...item, status: 'followed_up' } : item)));
     const waUrl = `https://wa.me/${phoneDigits}?text=${encodeURIComponent('أهلًا، بخصوص طلب عرض السعر عندنا...')}`;
@@ -129,12 +138,14 @@ const AdminPanel = () => {
   };
 
   const cancelRequest = async (requestId: string) => {
+    if (!requestId) return;
     await api.updateQuoteRequestStatus(requestId, 'cancelled');
     setRequests((prev) => prev.map((item) => (item.id === requestId ? { ...item, status: 'cancelled' } : item)));
     toast.success('تم إلغاء الطلب');
   };
 
   const handleCreateProduct = () => {
+    if (isLoading) return;
     const price = Number(newProduct.price);
     if (!newProduct.title.trim()) {
       toast.error('من فضلك اكتب اسم المنتج');
@@ -193,6 +204,7 @@ const AdminPanel = () => {
   };
 
   const handleSaveEdit = () => {
+    if (isLoading) return;
     if (!editingId) return;
     const price = Number(editingProduct.price);
     if (!editingProduct.title.trim()) {
@@ -283,9 +295,18 @@ const AdminPanel = () => {
                 </Button>
               </div>
               {isLoading ? (
-                <p className="text-sm text-muted-foreground">جاري التحميل...</p>
+                <LoadingState title="جاري تحميل الطلبات" message="برجاء الانتظار..." />
+              ) : requestsError ? (
+                <InlineError
+                  title="تعذر تحميل الطلبات"
+                  message={requestsError}
+                  onRetry={loadAdminData}
+                />
               ) : requests.length === 0 ? (
-                <p className="text-sm text-muted-foreground">مافيش طلبات لسه.</p>
+                <EmptyState
+                  title="لا توجد طلبات بعد"
+                  description="بمجرد وصول طلبات عروض السعر ستظهر هنا."
+                />
               ) : (
                 <div className="space-y-4">
                   {requests.map((req) => (
@@ -471,20 +492,35 @@ const AdminPanel = () => {
           <TabsContent value="settings">
             <div className="bg-card rounded-xl shadow-card p-6">
               <h3 className="font-semibold mb-4">إعدادات واتساب</h3>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="wa-phone">رقم واتساب</Label>
-                  <Input
-                    id="wa-phone"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder="201000000000"
-                  />
-                </div>
-              </div>
-              <Button className="mt-6" onClick={handleSaveSettings} disabled={saving}>
-                {saving ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
-              </Button>
+              {isLoading ? (
+                <LoadingState title="جاري تحميل الإعدادات" message="برجاء الانتظار..." />
+              ) : (
+                <>
+                  {settingsError && (
+                    <div className="mb-4">
+                      <InlineError
+                        title="تعذر تحميل الإعدادات"
+                        message={settingsError}
+                        onRetry={loadAdminData}
+                      />
+                    </div>
+                  )}
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="wa-phone">رقم واتساب</Label>
+                      <Input
+                        id="wa-phone"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        placeholder="201000000000"
+                      />
+                    </div>
+                  </div>
+                  <Button className="mt-6" onClick={handleSaveSettings} disabled={saving}>
+                    {saving ? 'جاري الحفظ...' : 'حفظ الإعدادات'}
+                  </Button>
+                </>
+              )}
             </div>
           </TabsContent>
 
