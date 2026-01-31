@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Mail, Lock, Key, Loader2, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { Seo } from '@/components/Seo';
 
 const SetupAdmin = () => {
   const navigate = useNavigate();
@@ -79,6 +80,7 @@ const SetupAdmin = () => {
 
   return (
     <Layout>
+      <Seo title="إعداد حساب الأدمن" description="إنشاء أول حساب أدمن للمنصة." />
       <div className="container py-8 md:py-12 max-w-md mx-auto">
         <div className="bg-card rounded-xl shadow-card p-6 md:p-8">
           <div className="text-center mb-6">

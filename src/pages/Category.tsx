@@ -6,6 +6,7 @@ import { CategoryChips } from '@/components/CategoryChips';
 import { categories } from '@/data/mockData';
 import { useProducts } from '@/data/productsStore';
 import { ChevronRight } from 'lucide-react';
+import { Seo } from '@/components/Seo';
 
 const Category = () => {
   const { name } = useParams<{ name: string }>();
@@ -16,6 +17,10 @@ const Category = () => {
 
   return (
     <Layout>
+      <Seo
+        title={`فئة ${categoryName}`}
+        description={`تصفح منتجات فئة ${categoryName} في سوق الحرفيين.`}
+      />
       <div className="container py-4">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-4">

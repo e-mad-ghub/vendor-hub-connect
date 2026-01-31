@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { categories } from '@/data/mockData';
+import { Seo } from '@/components/Seo';
 
 const Menu = () => (
   <div className="min-h-screen bg-background pb-20">
+    <Seo title="القائمة" description="روابط سريعة للفئات والصفحات الأساسية." />
     <div className="container py-4">
       <h1 className="text-xl font-bold mb-4">القائمة</h1>
       <div className="space-y-2">

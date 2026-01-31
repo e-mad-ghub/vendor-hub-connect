@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Mail, Lock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { LoadingState } from '@/components/LoadingState';
+import { Seo } from '@/components/Seo';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -55,6 +56,7 @@ const Login = () => {
   if (authLoading) {
     return (
       <Layout>
+        <Seo title="تسجيل دخول الأدمن" description="سجّل دخولك للوصول إلى لوحة الإدارة." />
         <div className="container py-12">
           <LoadingState title="جاري التحقق من الجلسة" message="برجاء الانتظار..." />
         </div>
@@ -64,6 +66,7 @@ const Login = () => {
 
   return (
     <Layout>
+      <Seo title="تسجيل دخول الأدمن" description="سجّل دخولك للوصول إلى لوحة الإدارة." />
       <div className="container py-8 md:py-12 max-w-md mx-auto">
         <div className="bg-card rounded-xl shadow-card p-6 md:p-8">
           <div className="text-center mb-6">

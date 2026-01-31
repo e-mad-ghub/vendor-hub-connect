@@ -4,6 +4,7 @@ import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, MessageCircle } from 'lucide-react';
+import { Seo } from '@/components/Seo';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ const Cart = () => {
   if (items.length === 0) {
     return (
       <Layout>
+        <Seo title="عربة التسوق" description="عربتك فاضية الآن. أضف المنتجات واطلب عرض سعر." />
         <div className="container py-12 text-center">
           <ShoppingBag className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
           <h1 className="text-2xl font-bold mb-2">العربة فاضية</h1>
@@ -31,6 +33,7 @@ const Cart = () => {
 
   return (
     <Layout>
+      <Seo title="عربة التسوق" description="راجع منتجاتك واطلب عرض سعر عبر واتساب." />
       <div className="container py-4 md:py-8">
         <h1 className="text-2xl md:text-3xl font-bold mb-6">عربة التسوق ({items.length} منتج)</h1>
 

@@ -131,6 +131,24 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  :is(a, button, input, textarea, select, [tabindex]):focus-visible {
+    outline: 3px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  .skip-link {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 50;
+    transform: translateY(-200%);
+    @apply bg-primary text-primary-foreground px-4 py-2 rounded-md shadow-card transition-transform;
+  }
+
+  .skip-link:focus-visible {
+    transform: translateY(0);
+  }
 }
 
 @layer components {

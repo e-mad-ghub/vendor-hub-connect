@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#fef3c7" />
+      <stop offset="100%" stop-color="#fde68a" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect x="80" y="80" width="1040" height="470" rx="32" fill="#111827" opacity="0.92" />
+  <text x="600" y="300" fill="#f59e0b" font-size="64" font-family="Cairo, Arial, sans-serif" text-anchor="middle">سوق الحرفيين</text>
+  <text x="600" y="370" fill="#e5e7eb" font-size="28" font-family="Cairo, Arial, sans-serif" text-anchor="middle">
+    طلبات عروض سعر سريعة عبر واتساب
+  </text>
+</svg>

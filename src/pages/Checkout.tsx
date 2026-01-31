@@ -11,6 +11,7 @@ import { MessageCircle, AlertTriangle } from 'lucide-react';
 import type { WhatsAppSettings } from '@/types/marketplace';
 import { LoadingState } from '@/components/LoadingState';
 import { InlineError } from '@/components/InlineError';
+import { Seo } from '@/components/Seo';
 
 const DEFAULT_TEMPLATE =
   'أهلًا، أنا اسمي [Customer Name]. عايز عرض سعر للقطع التالية:\n[Items]\nمن فضلك أكد السعر والتوفر. شكرًا.';
@@ -68,6 +69,7 @@ const Checkout = () => {
   if (items.length === 0) {
     return (
       <Layout>
+        <Seo title="طلب عرض سعر" description="عربتك فاضية الآن." />
         <div className="container py-12 text-center">
           <h1 className="text-2xl font-bold mb-4">العربة فاضية</h1>
           <Link to="/search">
@@ -81,6 +83,7 @@ const Checkout = () => {
   if (settingsLoading) {
     return (
       <Layout>
+        <Seo title="طلب عرض سعر" description="جاري تحميل إعدادات واتساب." />
         <div className="container py-12 max-w-5xl">
           <LoadingState title="جاري تحميل إعدادات واتساب" message="برجاء الانتظار..." />
         </div>
@@ -91,6 +94,7 @@ const Checkout = () => {
   if (settingsError) {
     return (
       <Layout>
+        <Seo title="طلب عرض سعر" description="تعذر تحميل إعدادات واتساب." />
         <div className="container py-12 max-w-5xl">
           <InlineError
             title="تعذر تحميل الإعدادات"
@@ -146,6 +150,7 @@ const Checkout = () => {
 
   return (
     <Layout>
+      <Seo title="طلب عرض سعر" description="أرسل طلبك مباشرة عبر واتساب لتأكيد السعر والتوافر." />
       <div className="container py-4 md:py-8 max-w-5xl">
         <h1 className="text-2xl md:text-3xl font-bold mb-6">طلب عرض سعر عبر واتساب</h1>
 

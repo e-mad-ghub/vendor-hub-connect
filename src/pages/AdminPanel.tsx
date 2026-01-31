@@ -16,6 +16,7 @@ import { PasswordChangeForm } from '@/components/PasswordChangeForm';
 import { LoadingState } from '@/components/LoadingState';
 import { InlineError } from '@/components/InlineError';
 import { EmptyState } from '@/components/EmptyState';
+import { Seo } from '@/components/Seo';
 
 const AdminPanel = () => {
   const { user, logout, isLoading: authLoading } = useAuth();
@@ -72,6 +73,7 @@ const AdminPanel = () => {
   if (authLoading) {
     return (
       <Layout>
+        <Seo title="لوحة الإدارة" description="إدارة الطلبات والمنتجات وإعدادات واتساب." />
         <div className="container py-12">
           <LoadingState title="جاري التحقق من الجلسة" message="برجاء الانتظار..." />
         </div>
@@ -82,6 +84,7 @@ const AdminPanel = () => {
   if (!user || user.role !== 'admin') {
     return (
       <Layout>
+        <Seo title="لوحة الإدارة" description="الدخول كأدمن مطلوب." />
         <div className="container py-12 text-center">
           <h1 className="text-2xl font-bold mb-4">الدخول كأدمن مطلوب</h1>
           <Link to="/login"><Button>سجل دخول كأدمن</Button></Link>
@@ -246,6 +249,7 @@ const AdminPanel = () => {
 
   return (
     <Layout>
+      <Seo title="لوحة الإدارة" description="إدارة الطلبات والمنتجات وإعدادات واتساب." />
       <div className="container py-4 md:py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">لوحة الإدارة</h1>

@@ -7,6 +7,7 @@ import { getProductById, getProductsByCategory } from '@/data/productsStore';
 import { ShoppingCart, Heart, Share2, Truck, Shield, RefreshCw, Minus, Plus, ChevronRight } from 'lucide-react';
 import { ProductCard } from '@/components/ProductCard';
 import { toast } from 'sonner';
+import { Seo } from '@/components/Seo';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +22,7 @@ const ProductDetail = () => {
   if (!product) {
     return (
       <Layout>
+        <Seo title="منتج غير موجود" description="المنتج المطلوب غير متاح حاليًا." />
         <div className="container py-12 text-center">
           <h1 className="text-2xl font-bold mb-4">المنتج غير موجود</h1>
           <Link to="/">
@@ -46,6 +48,7 @@ const ProductDetail = () => {
 
   return (
     <Layout>
+      <Seo title={product.title} description={product.description} />
       <div className="container py-4 md:py-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-4">

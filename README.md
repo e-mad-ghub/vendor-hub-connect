@@ -64,6 +64,7 @@ Copy `env.example` to `.env` locally (never commit it), or set variables in your
 Required variables:
 - `VITE_SUPABASE_URL` — Supabase project URL
 - `VITE_SUPABASE_PUBLISHABLE_KEY` — Supabase **anon** (public) key only
+- `VITE_PUBLIC_SITE_URL` — Base site URL for SEO/OG tags (e.g. https://example.com)
 
 ### Vercel
 - Go to **Project Settings → Environment Variables**

@@ -1,8 +1,10 @@
 import React from 'react';
 import { Layout } from '@/components/Layout';
+import { Seo } from '@/components/Seo';
 
 const About = () => (
   <Layout>
+    <Seo title="عن سوق الحرفيين" description="تعرف على قصتنا ومميزات سوق الحرفيين." />
     <div className="container py-8 max-w-3xl">
       <h1 className="text-3xl font-bold mb-6">عن سوق الحرفيين</h1>
       <div className="prose prose-gray max-w-none">

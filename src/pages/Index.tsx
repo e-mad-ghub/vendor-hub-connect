@@ -12,6 +12,7 @@ import { categories } from '@/data/mockData';
 import { useProducts } from '@/data/productsStore';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { Seo } from '@/components/Seo';
 
 const Index = () => {
   const { products } = useProducts();
@@ -87,6 +88,10 @@ const Index = () => {
 
   return (
     <Layout>
+      <Seo
+        title="الرئيسية"
+        description="سوق الحرفيين لقطع غيار السيارات. اطلب عرض سعر سريع عبر واتساب وتأكد من التوافر."
+      />
       {/* Hero Banner */}
       <section className="bg-gradient-to-r from-primary/10 via-primary/5 to-background">
         <div className="container py-8 md:py-12">

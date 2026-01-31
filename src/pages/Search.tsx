@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { SlidersHorizontal, X } from 'lucide-react';
 import { categories } from '@/data/mockData';
 import { useProducts } from '@/data/productsStore';
+import { Seo } from '@/components/Seo';
 
 const Search = () => {
   const [searchParams] = useSearchParams();
@@ -162,6 +163,10 @@ const Search = () => {
 
   return (
     <Layout>
+      <Seo
+        title={query ? `نتائج البحث عن ${query}` : 'كل المنتجات'}
+        description="تصفح كل المنتجات وفلتر حسب السعر والفئة والماركة."
+      />
       <div className="container py-4">
         {/* Header */}
         <div className="mb-4">

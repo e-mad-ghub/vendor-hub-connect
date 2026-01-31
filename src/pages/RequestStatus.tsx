@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAvailabilityRequests } from '@/contexts/RequestContext';
 import { validatePhone, sanitizePhoneForStorage } from '@/lib/validation';
 import { ArrowRight, Phone } from 'lucide-react';
+import { Seo } from '@/components/Seo';
 
 const statusLabels: Record<string, string> = {
   pending: 'قيد المراجعة',
@@ -61,6 +62,7 @@ const RequestStatus = () => {
 
   return (
     <Layout>
+      <Seo title="تتبع حالة الطلب" description="تابع حالة طلبات عروض السعر باستخدام رقم الهاتف." />
       <div className="container py-10 max-w-3xl">
         <h1 className="text-3xl font-bold mb-4">تتبع حالة طلب السعر</h1>
         <p className="text-muted-foreground mb-6">
@@ -79,7 +81,7 @@ const RequestStatus = () => {
               required
             />
             {phoneError && (
-              <p className="text-xs text-destructive mt-1">{phoneError}</p>
+              <p className="text-xs text-destructive mt-1" role="alert" aria-live="polite">{phoneError}</p>
             )}
           </div>
           <Button type="submit" className="flex items-center gap-2">
