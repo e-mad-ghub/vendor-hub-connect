@@ -12,6 +12,7 @@ import { categories } from '@/data/mockData';
 import { useProducts } from '@/data/productsStore';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { sanitizePhoneInput, validatePhone } from '@/lib/validation';
 import { Seo } from '@/components/Seo';
 import { trackEvent } from '@/lib/analytics';
 
@@ -50,6 +51,11 @@ const Index = () => {
       toast.error('من فضلك اكتب الاسم ورقم التليفون');
       return;
     }
+    const phoneValidation = validatePhone(customerPhone);
+    if (!phoneValidation.valid) {
+      toast.error(phoneValidation.error || 'رقم التليفون غير صالح');
+      return;
+    }
     if (!customPartName.trim()) {
       toast.error('من فضلك اكتب اسم القطعة');
       return;
@@ -65,7 +71,7 @@ const Index = () => {
       const message = buildCustomMessage();
       await api.createQuoteRequest({
         customerName: customerName.trim(),
-        customerPhone: customerPhone.trim(),
+        customerPhone: phoneValidation.sanitized || customerPhone.trim(),
         message,
         items: [
           {
@@ -140,8 +146,10 @@ const Index = () => {
                     <Input
                       id="custom-phone"
                       value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      onChange={(e) => setCustomerPhone(sanitizePhoneInput(e.target.value))}
                       placeholder="مثال: 01XXXXXXXXX"
+                      inputMode="tel"
+                      maxLength={16}
                     />
                   </div>
                   <div>

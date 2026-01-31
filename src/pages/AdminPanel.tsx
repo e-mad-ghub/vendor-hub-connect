@@ -17,6 +17,7 @@ import { LoadingState } from '@/components/LoadingState';
 import { InlineError } from '@/components/InlineError';
 import { EmptyState } from '@/components/EmptyState';
 import { Seo } from '@/components/Seo';
+import { sanitizePhoneInput, validatePhone } from '@/lib/validation';
 
 const AdminPanel = () => {
   const { user, logout, isLoading: authLoading } = useAuth();
@@ -26,6 +27,7 @@ const AdminPanel = () => {
   const [settingsError, setSettingsError] = React.useState<string | null>(null);
   const [phoneNumber, setPhoneNumber] = React.useState('');
   const [saving, setSaving] = React.useState(false);
+  const [pendingRequestIds, setPendingRequestIds] = React.useState<Set<string>>(new Set());
   const { products, createProduct, deleteProduct, editProduct } = useProducts();
   const [newProduct, setNewProduct] = React.useState({
     title: '',
@@ -97,8 +99,14 @@ const AdminPanel = () => {
     if (saving) return;
     setSaving(true);
     try {
+      const phoneValidation = validatePhone(phoneNumber);
+      if (!phoneValidation.valid) {
+        toast.error(phoneValidation.error || 'رقم التليفون غير صالح');
+        setSaving(false);
+        return;
+      }
       const updated = await api.updateWhatsAppSettings({
-        phoneNumber: phoneNumber.trim(),
+        phoneNumber: phoneValidation.sanitized || phoneNumber.trim(),
       });
       setPhoneNumber(updated.phoneNumber || '');
       toast.success('تم تحديث إعدادات واتساب');
@@ -128,23 +136,55 @@ const AdminPanel = () => {
   };
 
   const followUpRequest = async (request: QuoteRequest) => {
+    if (pendingRequestIds.has(request.id)) return;
     const phoneDigits = request.customerPhone.replace(/\D/g, '');
     if (!phoneDigits) {
       toast.error('رقم العميل غير صالح');
       return;
     }
     if (request.status === 'cancelled') return;
-    await api.updateQuoteRequestStatus(request.id, 'followed_up');
-    setRequests((prev) => prev.map((item) => (item.id === request.id ? { ...item, status: 'followed_up' } : item)));
-    const waUrl = `https://wa.me/${phoneDigits}?text=${encodeURIComponent('أهلًا، بخصوص طلب عرض السعر عندنا...')}`;
-    window.location.href = waUrl;
+    setPendingRequestIds((prev) => {
+      const next = new Set(prev);
+      next.add(request.id);
+      return next;
+    });
+    try {
+      await api.updateQuoteRequestStatus(request.id, 'followed_up');
+      setRequests((prev) => prev.map((item) => (item.id === request.id ? { ...item, status: 'followed_up' } : item)));
+      const waUrl = `https://wa.me/${phoneDigits}?text=${encodeURIComponent('أهلًا، بخصوص طلب عرض السعر عندنا...')}`;
+      window.location.href = waUrl;
+    } catch (e: any) {
+      toast.error(e?.message || 'تعذر متابعة الطلب');
+    } finally {
+      setPendingRequestIds((prev) => {
+        const next = new Set(prev);
+        next.delete(request.id);
+        return next;
+      });
+    }
   };
 
   const cancelRequest = async (requestId: string) => {
     if (!requestId) return;
-    await api.updateQuoteRequestStatus(requestId, 'cancelled');
-    setRequests((prev) => prev.map((item) => (item.id === requestId ? { ...item, status: 'cancelled' } : item)));
-    toast.success('تم إلغاء الطلب');
+    if (pendingRequestIds.has(requestId)) return;
+    setPendingRequestIds((prev) => {
+      const next = new Set(prev);
+      next.add(requestId);
+      return next;
+    });
+    try {
+      await api.updateQuoteRequestStatus(requestId, 'cancelled');
+      setRequests((prev) => prev.map((item) => (item.id === requestId ? { ...item, status: 'cancelled' } : item)));
+      toast.success('تم إلغاء الطلب');
+    } catch (e: any) {
+      toast.error(e?.message || 'تعذر إلغاء الطلب');
+    } finally {
+      setPendingRequestIds((prev) => {
+        const next = new Set(prev);
+        next.delete(requestId);
+        return next;
+      });
+    }
   };
 
   const handleCreateProduct = () => {
@@ -340,10 +380,10 @@ const AdminPanel = () => {
                       </div>
                       <p className="text-xs text-muted-foreground mt-3">{req.message}</p>
                       <div className="mt-4 flex flex-wrap gap-2">
-                        <Button size="sm" onClick={() => followUpRequest(req)} disabled={req.status === 'cancelled'}>
+                        <Button size="sm" onClick={() => followUpRequest(req)} disabled={req.status === 'cancelled' || pendingRequestIds.has(req.id)}>
                           متابعة على واتساب
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => cancelRequest(req.id)} disabled={req.status === 'cancelled'}>
+                        <Button size="sm" variant="outline" onClick={() => cancelRequest(req.id)} disabled={req.status === 'cancelled' || pendingRequestIds.has(req.id)}>
                           إلغاء الطلب
                         </Button>
                       </div>
@@ -521,8 +561,11 @@ const AdminPanel = () => {
                       <Input
                         id="wa-phone"
                         value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        onChange={(e) => setPhoneNumber(sanitizePhoneInput(e.target.value))}
                         placeholder="201000000000"
+                        type="tel"
+                        inputMode="tel"
+                        maxLength={16}
                       />
                     </div>
                   </div>

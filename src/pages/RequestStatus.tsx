@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAvailabilityRequests } from '@/contexts/RequestContext';
-import { validatePhone, sanitizePhoneForStorage } from '@/lib/validation';
+import { validatePhone, sanitizePhoneForStorage, sanitizePhoneInput } from '@/lib/validation';
 import { ArrowRight, Phone } from 'lucide-react';
 import { Seo } from '@/components/Seo';
 
@@ -41,8 +41,7 @@ const RequestStatus = () => {
   );
 
   const handlePhoneChange = (value: string) => {
-    const digitsOnly = value.replace(/\D/g, '').slice(0, 11);
-    setPhone(digitsOnly);
+    setPhone(sanitizePhoneInput(value));
     setPhoneError(null);
   };
 
@@ -76,9 +75,10 @@ const RequestStatus = () => {
               placeholder="01XXXXXXXXX"
               value={phone}
               onChange={(e) => handlePhoneChange(e.target.value)}
-              maxLength={11}
+              maxLength={16}
               className={phoneError ? 'border-destructive' : ''}
               required
+              inputMode="tel"
             />
             {phoneError && (
               <p className="text-xs text-destructive mt-1" role="alert" aria-live="polite">{phoneError}</p>

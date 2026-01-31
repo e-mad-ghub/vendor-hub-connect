@@ -73,6 +73,10 @@ Required variables:
 
 **Important:** Secrets (service role keys, database passwords) must never be committed or exposed in frontend code.
 
+## Package Manager
+
+This repo uses **npm**. Keep `package-lock.json` committed and avoid other lockfiles.
+
 ## Analytics
 
 This project uses Vercel Web Analytics for lightweight, privacy-friendly tracking.
@@ -89,6 +93,12 @@ Setup:
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+
+### Vercel build settings
+- Install: `npm install`
+- Build: `npm run build`
+- Output directory: `dist`
+- Framework preset: Vite
 
 ## Can I connect a custom domain to my Lovable project?
 

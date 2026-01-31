@@ -13,6 +13,7 @@ import { LoadingState } from '@/components/LoadingState';
 import { InlineError } from '@/components/InlineError';
 import { Seo } from '@/components/Seo';
 import { trackEvent } from '@/lib/analytics';
+import { sanitizePhoneInput, validatePhone } from '@/lib/validation';
 
 const DEFAULT_TEMPLATE =
   'أهلًا، أنا اسمي [Customer Name]. عايز عرض سعر للقطع التالية:\n[Items]\nمن فضلك أكد السعر والتوفر. شكرًا.';
@@ -113,6 +114,11 @@ const Checkout = () => {
       toast.error('من فضلك اكتب الاسم ورقم التليفون');
       return;
     }
+    const phoneValidation = validatePhone(customerPhone);
+    if (!phoneValidation.valid) {
+      toast.error(phoneValidation.error || 'رقم التليفون غير صالح');
+      return;
+    }
 
     const phoneNumber = (settings?.phoneNumber || '').replace(/\D/g, '');
     if (!phoneNumber) {
@@ -134,7 +140,7 @@ const Checkout = () => {
 
       await api.createQuoteRequest({
         customerName: customerName.trim(),
-        customerPhone: customerPhone.trim(),
+        customerPhone: phoneValidation.sanitized || customerPhone.trim(),
         message,
         items,
       });
@@ -181,9 +187,11 @@ const Checkout = () => {
                   <Input
                     id="customerPhone"
                     value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    onChange={(e) => setCustomerPhone(sanitizePhoneInput(e.target.value))}
                     placeholder="01XXXXXXXXX"
                     required
+                    inputMode="tel"
+                    maxLength={16}
                   />
                 </div>
               </div>
