@@ -73,6 +73,19 @@ Required variables:
 
 **Important:** Secrets (service role keys, database passwords) must never be committed or exposed in frontend code.
 
+## Analytics
+
+This project uses Vercel Web Analytics for lightweight, privacy-friendly tracking.
+
+Tracked events:
+- Page views (automatic)
+- Key actions: add to cart, quote request start/submit
+
+Setup:
+- Enable **Web Analytics** in the Vercel project dashboard.
+- Deploy the app (analytics only runs in production builds).
+- Do Not Track is respected; analytics is disabled when DNT is enabled.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.

@@ -113,7 +113,7 @@ const RequestStatus = () => {
                 <div className="mt-3 space-y-2 text-sm">
                   {req.items.map(item => (
                     <div key={item.productId} className="flex items-center gap-2">
-                      <img src={item.image} alt="" className="w-10 h-10 rounded object-cover" />
+                      <img src={item.image} alt="" className="w-10 h-10 rounded object-cover" loading="lazy" decoding="async" />
                       <div className="flex-1">
                         <p className="font-medium">{item.title}</p>
                         <p className="text-muted-foreground text-xs">الكمية: {item.quantity}</p>

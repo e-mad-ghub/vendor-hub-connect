@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, MessageCircle } from 'lucide-react';
 import { Seo } from '@/components/Seo';
+import { trackEvent } from '@/lib/analytics';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -47,7 +48,13 @@ const Cart = () => {
                     <Link to={`/product/${productId}`} className="w-20 h-20 md:w-24 md:h-24">
                       <div className="w-full h-full rounded-lg bg-muted flex items-center justify-center text-[10px] text-muted-foreground overflow-hidden">
                         {product.imageDataUrl ? (
-                          <img src={product.imageDataUrl} alt={product.title} className="w-full h-full object-cover" />
+                          <img
+                            src={product.imageDataUrl}
+                            alt={product.title}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                            decoding="async"
+                          />
                         ) : (
                           'صورة'
                         )}
@@ -120,7 +127,14 @@ const Cart = () => {
                 </div>
               </div>
 
-              <Button onClick={() => navigate('/checkout')} className="w-full mt-4" size="lg">
+              <Button
+                onClick={() => {
+                  trackEvent('Request Quote Start', { source: 'cart' });
+                  navigate('/checkout');
+                }}
+                className="w-full mt-4"
+                size="lg"
+              >
                 طلب عرض سعر عبر واتساب
               </Button>
 

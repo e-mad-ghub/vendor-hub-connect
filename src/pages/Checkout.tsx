@@ -12,6 +12,7 @@ import type { WhatsAppSettings } from '@/types/marketplace';
 import { LoadingState } from '@/components/LoadingState';
 import { InlineError } from '@/components/InlineError';
 import { Seo } from '@/components/Seo';
+import { trackEvent } from '@/lib/analytics';
 
 const DEFAULT_TEMPLATE =
   'أهلًا، أنا اسمي [Customer Name]. عايز عرض سعر للقطع التالية:\n[Items]\nمن فضلك أكد السعر والتوفر. شكرًا.';
@@ -138,6 +139,7 @@ const Checkout = () => {
         items,
       });
 
+      trackEvent('Request Quote Submit', { source: 'checkout', itemsCount: items.length });
       const waUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
       window.location.href = waUrl;
       clearCart();

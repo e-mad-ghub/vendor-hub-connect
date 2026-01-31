@@ -11,7 +11,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     <Link to={`/product/${product.id}`} className="product-card block group">
       <div className="relative aspect-square overflow-hidden bg-muted flex items-center justify-center text-xs text-muted-foreground">
         {product.imageDataUrl ? (
-          <img src={product.imageDataUrl} alt={product.title} className="w-full h-full object-cover" />
+          <img
+            src={product.imageDataUrl}
+            alt={product.title}
+            className="w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
+          />
         ) : (
           'صورة المنتج'
         )}

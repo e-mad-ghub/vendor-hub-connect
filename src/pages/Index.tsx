@@ -13,6 +13,7 @@ import { useProducts } from '@/data/productsStore';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { Seo } from '@/components/Seo';
+import { trackEvent } from '@/lib/analytics';
 
 const Index = () => {
   const { products } = useProducts();
@@ -78,6 +79,7 @@ const Index = () => {
           },
         ],
       });
+      trackEvent('Request Quote Submit', { source: 'custom', hasBrand: !!customCarBrand.trim() });
       window.location.href = `https://wa.me/${phoneDigits}?text=${encodeURIComponent(message)}`;
     } catch (e: any) {
       toast.error(e.message || 'تعذر إرسال الطلب');

@@ -463,7 +463,13 @@ const AdminPanel = () => {
                       <div key={product.id} className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
                         <div className="w-12 h-12 rounded bg-muted flex items-center justify-center text-[10px] text-muted-foreground overflow-hidden">
                           {product.imageDataUrl ? (
-                            <img src={product.imageDataUrl} alt={product.title} className="w-full h-full object-cover" />
+                            <img
+                              src={product.imageDataUrl}
+                              alt={product.title}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                              decoding="async"
+                            />
                           ) : (
                             'صورة'
                           )}

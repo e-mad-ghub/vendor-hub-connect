@@ -8,6 +8,7 @@ import { ShoppingCart, Heart, Share2, Truck, Shield, RefreshCw, Minus, Plus, Che
 import { ProductCard } from '@/components/ProductCard';
 import { toast } from 'sonner';
 import { Seo } from '@/components/Seo';
+import { trackEvent } from '@/lib/analytics';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -38,11 +39,13 @@ const ProductDetail = () => {
     toast.success(`تم إضافة ${product.title} للعربة`, {
       description: `الكمية: ${quantity}`,
     });
+    trackEvent('Add to Cart', { productId: product.id, quantity });
   };
 
   const handleBuyNow = () => {
     addToCart(product, quantity);
     toast.success('تمت الإضافة - اطلب عرض سعر عبر واتساب من العربة');
+    trackEvent('Request Quote Start', { source: 'product', productId: product.id, quantity });
     navigate('/cart');
   };
 
@@ -64,7 +67,13 @@ const ProductDetail = () => {
           <div className="space-y-4">
             <div className="aspect-square bg-muted rounded-xl flex items-center justify-center text-sm text-muted-foreground overflow-hidden">
               {product.imageDataUrl ? (
-                <img src={product.imageDataUrl} alt={product.title} className="w-full h-full object-cover" />
+                <img
+                  src={product.imageDataUrl}
+                  alt={product.title}
+                  className="w-full h-full object-cover"
+                  decoding="async"
+                  fetchpriority="high"
+                />
               ) : (
                 'صورة المنتج'
               )}
