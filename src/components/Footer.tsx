@@ -21,7 +21,6 @@ export const Footer: React.FC = () => {
     'بنود قانونية': [
       { label: 'الشروط والأحكام', path: '/terms' },
       { label: 'سياسة الخصوصية', path: '/privacy' },
-      { label: 'سياسة الاسترجاع', path: '/refund-policy' },
     ],
   };
 

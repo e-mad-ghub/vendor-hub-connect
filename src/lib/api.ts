@@ -1,5 +1,6 @@
 const STORAGE_KEY = 'vhc_frontend_settings';
 const REQUESTS_KEY = 'vhc_quote_requests';
+const CUSTOMER_SERVICE_KEY = 'vhc_customer_service_settings';
 
 type WhatsAppSettings = { phoneNumber: string };
 type QuoteRequest = {
@@ -12,8 +13,33 @@ type QuoteRequest = {
   createdAt: string;
 };
 
+type CustomerServiceSettings = {
+  supportEmail: string;
+  supportPhone: string;
+  supportAddress: string;
+  faqContent: string;
+  shippingInfo: string;
+  returnPolicy: string;
+  lastUpdated: string;
+};
+
 const defaultSettings: WhatsAppSettings = {
   phoneNumber: '201000000000',
+};
+
+const defaultCustomerServiceSettings: CustomerServiceSettings = {
+  supportEmail: 'support@markethub.demo',
+  supportPhone: '+1 (555) 123-4567',
+  supportAddress: '123 Market Street, Demo City',
+  faqContent: 'لو عندك أي سؤال، تقدر تبعتلنا رسالة وسنرد عليك في أقرب وقت.',
+  shippingInfo: 'الشحن يتم بعد تأكيد العرض والتوافر عبر واتساب.',
+  returnPolicy: [
+    'همنا تكون راضي تمامًا عن مشترياتك.',
+    'استرجاع خلال ٣٠ يوم من الاستلام لمعظم المنتجات.',
+    'ابدأ الاسترجاع بالتواصل معنا عبر خدمة العملاء.',
+    'يتم رد المبلغ خلال ٥-٧ أيام عمل بعد استلام المنتج.',
+  ].join('\n\n'),
+  lastUpdated: '31 يناير 2026',
 };
 
 const loadSettings = (): WhatsAppSettings => {
@@ -46,11 +72,32 @@ const saveRequests = (requests: QuoteRequest[]) => {
   localStorage.setItem(REQUESTS_KEY, JSON.stringify(requests));
 };
 
+const loadCustomerServiceSettings = (): CustomerServiceSettings => {
+  try {
+    const raw = localStorage.getItem(CUSTOMER_SERVICE_KEY);
+    return raw
+      ? { ...defaultCustomerServiceSettings, ...(JSON.parse(raw) as CustomerServiceSettings) }
+      : defaultCustomerServiceSettings;
+  } catch {
+    return defaultCustomerServiceSettings;
+  }
+};
+
+const saveCustomerServiceSettings = (settings: CustomerServiceSettings) => {
+  localStorage.setItem(CUSTOMER_SERVICE_KEY, JSON.stringify(settings));
+};
+
 export const api = {
   getWhatsAppSettings: async (): Promise<WhatsAppSettings> => loadSettings(),
   updateWhatsAppSettings: async (payload: WhatsAppSettings): Promise<WhatsAppSettings> => {
     const next = { ...defaultSettings, ...payload };
     saveSettings(next);
+    return next;
+  },
+  getCustomerServiceSettings: async (): Promise<CustomerServiceSettings> => loadCustomerServiceSettings(),
+  updateCustomerServiceSettings: async (payload: CustomerServiceSettings): Promise<CustomerServiceSettings> => {
+    const next = { ...defaultCustomerServiceSettings, ...payload };
+    saveCustomerServiceSettings(next);
     return next;
   },
   listQuoteRequests: async (): Promise<QuoteRequest[]> => loadRequests(),

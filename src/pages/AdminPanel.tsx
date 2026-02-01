@@ -28,6 +28,16 @@ const AdminPanel = () => {
   const [phoneNumber, setPhoneNumber] = React.useState('');
   const [saving, setSaving] = React.useState(false);
   const [pendingRequestIds, setPendingRequestIds] = React.useState<Set<string>>(new Set());
+  const [customerService, setCustomerService] = React.useState({
+    supportEmail: '',
+    supportPhone: '',
+    supportAddress: '',
+    faqContent: '',
+    shippingInfo: '',
+    returnPolicy: '',
+    lastUpdated: '',
+  });
+  const [customerServiceSaving, setCustomerServiceSaving] = React.useState(false);
   const { products, createProduct, deleteProduct, editProduct } = useProducts();
   const [newProduct, setNewProduct] = React.useState({
     title: '',
@@ -59,6 +69,8 @@ const AdminPanel = () => {
       ]);
       setRequests(quotes || []);
       setPhoneNumber(settings?.phoneNumber || '');
+      const customerServiceData = await api.getCustomerServiceSettings();
+      setCustomerService(customerServiceData);
     } catch (e: any) {
       setRequests([]);
       setRequestsError(e?.message || 'تعذر تحميل الطلبات.');
@@ -114,6 +126,38 @@ const AdminPanel = () => {
       toast.error(e.message || 'تعذر حفظ الإعدادات');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveCustomerService = async () => {
+    if (customerServiceSaving) return;
+    if (!customerService.supportEmail.trim()) {
+      toast.error('من فضلك اكتب البريد الإلكتروني للدعم');
+      return;
+    }
+    const phoneValidation = validatePhone(customerService.supportPhone);
+    if (!phoneValidation.valid) {
+      toast.error(phoneValidation.error || 'رقم التليفون غير صالح');
+      return;
+    }
+    setCustomerServiceSaving(true);
+    try {
+      const updated = await api.updateCustomerServiceSettings({
+        ...customerService,
+        supportEmail: customerService.supportEmail.trim(),
+        supportPhone: phoneValidation.sanitized || customerService.supportPhone.trim(),
+        supportAddress: customerService.supportAddress.trim(),
+        faqContent: customerService.faqContent.trim(),
+        shippingInfo: customerService.shippingInfo.trim(),
+        returnPolicy: customerService.returnPolicy.trim(),
+        lastUpdated: customerService.lastUpdated.trim(),
+      });
+      setCustomerService(updated);
+      toast.success('تم تحديث بيانات خدمة العملاء');
+    } catch (e: any) {
+      toast.error(e?.message || 'تعذر حفظ بيانات خدمة العملاء');
+    } finally {
+      setCustomerServiceSaving(false);
     }
   };
 
@@ -326,6 +370,7 @@ const AdminPanel = () => {
             <TabsTrigger value="requests">طلبات عروض السعر</TabsTrigger>
             <TabsTrigger value="products">المنتجات</TabsTrigger>
             <TabsTrigger value="settings">إعدادات واتساب</TabsTrigger>
+            <TabsTrigger value="customer-service">خدمة العملاء</TabsTrigger>
             <TabsTrigger value="security">الأمان</TabsTrigger>
           </TabsList>
 
@@ -574,6 +619,87 @@ const AdminPanel = () => {
                   </Button>
                 </>
               )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="customer-service">
+            <div className="bg-card rounded-xl shadow-card p-6">
+              <h3 className="font-semibold mb-4">بيانات خدمة العملاء</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="cs-email">البريد الإلكتروني</Label>
+                  <Input
+                    id="cs-email"
+                    type="email"
+                    value={customerService.supportEmail}
+                    onChange={(e) => setCustomerService((prev) => ({ ...prev, supportEmail: e.target.value }))}
+                    placeholder="support@example.com"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="cs-phone">رقم خدمة العملاء</Label>
+                  <Input
+                    id="cs-phone"
+                    type="tel"
+                    value={customerService.supportPhone}
+                    onChange={(e) => setCustomerService((prev) => ({ ...prev, supportPhone: sanitizePhoneInput(e.target.value) }))}
+                    placeholder="+20XXXXXXXXXX"
+                    inputMode="tel"
+                    maxLength={16}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="cs-address">العنوان</Label>
+                  <Input
+                    id="cs-address"
+                    value={customerService.supportAddress}
+                    onChange={(e) => setCustomerService((prev) => ({ ...prev, supportAddress: e.target.value }))}
+                    placeholder="العنوان"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="cs-faq">الأسئلة الشائعة</Label>
+                  <Textarea
+                    id="cs-faq"
+                    value={customerService.faqContent}
+                    onChange={(e) => setCustomerService((prev) => ({ ...prev, faqContent: e.target.value }))}
+                    placeholder="اكتب فقرة أو أكثر، وافصل بين الفقرات بسطر فاضي."
+                    rows={4}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="cs-shipping">معلومات الشحن</Label>
+                  <Textarea
+                    id="cs-shipping"
+                    value={customerService.shippingInfo}
+                    onChange={(e) => setCustomerService((prev) => ({ ...prev, shippingInfo: e.target.value }))}
+                    placeholder="اكتب تفاصيل الشحن، وافصل بين الفقرات بسطر فاضي."
+                    rows={3}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="cs-return">سياسة الاسترجاع</Label>
+                  <Textarea
+                    id="cs-return"
+                    value={customerService.returnPolicy}
+                    onChange={(e) => setCustomerService((prev) => ({ ...prev, returnPolicy: e.target.value }))}
+                    placeholder="اكتب سياسة الاسترجاع، وافصل بين الفقرات بسطر فاضي."
+                    rows={5}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="cs-last-updated">آخر تحديث</Label>
+                  <Input
+                    id="cs-last-updated"
+                    value={customerService.lastUpdated}
+                    onChange={(e) => setCustomerService((prev) => ({ ...prev, lastUpdated: e.target.value }))}
+                    placeholder="مثال: 31 يناير 2026"
+                  />
+                </div>
+              </div>
+              <Button className="mt-6" onClick={handleSaveCustomerService} disabled={customerServiceSaving}>
+                {customerServiceSaving ? 'جاري الحفظ...' : 'حفظ بيانات خدمة العملاء'}
+              </Button>
             </div>
           </TabsContent>
 
