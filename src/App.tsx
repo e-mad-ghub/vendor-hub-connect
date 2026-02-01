@@ -9,6 +9,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { LoadingState } from "@/components/LoadingState";
 import { AppAnalytics } from "@/components/AppAnalytics";
+import { AppSpeedInsights } from "@/components/AppSpeedInsights";
 import Index from "./pages/Index";
 import Search from "./pages/Search";
 
@@ -73,6 +74,7 @@ const App = () => (
               </Routes>
             </Suspense>
             <AppAnalytics />
+            <AppSpeedInsights />
           </BrowserRouter>
         </TooltipProvider>
       </CartProvider>
