@@ -2,7 +2,7 @@
 
 ## Project info
 
-**URL**: https://vendorly-shop-hub.lovable.app
+**URL**: https://vendorly-shop-hub.example.com
 
 ## How can I edit this code?
 
