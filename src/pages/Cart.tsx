@@ -47,13 +47,13 @@ const Cart = () => {
   return (
     <Layout>
       <Seo title="عربة التسوق" description="راجع منتجاتك واطلب عرض سعر عبر واتساب." />
-      <div className="container py-4 md:py-8">
-        <h1 className="text-2xl md:text-3xl font-bold mb-6">عربة التسوق ({groupedItems.length} منتج)</h1>
+      <div className="container py-3 md:py-8">
+        <h1 className="text-xl md:text-3xl font-bold mb-4 md:mb-6">عربة التسوق ({groupedItems.length} منتج)</h1>
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="bg-card rounded-xl shadow-card overflow-hidden">
+            <div className="bg-card rounded-lg md:rounded-xl shadow-card overflow-hidden">
               <div className="divide-y divide-border">
                 {groupedItems.map(({ productId, product, items: productItems }) => {
                   const hasNew = productItems.some(item => item.quality === 'new');
@@ -61,7 +61,7 @@ const Cart = () => {
                   const primaryItem = productItems.find(item => item.quality === 'new') || productItems[0];
                   const displayQuantity = primaryItem?.quantity || 1;
                   return (
-                  <div key={productId} className="p-4 flex gap-4">
+                  <div key={productId} className="p-3 md:p-4 flex gap-3 md:gap-4">
                     <Link to={`/product/${productId}`} className="w-20 h-20 md:w-24 md:h-24">
                       <div className="w-full h-full rounded-lg bg-muted flex items-center justify-center text-[10px] text-muted-foreground overflow-hidden">
                         {product.imageDataUrl ? (
@@ -93,7 +93,7 @@ const Cart = () => {
                         )}
                       </div>
 
-                      <div className="flex items-center justify-between mt-2">
+                      <div className="flex items-center justify-between mt-3">
                         <div className="flex items-center border border-border rounded-lg">
                           <button
                             onClick={() => {
@@ -135,7 +135,7 @@ const Cart = () => {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-card rounded-xl shadow-card p-6 sticky top-24">
+            <div className="bg-card rounded-lg md:rounded-xl shadow-card p-4 md:p-6 lg:sticky lg:top-24">
               <h2 className="text-lg font-semibold mb-4">ملخص الطلب</h2>
 
               <div className="space-y-3 text-sm">

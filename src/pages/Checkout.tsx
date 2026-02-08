@@ -172,13 +172,13 @@ const Checkout = () => {
   return (
     <Layout>
       <Seo title="طلب عرض سعر" description="أرسل طلبك مباشرة عبر واتساب لتأكيد السعر والتوافر." />
-      <div className="container py-4 md:py-8 max-w-5xl">
-        <h1 className="text-2xl md:text-3xl font-bold mb-6">طلب عرض سعر عبر واتساب</h1>
+      <div className="container py-3 md:py-8 max-w-5xl">
+        <h1 className="text-xl md:text-3xl font-bold mb-4 md:mb-6">طلب عرض سعر عبر واتساب</h1>
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Form Section */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-card rounded-xl shadow-card p-6">
+          <div className="lg:col-span-2 space-y-4 md:space-y-6">
+            <div className="bg-card rounded-lg md:rounded-xl shadow-card p-4 md:p-6">
               <div className="flex items-center gap-2 mb-4">
                 <MessageCircle className="h-5 w-5 text-primary" />
                 <h2 className="text-lg font-semibold">بيانات التواصل</h2>
@@ -210,7 +210,7 @@ const Checkout = () => {
               </div>
             </div>
 
-            <div className="bg-muted/40 border border-border rounded-xl p-4 flex items-start gap-3">
+            <div className="bg-muted/40 border border-border rounded-lg md:rounded-xl p-3 md:p-4 flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-primary mt-0.5" />
               <div>
                 <p className="font-semibold text-sm">تأكيد يدوي للأسعار والتوافر</p>
@@ -220,7 +220,7 @@ const Checkout = () => {
               </div>
             </div>
 
-            <div className="bg-card rounded-xl shadow-card p-6">
+            <div className="bg-card rounded-lg md:rounded-xl shadow-card p-4 md:p-6">
               <h2 className="text-lg font-semibold mb-4">محتوى الرسالة</h2>
               <pre className="text-sm whitespace-pre-wrap text-muted-foreground bg-muted/50 rounded-lg p-4">
                 {buildMessage()}
@@ -230,7 +230,7 @@ const Checkout = () => {
 
           {/* Order Summary Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-card rounded-xl shadow-card p-6 sticky top-24">
+            <div className="bg-card rounded-lg md:rounded-xl shadow-card p-4 md:p-6 lg:sticky lg:top-24">
               <h2 className="text-lg font-semibold mb-4">ملخص الطلب</h2>
 
               <div className="space-y-3 text-sm">
