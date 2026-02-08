@@ -13,6 +13,7 @@ import { MessageCircle, FileDown, Settings, Package, Key } from 'lucide-react';
 import { toast } from 'sonner';
 import { useProducts } from '@/data/productsStore';
 import { categories } from '@/data/mockData';
+import { defaultBrandOptions, type BrandOption, BRAND_OPTIONS_KEY, translateBrandOptions } from '@/data/brandOptions';
 import type { QuoteRequest } from '@/types/marketplace';
 import { PasswordChangeForm } from '@/components/PasswordChangeForm';
 import { LoadingState } from '@/components/LoadingState';
@@ -20,6 +21,7 @@ import { InlineError } from '@/components/InlineError';
 import { EmptyState } from '@/components/EmptyState';
 import { Seo } from '@/components/Seo';
 import { sanitizePhoneInput, validatePhone } from '@/lib/validation';
+import { formatCarBrands } from '@/lib/brands';
 
 const AdminPanel = () => {
   const { user, logout, isLoading: authLoading } = useAuth();
@@ -46,18 +48,21 @@ const AdminPanel = () => {
     description: '',
     price: '',
     category: '',
-    carBrands: '',
     imageDataUrl: '',
   });
+  const [newProductBrands, setNewProductBrands] = React.useState<string[]>([]);
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [editingProduct, setEditingProduct] = React.useState({
     title: '',
     description: '',
     price: '',
     category: '',
-    carBrands: '',
     imageDataUrl: '',
   });
+  const [editingProductBrands, setEditingProductBrands] = React.useState<string[]>([]);
+
+  const BRAND_OPTIONS_KEY = 'vhc_brand_options';
+  const [brandOptions, setBrandOptions] = React.useState<BrandOption[]>([]);
 
   const loadAdminData = React.useCallback(async () => {
     if (user?.role !== 'admin') return;
@@ -85,6 +90,24 @@ const AdminPanel = () => {
   React.useEffect(() => {
     loadAdminData();
   }, [loadAdminData]);
+
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem(BRAND_OPTIONS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as BrandOption[];
+        const translated = translateBrandOptions(parsed);
+        if (JSON.stringify(parsed) !== JSON.stringify(translated)) {
+          localStorage.setItem(BRAND_OPTIONS_KEY, JSON.stringify(translated));
+        }
+        setBrandOptions(translated);
+        return;
+      }
+      setBrandOptions(defaultBrandOptions);
+    } catch {
+      setBrandOptions(defaultBrandOptions);
+    }
+  }, []);
 
   if (authLoading) {
     return (
@@ -249,10 +272,7 @@ const AdminPanel = () => {
       description: newProduct.description.trim(),
       price,
       category: newProduct.category.trim() || 'غير محدد',
-      carBrands: newProduct.carBrands
-        .split(',')
-        .map((brand) => brand.trim())
-        .filter(Boolean),
+      carBrands: newProductBrands,
       imageDataUrl: newProduct.imageDataUrl,
     });
     setNewProduct({
@@ -260,9 +280,9 @@ const AdminPanel = () => {
       description: '',
       price: '',
       category: '',
-      carBrands: '',
       imageDataUrl: '',
     });
+    setNewProductBrands([]);
     toast.success('تمت إضافة المنتج');
   };
 
@@ -275,9 +295,9 @@ const AdminPanel = () => {
       description: product.description,
       price: String(product.price),
       category: product.category,
-      carBrands: product.carBrands?.join(', ') || '',
       imageDataUrl: product.imageDataUrl || '',
     });
+    setEditingProductBrands(product.carBrands || []);
   };
 
   const cancelEdit = () => {
@@ -287,9 +307,9 @@ const AdminPanel = () => {
       description: '',
       price: '',
       category: '',
-      carBrands: '',
       imageDataUrl: '',
     });
+    setEditingProductBrands([]);
   };
 
   const handleSaveEdit = () => {
@@ -309,15 +329,24 @@ const AdminPanel = () => {
       description: editingProduct.description.trim(),
       price,
       category: editingProduct.category.trim() || 'غير محدد',
-      carBrands: editingProduct.carBrands
-        .split(',')
-        .map((brand) => brand.trim())
-        .filter(Boolean),
+      carBrands: editingProductBrands,
       imageDataUrl: editingProduct.imageDataUrl,
     });
     toast.success('تم تحديث المنتج');
     cancelEdit();
   };
+
+  const toggleBrandSelection = (value: string, isEditing: boolean) => {
+    const updater = (prev: string[]) => (
+      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]
+    );
+    if (isEditing) {
+      setEditingProductBrands(updater);
+      return;
+    }
+    setNewProductBrands(updater);
+  };
+
 
   const handleImageChange = (file: File | null, isEditing: boolean) => {
     if (!file) return;
@@ -339,9 +368,14 @@ const AdminPanel = () => {
       <div className="container py-4 md:py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">لوحة الإدارة</h1>
-          <Button variant="outline" size="sm" onClick={logout}>
-            تسجيل خروج
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link to="/admin/brands">
+              <Button variant="outline" size="sm">إدارة الماركات</Button>
+            </Link>
+            <Button variant="outline" size="sm" onClick={logout}>
+              تسجيل خروج
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
@@ -507,16 +541,39 @@ const AdminPanel = () => {
                   </div>
                   <div className="md:col-span-2">
                     <Label htmlFor="prod-brands">الماركات المدعومة</Label>
-                    <Input
-                      id="prod-brands"
-                      value={editingId ? editingProduct.carBrands : newProduct.carBrands}
-                      onChange={(e) => (editingId
-                        ? setEditingProduct({ ...editingProduct, carBrands: e.target.value })
-                        : setNewProduct({ ...newProduct, carBrands: e.target.value })
-                      )}
-                      placeholder="تويوتا, هيونداي, نيسان"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">افصل الماركات بفاصلة.</p>
+                    <div className="border border-border rounded-lg p-3 space-y-3 max-h-64 overflow-y-auto">
+                      {brandOptions.map((option, brandIndex) => (
+                        <div key={`${option.brand}-${brandIndex}`} className="space-y-2">
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={(editingId ? editingProductBrands : newProductBrands).includes(option.brand)}
+                              onChange={() => toggleBrandSelection(option.brand, !!editingId)}
+                            />
+                            <span className="text-sm font-medium">{option.brand}</span>
+                          </label>
+                          {option.models.length > 0 && (
+                            <div className="grid gap-2 pl-6">
+                              {option.models.map((model, modelIndex) => {
+                                const value = `${option.brand} - ${model}`;
+                                const selected = (editingId ? editingProductBrands : newProductBrands).includes(value);
+                                return (
+                                  <label key={`${value}-${modelIndex}`} className="flex items-center gap-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={selected}
+                                      onChange={() => toggleBrandSelection(value, !!editingId)}
+                                    />
+                                    <span className="text-sm text-muted-foreground">{model}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">اختر ماركة أو موديل واحد أو أكثر.</p>
                   </div>
                   <div className="md:col-span-2">
                     <Label htmlFor="prod-image">صورة المنتج</Label>
@@ -577,7 +634,7 @@ const AdminPanel = () => {
                           <p className="text-xs text-muted-foreground">السعر: ج.م {product.price.toFixed(0)}</p>
                           <p className="text-xs text-muted-foreground">الفئة: {product.category}</p>
                           <p className="text-xs text-muted-foreground">
-                            الماركات: {product.carBrands && product.carBrands.length > 0 ? product.carBrands.join('، ') : 'مش متحدد'}
+                            الماركات: {formatCarBrands(product.carBrands)}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">

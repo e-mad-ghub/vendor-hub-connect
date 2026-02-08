@@ -9,6 +9,7 @@ import { ProductCard } from '@/components/ProductCard';
 import { toast } from 'sonner';
 import { Seo } from '@/components/Seo';
 import { trackEvent } from '@/lib/analytics';
+import { formatCarBrands } from '@/lib/brands';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -96,7 +97,7 @@ const ProductDetail = () => {
 
             <div className="bg-card rounded-xl p-4 border border-border text-sm text-muted-foreground">
               <p>الفئة: {product.category}</p>
-              <p>الماركات: {product.carBrands && product.carBrands.length > 0 ? product.carBrands.join('، ') : 'مش متحدد'}</p>
+              <p>الماركات: {formatCarBrands(product.carBrands)}</p>
             </div>
 
             {/* Quantity */}

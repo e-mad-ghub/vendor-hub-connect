@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Product } from '@/types/marketplace';
 import { adminSeedProducts } from '@/data/adminCatalog';
+import { translateBrandLabel, expandBrandsWithModels, BRAND_OPTIONS_KEY, defaultBrandOptions, translateBrandOptions, type BrandOption } from '@/data/brandOptions';
 
 const STORAGE_KEY = 'vhc_products';
 const STORAGE_BOOTSTRAP_KEY = 'vhc_products_bootstrapped';
@@ -34,9 +35,35 @@ const cleanupLegacyProductFields = (items: Product[]): Product[] =>
     imageDataUrl: imageDataUrl || '',
   }));
 
+const translateProductBrands = (items: Product[]): { items: Product[]; changed: boolean } => {
+  let changed = false;
+  const next = items.map((product) => {
+    if (!product.carBrands || product.carBrands.length === 0) return product;
+    const translated = product.carBrands.map((value) => translateBrandLabel(value));
+    const same = translated.every((value, index) => value === product.carBrands?.[index]);
+    if (!same) {
+      changed = true;
+      return { ...product, carBrands: translated };
+    }
+    return product;
+  });
+  return { items: next, changed };
+};
+
 const emitProductsUpdated = () => {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new Event('vhc-products-updated'));
+  }
+};
+
+const loadBrandOptions = (): BrandOption[] => {
+  try {
+    const raw = localStorage.getItem(BRAND_OPTIONS_KEY);
+    if (!raw) return defaultBrandOptions;
+    const parsed = JSON.parse(raw) as BrandOption[];
+    return translateBrandOptions(parsed);
+  } catch {
+    return defaultBrandOptions;
   }
 };
 
@@ -53,7 +80,29 @@ export const getProducts = (): Product[] => {
     }
 
     const parsed = JSON.parse(raw) as Product[];
-    return filterAdminProducts(normalizeProducts(cleanupLegacyProductFields(parsed)));
+    const normalized = filterAdminProducts(normalizeProducts(cleanupLegacyProductFields(parsed)));
+    const translated = translateProductBrands(normalized);
+    const brandOptions = loadBrandOptions();
+    const expanded = translated.items.map((product) => ({
+      ...product,
+      carBrands: expandBrandsWithModels(product.carBrands, brandOptions),
+    }));
+    const expandedChanged = expanded.some((product, index) => {
+      const prev = translated.items[index].carBrands || [];
+      const next = product.carBrands || [];
+      if (prev.length !== next.length) return true;
+      return prev.some((value, idx) => value !== next[idx]);
+    });
+    if (translated.changed) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(translated.items));
+      emitProductsUpdated();
+    }
+    if (expandedChanged) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(expanded));
+      emitProductsUpdated();
+      return expanded;
+    }
+    return translated.items;
   } catch {
     return [];
   }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Product } from '@/types/marketplace';
+import { formatCarBrands } from '@/lib/brands';
 
 interface ProductCardProps {
   product: Product;
@@ -37,7 +38,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </p>
 
         <p className="text-xs text-muted-foreground mt-1">
-          الماركات: {product.carBrands && product.carBrands.length > 0 ? product.carBrands.join('، ') : 'مش متحدد'}
+          الماركات: {formatCarBrands(product.carBrands)}
         </p>
       </div>
     </Link>
