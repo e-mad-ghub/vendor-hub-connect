@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -9,16 +9,34 @@ import { ProductCard } from '@/components/ProductCard';
 import { toast } from 'sonner';
 import { Seo } from '@/components/Seo';
 import { trackEvent } from '@/lib/analytics';
+import { formatCarBrands } from '@/lib/brands';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
+  const [selectedQualities, setSelectedQualities] = useState<{ new: boolean; imported: boolean }>({ new: false, imported: false });
   const product = getProductById(id || '');
   const relatedProducts = product
     ? getProductsByCategory(product.category).filter(p => p.id !== product?.id).slice(0, 4)
     : [];
+
+  const availability = useMemo(() => {
+    return {
+      hasNew: !!product?.newAvailable && typeof product?.newPrice === 'number',
+      hasImported: !!product?.importedAvailable,
+      newPrice: typeof product?.newPrice === 'number' ? product.newPrice : 0,
+    };
+  }, [product]);
+
+  useEffect(() => {
+    if (!product) return;
+    setSelectedQualities({
+      new: availability.hasNew,
+      imported: availability.hasImported,
+    });
+  }, [product?.id, availability.hasNew, availability.hasImported]);
 
   if (!product) {
     return (
@@ -35,17 +53,27 @@ const ProductDetail = () => {
   }
 
   const handleAddToCart = () => {
-    addToCart(product, quantity);
+    if (!selectedQualities.new && !selectedQualities.imported) {
+      toast.error('اختار الجودة قبل الإضافة');
+      return;
+    }
+    if (selectedQualities.new) addToCart(product, 'new', quantity);
+    if (selectedQualities.imported) addToCart(product, 'imported', quantity);
     toast.success(`تم إضافة ${product.title} للعربة`, {
       description: `الكمية: ${quantity}`,
     });
-    trackEvent('Add to Cart', { productId: product.id, quantity });
+    trackEvent('Add to Cart', { productId: product.id, quantity, quality: selectedQualities });
   };
 
   const handleBuyNow = () => {
-    addToCart(product, quantity);
+    if (!selectedQualities.new && !selectedQualities.imported) {
+      toast.error('اختار الجودة قبل الإضافة');
+      return;
+    }
+    if (selectedQualities.new) addToCart(product, 'new', quantity);
+    if (selectedQualities.imported) addToCart(product, 'imported', quantity);
     toast.success('تمت الإضافة - اطلب عرض سعر عبر واتساب من العربة');
-    trackEvent('Request Quote Start', { source: 'product', productId: product.id, quantity });
+    trackEvent('Request Quote Start', { source: 'product', productId: product.id, quantity, quality: selectedQualities });
     navigate('/cart');
   };
 
@@ -89,14 +117,57 @@ const ProductDetail = () => {
 
             {/* Price */}
             <div className="bg-muted/50 rounded-xl p-4">
-              <div className="flex items-baseline gap-3">
-                <span className="text-3xl font-bold text-primary">ج.م {product.price.toFixed(2)}</span>
+              <div className="space-y-2 text-sm">
+                <p>
+                  جديد: {availability.hasNew ? `ج.م ${availability.newPrice.toFixed(2)}` : 'غير متاح'}
+                </p>
+                <p>
+                  استيراد: {availability.hasImported ? 'متاح' : 'غير متاح'}
+                </p>
               </div>
             </div>
 
             <div className="bg-card rounded-xl p-4 border border-border text-sm text-muted-foreground">
               <p>الفئة: {product.category}</p>
-              <p>الماركات: {product.carBrands && product.carBrands.length > 0 ? product.carBrands.join('، ') : 'مش متحدد'}</p>
+              <p>الماركات: {formatCarBrands(product.carBrands)}</p>
+            </div>
+
+            {/* Quality */}
+            <div className="space-y-2">
+              <p className="font-medium">اختر الجودة:</p>
+              <div className="flex flex-wrap gap-2">
+                {availability.hasNew && (
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={selectedQualities.new}
+                      onChange={(e) => setSelectedQualities((prev) => ({ ...prev, new: e.target.checked }))}
+                    />
+                    جديد
+                  </label>
+                )}
+                {availability.hasNew && availability.hasImported && (
+                  <span className="text-xs text-muted-foreground">أو</span>
+                )}
+                {availability.hasImported && (
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={selectedQualities.imported}
+                      onChange={(e) => setSelectedQualities((prev) => ({ ...prev, imported: e.target.checked }))}
+                    />
+                    استيراد
+                  </label>
+                )}
+                {!availability.hasNew && !availability.hasImported && (
+                  <span className="text-sm text-muted-foreground">غير متاح حاليًا</span>
+                )}
+              </div>
+              {(selectedQualities.new && selectedQualities.imported) && (
+                <p className="text-xs text-muted-foreground">
+                  دلوقتي حضرتك طلبت فحص الجديد والاستيراد مع بعض عشان مقارنة السعر، وبعد التأكيد تقدر تختار واحد بس اللي يناسبك.
+                </p>
+              )}
             </div>
 
             {/* Quantity */}
@@ -121,10 +192,10 @@ const ProductDetail = () => {
 
             {/* Actions */}
             <div className="flex gap-3">
-              <Button onClick={handleBuyNow} size="lg" className="flex-1">
+              <Button onClick={handleBuyNow} size="lg" className="flex-1" disabled={!selectedQualities.new && !selectedQualities.imported}>
                 أضف واطلب عرض سعر
               </Button>
-              <Button onClick={handleAddToCart} size="lg" variant="outline" className="flex-1">
+              <Button onClick={handleAddToCart} size="lg" variant="outline" className="flex-1" disabled={!selectedQualities.new && !selectedQualities.imported}>
                 <ShoppingCart className="h-4 w-4 mr-2" />
                 أضف للعربة
               </Button>
@@ -178,12 +249,19 @@ const ProductDetail = () => {
       <div className="fixed bottom-16 left-0 right-0 bg-card border-t border-border p-3 md:hidden sticky-bar z-40">
         <div className="flex items-center gap-3">
           <div className="flex-1">
-            <p className="text-xl font-bold text-primary">ج.م {product.price.toFixed(2)}</p>
+            <p className="text-sm text-muted-foreground">
+              جودة: {selectedQualities.new && selectedQualities.imported ? 'جديد + استيراد' : selectedQualities.new ? 'جديد' : selectedQualities.imported ? 'استيراد' : 'غير محدد'}
+            </p>
+            <p className="text-xl font-bold text-primary">
+              {availability.hasNew && selectedQualities.new
+                ? `ج.م ${availability.newPrice.toFixed(2)}`
+                : 'سعر حسب العرض'}
+            </p>
           </div>
-          <Button onClick={handleAddToCart} size="sm" variant="outline">
+          <Button onClick={handleAddToCart} size="sm" variant="outline" disabled={!selectedQualities.new && !selectedQualities.imported}>
             <ShoppingCart className="h-4 w-4" />
           </Button>
-          <Button onClick={handleBuyNow} size="sm" className="px-6">
+          <Button onClick={handleBuyNow} size="sm" className="px-6" disabled={!selectedQualities.new && !selectedQualities.imported}>
             اطلب عرض سعر
           </Button>
         </div>

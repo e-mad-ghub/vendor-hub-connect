@@ -8,7 +8,7 @@ type QuoteRequest = {
   customerName: string;
   customerPhone: string;
   message: string;
-  items: Array<{ productId: string; title: string; quantity: number; price: number; image: string }>;
+  items: Array<{ productId: string; title: string; quantity: number; quality?: 'new' | 'imported'; unitPrice?: number; image: string }>;
   status: 'pending' | 'cancelled' | 'followed_up';
   createdAt: string;
 };

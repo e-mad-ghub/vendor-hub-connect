@@ -38,10 +38,15 @@ const Index = () => {
       ? `${customPartName.trim()} (${customCarBrand.trim()})`
       : customPartName.trim();
     return [
-      `أهلًا، أنا اسمي ${customerName.trim()}.`,
-      `عايز عرض سعر لقطعة: ${partLine}.`,
-      `رقم التليفون: ${customerPhone.trim()}.`,
-      'من فضلك أكد السعر والتوفر. شكرًا.',
+      'طلب عرض سعر (طلب مخصص)',
+      `الاسم: ${customerName.trim()}`,
+      `رقم التليفون: ${customerPhone.trim()}`,
+      '',
+      'تفاصيل الطلب:',
+      `• القطعة: ${partLine}`,
+      `  - الماركات/الموديلات: ${customCarBrand.trim() || 'غير محدد'}`,
+      '',
+      'ملاحظة: من فضلك أكد السعر والتوفر. شكرًا.',
     ].join('\n');
   };
 
@@ -80,7 +85,7 @@ const Index = () => {
               ? `${customPartName.trim()} (${customCarBrand.trim()})`
               : customPartName.trim(),
             quantity: 1,
-            price: 0,
+            unitPrice: 0,
             image: '',
           },
         ],
@@ -98,7 +103,7 @@ const Index = () => {
     <Layout>
       <Seo
         title="الرئيسية"
-        description="سوق الحرفيين لقطع غيار السيارات. اطلب عرض سعر سريع عبر واتساب وتأكد من التوافر."
+        description="مع فريقنا المختص هتقدر توصل لأي قطعه غيار بتدور عليها في مصر سواء جديدة او استيراد ف ثواني من موبايلك و كمان توصلك لحد عربيتك"
       />
       {/* Hero Banner */}
       <section className="bg-gradient-to-r from-primary/10 via-primary/5 to-background">
@@ -107,8 +112,8 @@ const Index = () => {
             <div className="flex-1 text-center md:text-left">
               <Badge className="bg-primary/10 text-primary mb-4">🔥 عروض سخنة</Badge>
               <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-4 leading-tight">
-                اكتشف منتجات جاهزة مع{' '}
-                <span className="text-primary">طلب عرض سعر عبر واتساب</span>
+                دور على قطع غيار عربيتك{' '}
+                <span className="text-primary">وهنوصلهالك بسرعة</span>
               </h2>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto md:mx-0">
                 منتجات مختارة من فريق واحد موثوق. اطلب عرض سعر وتأكد من التوافر بسرعة عبر واتساب.
@@ -118,11 +123,6 @@ const Index = () => {
                   <Button size="lg" className="w-full sm:w-auto">
                     ابدأ التسوق
                     <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link to="/cart">
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                    اطلب عرض سعر
                   </Button>
                 </Link>
               </div>

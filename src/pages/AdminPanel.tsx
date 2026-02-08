@@ -6,11 +6,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
 import { MessageCircle, FileDown, Settings, Package, Key } from 'lucide-react';
 import { toast } from 'sonner';
 import { useProducts } from '@/data/productsStore';
+import { categories } from '@/data/mockData';
+import { defaultBrandOptions, type BrandOption, BRAND_OPTIONS_KEY, translateBrandOptions } from '@/data/brandOptions';
 import type { QuoteRequest } from '@/types/marketplace';
 import { PasswordChangeForm } from '@/components/PasswordChangeForm';
 import { LoadingState } from '@/components/LoadingState';
@@ -18,6 +21,7 @@ import { InlineError } from '@/components/InlineError';
 import { EmptyState } from '@/components/EmptyState';
 import { Seo } from '@/components/Seo';
 import { sanitizePhoneInput, validatePhone } from '@/lib/validation';
+import { formatCarBrands } from '@/lib/brands';
 
 const AdminPanel = () => {
   const { user, logout, isLoading: authLoading } = useAuth();
@@ -42,20 +46,27 @@ const AdminPanel = () => {
   const [newProduct, setNewProduct] = React.useState({
     title: '',
     description: '',
-    price: '',
+    newPrice: '',
+    newAvailable: true,
+    importedAvailable: false,
     category: '',
-    carBrands: '',
     imageDataUrl: '',
   });
+  const [newProductBrands, setNewProductBrands] = React.useState<string[]>([]);
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [editingProduct, setEditingProduct] = React.useState({
     title: '',
     description: '',
-    price: '',
+    newPrice: '',
+    newAvailable: true,
+    importedAvailable: false,
     category: '',
-    carBrands: '',
     imageDataUrl: '',
   });
+  const [editingProductBrands, setEditingProductBrands] = React.useState<string[]>([]);
+
+  const BRAND_OPTIONS_KEY = 'vhc_brand_options';
+  const [brandOptions, setBrandOptions] = React.useState<BrandOption[]>([]);
 
   const loadAdminData = React.useCallback(async () => {
     if (user?.role !== 'admin') return;
@@ -83,6 +94,24 @@ const AdminPanel = () => {
   React.useEffect(() => {
     loadAdminData();
   }, [loadAdminData]);
+
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem(BRAND_OPTIONS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as BrandOption[];
+        const translated = translateBrandOptions(parsed);
+        if (JSON.stringify(parsed) !== JSON.stringify(translated)) {
+          localStorage.setItem(BRAND_OPTIONS_KEY, JSON.stringify(translated));
+        }
+        setBrandOptions(translated);
+        return;
+      }
+      setBrandOptions(defaultBrandOptions);
+    } catch {
+      setBrandOptions(defaultBrandOptions);
+    }
+  }, []);
 
   if (authLoading) {
     return (
@@ -164,7 +193,13 @@ const AdminPanel = () => {
   const exportCsv = () => {
     const headers = ['id', 'customerName', 'customerPhone', 'createdAt', 'items'];
     const rows = requests.map((req) => {
-      const items = req.items.map((i) => `${i.title} x ${i.quantity}`).join(' | ');
+      const items = req.items
+        .map((i) => {
+          const qualityLabel = i.quality === 'imported' ? 'استيراد' : i.quality === 'new' ? 'جديد' : 'غير محدد';
+          const priceLabel = typeof i.unitPrice === 'number' ? `ج.م ${i.unitPrice}` : 'سعر حسب العرض';
+          return `${i.title} (${qualityLabel}) x ${i.quantity} — ${priceLabel}`;
+        })
+        .join(' | ');
       return [req.id, req.customerName, req.customerPhone, req.createdAt, items]
         .map((value) => `"${String(value).replace(/"/g, '""')}"`)
         .join(',');
@@ -233,34 +268,39 @@ const AdminPanel = () => {
 
   const handleCreateProduct = () => {
     if (isLoading) return;
-    const price = Number(newProduct.price);
     if (!newProduct.title.trim()) {
       toast.error('من فضلك اكتب اسم المنتج');
       return;
     }
-    if (!Number.isFinite(price) || price <= 0) {
-      toast.error('ادخل سعر صالح');
+    if (!newProduct.newAvailable && !newProduct.importedAvailable) {
+      toast.error('لازم تختار جودة متاحة على الأقل');
+      return;
+    }
+    const price = Number(newProduct.newPrice);
+    if (newProduct.newAvailable && (!Number.isFinite(price) || price <= 0)) {
+      toast.error('ادخل سعر صالح للجديد');
       return;
     }
     createProduct({
       title: newProduct.title.trim(),
       description: newProduct.description.trim(),
-      price,
+      newAvailable: newProduct.newAvailable,
+      newPrice: newProduct.newAvailable ? price : undefined,
+      importedAvailable: newProduct.importedAvailable,
       category: newProduct.category.trim() || 'غير محدد',
-      carBrands: newProduct.carBrands
-        .split(',')
-        .map((brand) => brand.trim())
-        .filter(Boolean),
+      carBrands: newProductBrands,
       imageDataUrl: newProduct.imageDataUrl,
     });
     setNewProduct({
       title: '',
       description: '',
-      price: '',
+      newPrice: '',
+      newAvailable: true,
+      importedAvailable: false,
       category: '',
-      carBrands: '',
       imageDataUrl: '',
     });
+    setNewProductBrands([]);
     toast.success('تمت إضافة المنتج');
   };
 
@@ -271,11 +311,13 @@ const AdminPanel = () => {
     setEditingProduct({
       title: product.title,
       description: product.description,
-      price: String(product.price),
+      newPrice: product.newPrice ? String(product.newPrice) : '',
+      newAvailable: !!product.newAvailable,
+      importedAvailable: !!product.importedAvailable,
       category: product.category,
-      carBrands: product.carBrands?.join(', ') || '',
       imageDataUrl: product.imageDataUrl || '',
     });
+    setEditingProductBrands(product.carBrands || []);
   };
 
   const cancelEdit = () => {
@@ -283,39 +325,56 @@ const AdminPanel = () => {
     setEditingProduct({
       title: '',
       description: '',
-      price: '',
+      newPrice: '',
+      newAvailable: true,
+      importedAvailable: false,
       category: '',
-      carBrands: '',
       imageDataUrl: '',
     });
+    setEditingProductBrands([]);
   };
 
   const handleSaveEdit = () => {
     if (isLoading) return;
     if (!editingId) return;
-    const price = Number(editingProduct.price);
     if (!editingProduct.title.trim()) {
       toast.error('من فضلك اكتب اسم المنتج');
       return;
     }
-    if (!Number.isFinite(price) || price <= 0) {
-      toast.error('ادخل سعر صالح');
+    if (!editingProduct.newAvailable && !editingProduct.importedAvailable) {
+      toast.error('لازم تختار جودة متاحة على الأقل');
+      return;
+    }
+    const price = Number(editingProduct.newPrice);
+    if (editingProduct.newAvailable && (!Number.isFinite(price) || price <= 0)) {
+      toast.error('ادخل سعر صالح للجديد');
       return;
     }
     editProduct(editingId, {
       title: editingProduct.title.trim(),
       description: editingProduct.description.trim(),
-      price,
+      newAvailable: editingProduct.newAvailable,
+      newPrice: editingProduct.newAvailable ? price : undefined,
+      importedAvailable: editingProduct.importedAvailable,
       category: editingProduct.category.trim() || 'غير محدد',
-      carBrands: editingProduct.carBrands
-        .split(',')
-        .map((brand) => brand.trim())
-        .filter(Boolean),
+      carBrands: editingProductBrands,
       imageDataUrl: editingProduct.imageDataUrl,
     });
     toast.success('تم تحديث المنتج');
     cancelEdit();
   };
+
+  const toggleBrandSelection = (value: string, isEditing: boolean) => {
+    const updater = (prev: string[]) => (
+      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]
+    );
+    if (isEditing) {
+      setEditingProductBrands(updater);
+      return;
+    }
+    setNewProductBrands(updater);
+  };
+
 
   const handleImageChange = (file: File | null, isEditing: boolean) => {
     if (!file) return;
@@ -337,9 +396,14 @@ const AdminPanel = () => {
       <div className="container py-4 md:py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">لوحة الإدارة</h1>
-          <Button variant="outline" size="sm" onClick={logout}>
-            تسجيل خروج
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link to="/admin/brands">
+              <Button variant="outline" size="sm">إدارة الماركات</Button>
+            </Link>
+            <Button variant="outline" size="sm" onClick={logout}>
+              تسجيل خروج
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
@@ -419,6 +483,12 @@ const AdminPanel = () => {
                             <div className="flex-1">
                               <p className="font-medium">{item.title}</p>
                               <p className="text-muted-foreground text-xs">الكمية: {item.quantity}</p>
+                              <p className="text-muted-foreground text-xs">
+                                الجودة: {item.quality === 'imported' ? 'استيراد' : item.quality === 'new' ? 'جديد' : 'غير محدد'}
+                              </p>
+                              <p className="text-muted-foreground text-xs">
+                                السعر: {typeof item.unitPrice === 'number' ? `ج.م ${item.unitPrice}` : 'سعر حسب العرض'}
+                              </p>
                             </div>
                           </div>
                         ))}
@@ -470,41 +540,102 @@ const AdminPanel = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="prod-price">السعر</Label>
+                    <Label>الجودة المتاحة</Label>
+                    <div className="flex flex-wrap gap-3 mt-2">
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={editingId ? editingProduct.newAvailable : newProduct.newAvailable}
+                          onChange={(e) => (editingId
+                            ? setEditingProduct({ ...editingProduct, newAvailable: e.target.checked })
+                            : setNewProduct({ ...newProduct, newAvailable: e.target.checked })
+                          )}
+                        />
+                        جديد
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={editingId ? editingProduct.importedAvailable : newProduct.importedAvailable}
+                          onChange={(e) => (editingId
+                            ? setEditingProduct({ ...editingProduct, importedAvailable: e.target.checked })
+                            : setNewProduct({ ...newProduct, importedAvailable: e.target.checked })
+                          )}
+                        />
+                        استيراد
+                      </label>
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="prod-price">سعر الجديد</Label>
                     <Input
                       id="prod-price"
-                      value={editingId ? editingProduct.price : newProduct.price}
+                      value={editingId ? editingProduct.newPrice : newProduct.newPrice}
                       onChange={(e) => (editingId
-                        ? setEditingProduct({ ...editingProduct, price: e.target.value })
-                        : setNewProduct({ ...newProduct, price: e.target.value })
+                        ? setEditingProduct({ ...editingProduct, newPrice: e.target.value })
+                        : setNewProduct({ ...newProduct, newPrice: e.target.value })
                       )}
                       placeholder="1950"
+                      disabled={editingId ? !editingProduct.newAvailable : !newProduct.newAvailable}
                     />
                   </div>
                   <div>
                     <Label htmlFor="prod-category">الفئة</Label>
-                    <Input
-                      id="prod-category"
+                    <Select
                       value={editingId ? editingProduct.category : newProduct.category}
-                      onChange={(e) => (editingId
-                        ? setEditingProduct({ ...editingProduct, category: e.target.value })
-                        : setNewProduct({ ...newProduct, category: e.target.value })
+                      onValueChange={(value) => (editingId
+                        ? setEditingProduct({ ...editingProduct, category: value })
+                        : setNewProduct({ ...newProduct, category: value })
                       )}
-                      placeholder="كهرباء"
-                    />
+                    >
+                      <SelectTrigger id="prod-category">
+                        <SelectValue placeholder="اختر الفئة" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="غير محدد">غير محدد</SelectItem>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.name}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="md:col-span-2">
                     <Label htmlFor="prod-brands">الماركات المدعومة</Label>
-                    <Input
-                      id="prod-brands"
-                      value={editingId ? editingProduct.carBrands : newProduct.carBrands}
-                      onChange={(e) => (editingId
-                        ? setEditingProduct({ ...editingProduct, carBrands: e.target.value })
-                        : setNewProduct({ ...newProduct, carBrands: e.target.value })
-                      )}
-                      placeholder="تويوتا, هيونداي, نيسان"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">افصل الماركات بفاصلة.</p>
+                    <div className="border border-border rounded-lg p-3 space-y-3 max-h-64 overflow-y-auto">
+                      {brandOptions.map((option, brandIndex) => (
+                        <div key={`${option.brand}-${brandIndex}`} className="space-y-2">
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={(editingId ? editingProductBrands : newProductBrands).includes(option.brand)}
+                              onChange={() => toggleBrandSelection(option.brand, !!editingId)}
+                            />
+                            <span className="text-sm font-medium">{option.brand}</span>
+                          </label>
+                          {option.models.length > 0 && (
+                            <div className="grid gap-2 pl-6">
+                              {option.models.map((model, modelIndex) => {
+                                const value = `${option.brand} - ${model}`;
+                                const selected = (editingId ? editingProductBrands : newProductBrands).includes(value);
+                                return (
+                                  <label key={`${value}-${modelIndex}`} className="flex items-center gap-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={selected}
+                                      onChange={() => toggleBrandSelection(value, !!editingId)}
+                                    />
+                                    <span className="text-sm text-muted-foreground">{model}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">اختر ماركة أو موديل واحد أو أكثر.</p>
                   </div>
                   <div className="md:col-span-2">
                     <Label htmlFor="prod-image">صورة المنتج</Label>
@@ -562,10 +693,17 @@ const AdminPanel = () => {
                         <div className="flex-1">
                           <p className="font-medium">{product.title}</p>
                           <p className="text-xs text-muted-foreground">الوصف: {product.description}</p>
-                          <p className="text-xs text-muted-foreground">السعر: ج.م {product.price.toFixed(0)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            جديد: {product.newAvailable && typeof product.newPrice === 'number'
+                              ? `ج.م ${product.newPrice.toFixed(0)}`
+                              : 'غير متاح'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            استيراد: {product.importedAvailable ? 'متاح' : 'غير متاح'}
+                          </p>
                           <p className="text-xs text-muted-foreground">الفئة: {product.category}</p>
                           <p className="text-xs text-muted-foreground">
-                            الماركات: {product.carBrands && product.carBrands.length > 0 ? product.carBrands.join('، ') : 'مش متحدد'}
+                            الماركات: {formatCarBrands(product.carBrands)}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">

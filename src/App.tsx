@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { LoadingState } from "@/components/LoadingState";
 import { AppAnalytics } from "@/components/AppAnalytics";
 import { AppSpeedInsights } from "@/components/AppSpeedInsights";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import Search from "./pages/Search";
 
@@ -19,6 +20,7 @@ const Cart = React.lazy(() => import("./pages/Cart"));
 const Checkout = React.lazy(() => import("./pages/Checkout"));
 const Login = React.lazy(() => import("./pages/Login"));
 const AdminPanel = React.lazy(() => import("./pages/AdminPanel"));
+const AdminBrands = React.lazy(() => import("./pages/AdminBrands"));
 const About = React.lazy(() => import("./pages/About"));
 const Contact = React.lazy(() => import("./pages/Contact"));
 const Terms = React.lazy(() => import("./pages/Terms"));
@@ -39,6 +41,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <ScrollToTop />
             <Suspense
               fallback={(
                 <div className="container py-12">
@@ -59,6 +62,14 @@ const App = () => (
                   element={(
                     <ProtectedRoute requireRole="admin">
                       <AdminPanel />
+                    </ProtectedRoute>
+                  )}
+                />
+                <Route
+                  path="/admin/brands"
+                  element={(
+                    <ProtectedRoute requireRole="admin">
+                      <AdminBrands />
                     </ProtectedRoute>
                   )}
                 />

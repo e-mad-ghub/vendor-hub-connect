@@ -38,8 +38,11 @@ const Search = () => {
       );
     }
 
-    // Price filter
-    result = result.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
+    // Price filter (based on new price when available)
+    result = result.filter(p => {
+      const priceValue = p.newAvailable && typeof p.newPrice === 'number' ? p.newPrice : 0;
+      return priceValue >= priceRange[0] && priceValue <= priceRange[1];
+    });
 
     // Category filter
     if (selectedCategories.length > 0) {
@@ -54,10 +57,18 @@ const Search = () => {
     // Sort
     switch (sortBy) {
       case 'price-low':
-        result.sort((a, b) => a.price - b.price);
+        result.sort((a, b) => {
+          const aPrice = a.newAvailable && typeof a.newPrice === 'number' ? a.newPrice : 0;
+          const bPrice = b.newAvailable && typeof b.newPrice === 'number' ? b.newPrice : 0;
+          return aPrice - bPrice;
+        });
         break;
       case 'price-high':
-        result.sort((a, b) => b.price - a.price);
+        result.sort((a, b) => {
+          const aPrice = a.newAvailable && typeof a.newPrice === 'number' ? a.newPrice : 0;
+          const bPrice = b.newAvailable && typeof b.newPrice === 'number' ? b.newPrice : 0;
+          return bPrice - aPrice;
+        });
         break;
       case 'newest':
         result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());

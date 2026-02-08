@@ -41,7 +41,7 @@ export const Header: React.FC = () => {
             {/* Search Bar - Desktop */}
             <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-2xl">
               <div className="flex w-full">
-                <Input type="search" placeholder="دور على منتجات، براندات وحاجات تانية..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="rounded-r-none border-r-0 bg-background text-foreground focus-visible:ring-0 focus-visible:ring-offset-0" />
+                <Input type="search" placeholder="دور على قطع غيار، ماركات عربيات، وموديلات..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="rounded-r-none border-r-0 bg-background text-foreground focus-visible:ring-0 focus-visible:ring-offset-0" />
                 <Button type="submit" className="rounded-l-none px-6">
                   <Search className="h-4 w-4" />
                 </Button>
@@ -74,9 +74,9 @@ export const Header: React.FC = () => {
           </div>
 
           {/* Mobile Search */}
-          <form onSubmit={handleSearch} className="mt-2 md:hidden">
+            <form onSubmit={handleSearch} className="mt-2 md:hidden">
             <div className="flex">
-                <Input type="search" placeholder="دور على المنتجات..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="rounded-r-none border-r-0 bg-background text-foreground focus-visible:ring-0" />
+                <Input type="search" placeholder="دور على قطع غيار..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="rounded-r-none border-r-0 bg-background text-foreground focus-visible:ring-0" />
                 <Button type="submit" className="rounded-l-none px-4">
                   <Search className="h-4 w-4" />
                 </Button>

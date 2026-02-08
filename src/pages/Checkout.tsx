@@ -14,6 +14,7 @@ import { InlineError } from '@/components/InlineError';
 import { Seo } from '@/components/Seo';
 import { trackEvent } from '@/lib/analytics';
 import { sanitizePhoneInput, validatePhone } from '@/lib/validation';
+import { formatCarBrands } from '@/lib/brands';
 
 const DEFAULT_TEMPLATE =
   'أهلًا، أنا اسمي [Customer Name]. عايز عرض سعر للقطع التالية:\n[Items]\nمن فضلك أكد السعر والتوفر. شكرًا.';
@@ -49,23 +50,34 @@ const Checkout = () => {
 
   const itemsText = useMemo(() => {
     return detailedItems
-      .map(({ product, quantity }) => `- ${product.title} x ${quantity}`)
+      .map(({ product, quantity, quality, unitPrice }) => {
+        const qualityLabel = quality === 'new' ? 'جديد' : 'استيراد';
+        const priceLabel = quality === 'new' ? `ج.م ${unitPrice.toFixed(2)}` : 'سعر حسب العرض';
+        const brands = formatCarBrands(product.carBrands);
+        return [
+          `• ${product.title}`,
+          `  - الجودة: ${qualityLabel}`,
+          `  - الكمية: ${quantity}`,
+          `  - السعر: ${priceLabel}`,
+          `  - الماركات/الموديلات: ${brands}`,
+        ].join('\n');
+      })
       .join('\n');
   }, [detailedItems]);
 
   const buildMessage = () => {
-    const template = DEFAULT_TEMPLATE;
-    let message = template
-      .replace(/\[Customer Name\]/g, customerName.trim())
-      .replace(/\[Customer Phone\]/g, customerPhone.trim())
-      .replace(/\[Items\]/g, itemsText);
+    const header = [
+      'طلب عرض سعر',
+      `الاسم: ${customerName.trim()}`,
+      `رقم التليفون: ${customerPhone.trim()}`,
+      '',
+      'تفاصيل الطلب:',
+      itemsText,
+      '',
+      'ملاحظة: من فضلك أكد السعر والتوفر.',
+    ].join('\n');
 
-    if (!template.includes('[Items]')) {
-      message = `${message}\n${itemsText}`;
-    }
-    message = `${message}\nرقم التليفون: ${customerPhone.trim()}`;
-
-    return message.trim();
+    return header.trim();
   };
 
   if (items.length === 0) {
@@ -130,13 +142,14 @@ const Checkout = () => {
     const message = buildMessage();
 
     try {
-      const items = detailedItems.map(({ product, quantity }) => ({
-        productId: product.id,
-        title: product.title,
-        quantity,
-        price: product.price,
-        image: '',
-      }));
+  const items = detailedItems.map(({ product, quantity, quality, unitPrice }) => ({
+    productId: product.id,
+    title: product.title,
+    quantity,
+    quality,
+    unitPrice,
+    image: '',
+  }));
 
       await api.createQuoteRequest({
         customerName: customerName.trim(),
@@ -223,11 +236,28 @@ const Checkout = () => {
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">عدد المنتجات</span>
-                  <span className="font-medium">{items.length}</span>
+                  <span className="font-medium">
+                    {new Set(detailedItems.map((item) => item.productId)).size}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">الإجمالي الفرعي</span>
                   <span className="font-medium">ج.م {subtotal.toFixed(2)}</span>
+                </div>
+                <div className="border-t border-border pt-3 mt-3">
+                  <p className="text-xs text-muted-foreground mb-2">الجودات المختارة</p>
+                  <div className="space-y-2 text-xs text-muted-foreground">
+                    {detailedItems.map(({ product, quantity, quality, unitPrice }) => (
+                      <div key={`${product.id}-${quality}`} className="flex items-center justify-between gap-2">
+                        <span className="truncate">
+                          {product.title} ({quality === 'new' ? 'جديد' : 'استيراد'}) × {quantity}
+                        </span>
+                        <span className="whitespace-nowrap">
+                          {quality === 'new' ? `ج.م ${unitPrice.toFixed(2)}` : 'سعر حسب العرض'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="border-t border-border pt-3 mt-3">
                   <p className="text-xs text-muted-foreground">

@@ -13,7 +13,9 @@ export interface Product {
   id: string;
   title: string;
   description: string;
-  price: number;
+  newAvailable?: boolean;
+  newPrice?: number;
+  importedAvailable?: boolean;
   category: string;
   carBrands?: string[];
   imageDataUrl?: string;
@@ -25,7 +27,8 @@ export interface Product {
 export interface CartItem {
   productId: string;
   quantity: number;
-  price: number;
+  quality: 'new' | 'imported';
+  unitPrice: number;
 }
 
 export interface Category {
@@ -40,7 +43,8 @@ export interface QuoteRequestItem {
   quantity: number;
   title: string;
   image: string;
-  price?: number;
+  quality?: 'new' | 'imported';
+  unitPrice?: number;
 }
 
 export type QuoteRequestStatus = 'pending' | 'cancelled' | 'followed_up';
