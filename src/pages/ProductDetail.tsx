@@ -80,7 +80,7 @@ const ProductDetail = () => {
   return (
     <Layout>
       <Seo title={product.title} description={product.description} />
-      <div className="container py-4 md:py-8">
+      <div className="container py-3 md:py-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
           <Link to="/" className="hover:text-primary">الرئيسية</Link>
@@ -90,10 +90,10 @@ const ProductDetail = () => {
           <span className="text-foreground truncate">{product.title}</span>
         </nav>
 
-        <div className="grid md:grid-cols-2 gap-6 lg:gap-10">
+        <div className="grid md:grid-cols-2 gap-4 md:gap-6 lg:gap-10">
           {/* Product Image */}
           <div className="space-y-4">
-            <div className="aspect-square bg-muted rounded-xl flex items-center justify-center text-sm text-muted-foreground overflow-hidden">
+            <div className="aspect-square bg-muted rounded-lg md:rounded-xl flex items-center justify-center text-sm text-muted-foreground overflow-hidden">
               {product.imageDataUrl ? (
                 <img
                   src={product.imageDataUrl}
@@ -109,14 +109,14 @@ const ProductDetail = () => {
           </div>
 
           {/* Product Info */}
-          <div className="space-y-4">
+          <div className="space-y-3 md:space-y-4">
             {/* Title */}
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">{product.title}</h1>
+              <h1 className="text-xl md:text-3xl font-bold text-foreground mb-2">{product.title}</h1>
             </div>
 
             {/* Price */}
-            <div className="bg-muted/50 rounded-xl p-4">
+            <div className="bg-muted/50 rounded-lg md:rounded-xl p-3 md:p-4">
               <div className="space-y-2 text-sm">
                 <p>
                   جديد: {availability.hasNew ? `ج.م ${availability.newPrice.toFixed(2)}` : 'غير متاح'}
@@ -127,7 +127,7 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            <div className="bg-card rounded-xl p-4 border border-border text-sm text-muted-foreground">
+            <div className="bg-card rounded-lg md:rounded-xl p-3 md:p-4 border border-border text-sm text-muted-foreground">
               <p>الفئة: {product.category}</p>
               <p>الماركات: {formatCarBrands(product.carBrands)}</p>
             </div>
@@ -135,7 +135,7 @@ const ProductDetail = () => {
             {/* Quality */}
             <div className="space-y-2">
               <p className="font-medium">اختر الجودة:</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-3">
                 {availability.hasNew && (
                   <label className="flex items-center gap-2 text-sm">
                     <input
@@ -191,7 +191,7 @@ const ProductDetail = () => {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Button onClick={handleBuyNow} size="lg" className="flex-1" disabled={!selectedQualities.new && !selectedQualities.imported}>
                 أضف واطلب عرض سعر
               </Button>
@@ -199,16 +199,16 @@ const ProductDetail = () => {
                 <ShoppingCart className="h-4 w-4 mr-2" />
                 أضف للعربة
               </Button>
-              <Button size="lg" variant="outline" className="px-3">
+              <Button size="lg" variant="outline" className="px-3 w-full sm:w-auto">
                 <Heart className="h-5 w-5" />
               </Button>
-              <Button size="lg" variant="outline" className="px-3">
+              <Button size="lg" variant="outline" className="px-3 w-full sm:w-auto">
                 <Share2 className="h-5 w-5" />
               </Button>
             </div>
 
             {/* Features */}
-            <div className="grid grid-cols-3 gap-3 pt-4 border-t border-border">
+            <div className="grid grid-cols-3 gap-2 md:gap-3 pt-3 md:pt-4 border-t border-border">
               <div className="text-center p-3">
                 <Truck className="h-6 w-6 mx-auto text-primary mb-1" />
                 <p className="text-xs text-muted-foreground">شحن بعد التأكيد</p>
@@ -225,14 +225,14 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        <div className="mt-8 bg-card rounded-xl p-6 shadow-card">
+        <div className="mt-6 md:mt-8 bg-card rounded-lg md:rounded-xl p-4 md:p-6 shadow-card">
           <h3 className="font-semibold mb-3">وصف المنتج</h3>
           <p className="text-muted-foreground leading-relaxed">{product.description}</p>
         </div>
 
         {/* Related Products */}
         {relatedProducts.length > 0 && (
-          <section className="mt-10">
+          <section className="mt-8 md:mt-10">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold">منتجات مشابهة</h3>
             </div>

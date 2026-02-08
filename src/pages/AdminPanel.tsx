@@ -393,10 +393,10 @@ const AdminPanel = () => {
   return (
     <Layout>
       <Seo title="لوحة الإدارة" description="إدارة الطلبات والمنتجات وإعدادات واتساب." />
-      <div className="container py-4 md:py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">لوحة الإدارة</h1>
-          <div className="flex items-center gap-2">
+      <div className="container py-3 md:py-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5 md:mb-6">
+          <h1 className="text-xl md:text-2xl font-bold">لوحة الإدارة</h1>
+          <div className="flex flex-wrap items-center gap-2">
             <Link to="/admin/brands">
               <Button variant="outline" size="sm">إدارة الماركات</Button>
             </Link>
@@ -406,7 +406,7 @@ const AdminPanel = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-5 md:mb-6">
           <div className="bg-card rounded-xl p-4 shadow-card">
             <MessageCircle className="h-6 w-6 text-primary mb-2" />
             <p className="text-2xl font-bold">{requests.length}</p>
@@ -430,7 +430,7 @@ const AdminPanel = () => {
         </div>
 
         <Tabs defaultValue="requests" className="space-y-4">
-          <TabsList>
+          <TabsList className="w-full flex flex-wrap md:flex-nowrap gap-2 overflow-x-auto">
             <TabsTrigger value="requests">طلبات عروض السعر</TabsTrigger>
             <TabsTrigger value="products">المنتجات</TabsTrigger>
             <TabsTrigger value="settings">إعدادات واتساب</TabsTrigger>
@@ -439,7 +439,7 @@ const AdminPanel = () => {
           </TabsList>
 
           <TabsContent value="requests">
-            <div className="bg-card rounded-xl shadow-card p-6">
+            <div className="bg-card rounded-lg md:rounded-xl shadow-card p-4 md:p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold">سجل الطلبات</h3>
                 <Button size="sm" variant="outline" onClick={exportCsv} disabled={requests.length === 0}>
@@ -510,10 +510,10 @@ const AdminPanel = () => {
           </TabsContent>
 
           <TabsContent value="products">
-            <div className="bg-card rounded-xl shadow-card p-6 space-y-6">
+            <div className="bg-card rounded-lg md:rounded-xl shadow-card p-4 md:p-6 space-y-6">
               <div>
                 <h3 className="font-semibold mb-4">{editingId ? 'تعديل المنتج' : 'إضافة منتج جديد'}</h3>
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-2 gap-3 md:gap-4">
                   <div className="md:col-span-2">
                     <Label htmlFor="prod-title">اسم المنتج</Label>
                     <Input
@@ -676,7 +676,7 @@ const AdminPanel = () => {
                 ) : (
                   <div className="space-y-3">
                     {products.map((product) => (
-                      <div key={product.id} className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
+                      <div key={product.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-muted/50 rounded-lg">
                         <div className="w-12 h-12 rounded bg-muted flex items-center justify-center text-[10px] text-muted-foreground overflow-hidden">
                           {product.imageDataUrl ? (
                             <img
@@ -706,7 +706,7 @@ const AdminPanel = () => {
                             الماركات: {formatCarBrands(product.carBrands)}
                           </p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <Button size="sm" variant="outline" onClick={() => startEdit(product.id)}>
                             تعديل
                           </Button>
@@ -723,7 +723,7 @@ const AdminPanel = () => {
           </TabsContent>
 
           <TabsContent value="settings">
-            <div className="bg-card rounded-xl shadow-card p-6">
+            <div className="bg-card rounded-lg md:rounded-xl shadow-card p-4 md:p-6">
               <h3 className="font-semibold mb-4">إعدادات واتساب</h3>
               {isLoading ? (
                 <LoadingState title="جاري تحميل الإعدادات" message="برجاء الانتظار..." />
@@ -761,9 +761,9 @@ const AdminPanel = () => {
           </TabsContent>
 
           <TabsContent value="customer-service">
-            <div className="bg-card rounded-xl shadow-card p-6">
+            <div className="bg-card rounded-lg md:rounded-xl shadow-card p-4 md:p-6">
               <h3 className="font-semibold mb-4">بيانات خدمة العملاء</h3>
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-3 md:gap-4">
                 <div>
                   <Label htmlFor="cs-email">البريد الإلكتروني</Label>
                   <Input
@@ -842,7 +842,7 @@ const AdminPanel = () => {
           </TabsContent>
 
           <TabsContent value="security">
-            <div className="bg-card rounded-xl shadow-card p-6">
+            <div className="bg-card rounded-lg md:rounded-xl shadow-card p-4 md:p-6">
               <div className="flex items-center gap-3 mb-6">
                 <Key className="h-6 w-6 text-primary" />
                 <h3 className="font-semibold">تغيير كلمة السر</h3>
