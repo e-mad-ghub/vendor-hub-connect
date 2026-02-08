@@ -6,11 +6,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { api } from '@/lib/api';
 import { MessageCircle, FileDown, Settings, Package, Key } from 'lucide-react';
 import { toast } from 'sonner';
 import { useProducts } from '@/data/productsStore';
+import { categories } from '@/data/mockData';
 import type { QuoteRequest } from '@/types/marketplace';
 import { PasswordChangeForm } from '@/components/PasswordChangeForm';
 import { LoadingState } from '@/components/LoadingState';
@@ -483,15 +485,25 @@ const AdminPanel = () => {
                   </div>
                   <div>
                     <Label htmlFor="prod-category">الفئة</Label>
-                    <Input
-                      id="prod-category"
+                    <Select
                       value={editingId ? editingProduct.category : newProduct.category}
-                      onChange={(e) => (editingId
-                        ? setEditingProduct({ ...editingProduct, category: e.target.value })
-                        : setNewProduct({ ...newProduct, category: e.target.value })
+                      onValueChange={(value) => (editingId
+                        ? setEditingProduct({ ...editingProduct, category: value })
+                        : setNewProduct({ ...newProduct, category: value })
                       )}
-                      placeholder="كهرباء"
-                    />
+                    >
+                      <SelectTrigger id="prod-category">
+                        <SelectValue placeholder="اختر الفئة" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="غير محدد">غير محدد</SelectItem>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.name}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="md:col-span-2">
                     <Label htmlFor="prod-brands">الماركات المدعومة</Label>

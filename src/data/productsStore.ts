@@ -1,8 +1,9 @@
 import React from 'react';
-import { products as defaultProducts } from '@/data/mockData';
 import type { Product } from '@/types/marketplace';
+import { adminSeedProducts } from '@/data/adminCatalog';
 
 const STORAGE_KEY = 'vhc_products';
+const STORAGE_BOOTSTRAP_KEY = 'vhc_products_bootstrapped';
 const ADMIN_ID = 'admin_local';
 const ADMIN_NAME = 'الأدمن';
 
@@ -40,18 +41,21 @@ const emitProductsUpdated = () => {
 };
 
 export const getProducts = (): Product[] => {
-  if (typeof window === 'undefined') return normalizeProducts(defaultProducts);
+  if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      const seeded = filterAdminProducts(normalizeProducts(defaultProducts));
+    const alreadyBootstrapped = localStorage.getItem(STORAGE_BOOTSTRAP_KEY) === 'true';
+    if (!raw || !alreadyBootstrapped) {
+      const seeded = filterAdminProducts(normalizeProducts(adminSeedProducts));
       localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+      localStorage.setItem(STORAGE_BOOTSTRAP_KEY, 'true');
       return seeded;
     }
+
     const parsed = JSON.parse(raw) as Product[];
     return filterAdminProducts(normalizeProducts(cleanupLegacyProductFields(parsed)));
   } catch {
-    return filterAdminProducts(normalizeProducts(defaultProducts));
+    return [];
   }
 };
 
