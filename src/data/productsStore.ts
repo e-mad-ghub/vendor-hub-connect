@@ -11,20 +11,32 @@ const ADMIN_NAME = 'الأدمن';
 export type NewProductInput = {
   title: string;
   description: string;
-  price: number;
+  newAvailable: boolean;
+  newPrice?: number;
+  importedAvailable: boolean;
   category: string;
   carBrands?: string[];
   imageDataUrl?: string;
 };
 
 const normalizeProducts = (items: Product[]): Product[] =>
-  items.map((product) => ({
-    ...product,
-    ownerId: product.ownerId || ADMIN_ID,
-    ownerName: product.ownerName || ADMIN_NAME,
-    carBrands: product.carBrands || [],
-    imageDataUrl: product.imageDataUrl || '',
-  }));
+  items.map((product) => {
+    const legacyPrice = (product as Product & { price?: number }).price;
+    const derivedNewPrice = product.newPrice ?? (typeof legacyPrice === 'number' ? legacyPrice : 1000);
+    const derivedNewAvailable = true;
+    const derivedImportedAvailable = true;
+
+    return {
+      ...product,
+      newAvailable: derivedNewAvailable,
+      newPrice: derivedNewPrice,
+      importedAvailable: derivedImportedAvailable,
+      ownerId: product.ownerId || ADMIN_ID,
+      ownerName: product.ownerName || ADMIN_NAME,
+      carBrands: product.carBrands || [],
+      imageDataUrl: product.imageDataUrl || '',
+    };
+  });
 
 const filterAdminProducts = (items: Product[]): Product[] =>
   items.filter((product) => (product.ownerId || ADMIN_ID) === ADMIN_ID);
@@ -81,6 +93,15 @@ export const getProducts = (): Product[] => {
 
     const parsed = JSON.parse(raw) as Product[];
     const normalized = filterAdminProducts(normalizeProducts(cleanupLegacyProductFields(parsed)));
+    const prevById = new Map(parsed.map((item) => [item.id, item]));
+    const availabilityChanged = normalized.some((product) => {
+      const prev = prevById.get(product.id);
+      if (!prev) return true;
+      const prevNewPrice = (prev as Product & { newPrice?: number }).newPrice;
+      return prev.newAvailable !== product.newAvailable
+        || prev.importedAvailable !== product.importedAvailable
+        || prevNewPrice !== product.newPrice;
+    });
     const translated = translateProductBrands(normalized);
     const brandOptions = loadBrandOptions();
     const expanded = translated.items.map((product) => ({
@@ -93,7 +114,7 @@ export const getProducts = (): Product[] => {
       if (prev.length !== next.length) return true;
       return prev.some((value, idx) => value !== next[idx]);
     });
-    if (translated.changed) {
+    if (translated.changed || availabilityChanged) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(translated.items));
       emitProductsUpdated();
     }
@@ -118,7 +139,9 @@ export const addProduct = (input: NewProductInput): Product => {
     id: `p_${Date.now()}`,
     title: input.title,
     description: input.description,
-    price: input.price,
+    newAvailable: input.newAvailable,
+    newPrice: input.newAvailable ? input.newPrice : undefined,
+    importedAvailable: input.importedAvailable,
     category: input.category,
     ownerId: ADMIN_ID,
     ownerName: ADMIN_NAME,
@@ -142,9 +165,15 @@ export const updateProduct = (id: string, updates: Partial<Product>): Product | 
   const current = getProducts();
   const next = current.map((product) => {
     if (product.id !== id) return product;
+    const nextNewAvailable =
+      typeof updates.newAvailable === 'boolean' ? updates.newAvailable : product.newAvailable;
+    const nextNewPrice =
+      typeof updates.newPrice === 'number' ? updates.newPrice : product.newPrice;
     return {
       ...product,
       ...updates,
+      newAvailable: nextNewAvailable,
+      newPrice: nextNewAvailable ? nextNewPrice : undefined,
       ownerId: ADMIN_ID,
       ownerName: ADMIN_NAME,
       carBrands: updates.carBrands ?? product.carBrands ?? [],

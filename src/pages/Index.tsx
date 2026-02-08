@@ -80,7 +80,7 @@ const Index = () => {
               ? `${customPartName.trim()} (${customCarBrand.trim()})`
               : customPartName.trim(),
             quantity: 1,
-            price: 0,
+            unitPrice: 0,
             image: '',
           },
         ],

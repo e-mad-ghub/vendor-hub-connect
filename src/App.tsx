@@ -10,6 +10,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { LoadingState } from "@/components/LoadingState";
 import { AppAnalytics } from "@/components/AppAnalytics";
 import { AppSpeedInsights } from "@/components/AppSpeedInsights";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import Search from "./pages/Search";
 
@@ -40,6 +41,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <ScrollToTop />
             <Suspense
               fallback={(
                 <div className="container py-12">

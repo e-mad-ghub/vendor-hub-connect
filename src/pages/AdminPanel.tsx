@@ -46,7 +46,9 @@ const AdminPanel = () => {
   const [newProduct, setNewProduct] = React.useState({
     title: '',
     description: '',
-    price: '',
+    newPrice: '',
+    newAvailable: true,
+    importedAvailable: false,
     category: '',
     imageDataUrl: '',
   });
@@ -55,7 +57,9 @@ const AdminPanel = () => {
   const [editingProduct, setEditingProduct] = React.useState({
     title: '',
     description: '',
-    price: '',
+    newPrice: '',
+    newAvailable: true,
+    importedAvailable: false,
     category: '',
     imageDataUrl: '',
   });
@@ -189,7 +193,13 @@ const AdminPanel = () => {
   const exportCsv = () => {
     const headers = ['id', 'customerName', 'customerPhone', 'createdAt', 'items'];
     const rows = requests.map((req) => {
-      const items = req.items.map((i) => `${i.title} x ${i.quantity}`).join(' | ');
+      const items = req.items
+        .map((i) => {
+          const qualityLabel = i.quality === 'imported' ? 'استيراد' : i.quality === 'new' ? 'جديد' : 'غير محدد';
+          const priceLabel = typeof i.unitPrice === 'number' ? `ج.م ${i.unitPrice}` : 'سعر حسب العرض';
+          return `${i.title} (${qualityLabel}) x ${i.quantity} — ${priceLabel}`;
+        })
+        .join(' | ');
       return [req.id, req.customerName, req.customerPhone, req.createdAt, items]
         .map((value) => `"${String(value).replace(/"/g, '""')}"`)
         .join(',');
@@ -258,19 +268,25 @@ const AdminPanel = () => {
 
   const handleCreateProduct = () => {
     if (isLoading) return;
-    const price = Number(newProduct.price);
     if (!newProduct.title.trim()) {
       toast.error('من فضلك اكتب اسم المنتج');
       return;
     }
-    if (!Number.isFinite(price) || price <= 0) {
-      toast.error('ادخل سعر صالح');
+    if (!newProduct.newAvailable && !newProduct.importedAvailable) {
+      toast.error('لازم تختار جودة متاحة على الأقل');
+      return;
+    }
+    const price = Number(newProduct.newPrice);
+    if (newProduct.newAvailable && (!Number.isFinite(price) || price <= 0)) {
+      toast.error('ادخل سعر صالح للجديد');
       return;
     }
     createProduct({
       title: newProduct.title.trim(),
       description: newProduct.description.trim(),
-      price,
+      newAvailable: newProduct.newAvailable,
+      newPrice: newProduct.newAvailable ? price : undefined,
+      importedAvailable: newProduct.importedAvailable,
       category: newProduct.category.trim() || 'غير محدد',
       carBrands: newProductBrands,
       imageDataUrl: newProduct.imageDataUrl,
@@ -278,7 +294,9 @@ const AdminPanel = () => {
     setNewProduct({
       title: '',
       description: '',
-      price: '',
+      newPrice: '',
+      newAvailable: true,
+      importedAvailable: false,
       category: '',
       imageDataUrl: '',
     });
@@ -293,7 +311,9 @@ const AdminPanel = () => {
     setEditingProduct({
       title: product.title,
       description: product.description,
-      price: String(product.price),
+      newPrice: product.newPrice ? String(product.newPrice) : '',
+      newAvailable: !!product.newAvailable,
+      importedAvailable: !!product.importedAvailable,
       category: product.category,
       imageDataUrl: product.imageDataUrl || '',
     });
@@ -305,7 +325,9 @@ const AdminPanel = () => {
     setEditingProduct({
       title: '',
       description: '',
-      price: '',
+      newPrice: '',
+      newAvailable: true,
+      importedAvailable: false,
       category: '',
       imageDataUrl: '',
     });
@@ -315,19 +337,25 @@ const AdminPanel = () => {
   const handleSaveEdit = () => {
     if (isLoading) return;
     if (!editingId) return;
-    const price = Number(editingProduct.price);
     if (!editingProduct.title.trim()) {
       toast.error('من فضلك اكتب اسم المنتج');
       return;
     }
-    if (!Number.isFinite(price) || price <= 0) {
-      toast.error('ادخل سعر صالح');
+    if (!editingProduct.newAvailable && !editingProduct.importedAvailable) {
+      toast.error('لازم تختار جودة متاحة على الأقل');
+      return;
+    }
+    const price = Number(editingProduct.newPrice);
+    if (editingProduct.newAvailable && (!Number.isFinite(price) || price <= 0)) {
+      toast.error('ادخل سعر صالح للجديد');
       return;
     }
     editProduct(editingId, {
       title: editingProduct.title.trim(),
       description: editingProduct.description.trim(),
-      price,
+      newAvailable: editingProduct.newAvailable,
+      newPrice: editingProduct.newAvailable ? price : undefined,
+      importedAvailable: editingProduct.importedAvailable,
       category: editingProduct.category.trim() || 'غير محدد',
       carBrands: editingProductBrands,
       imageDataUrl: editingProduct.imageDataUrl,
@@ -455,6 +483,12 @@ const AdminPanel = () => {
                             <div className="flex-1">
                               <p className="font-medium">{item.title}</p>
                               <p className="text-muted-foreground text-xs">الكمية: {item.quantity}</p>
+                              <p className="text-muted-foreground text-xs">
+                                الجودة: {item.quality === 'imported' ? 'استيراد' : item.quality === 'new' ? 'جديد' : 'غير محدد'}
+                              </p>
+                              <p className="text-muted-foreground text-xs">
+                                السعر: {typeof item.unitPrice === 'number' ? `ج.م ${item.unitPrice}` : 'سعر حسب العرض'}
+                              </p>
                             </div>
                           </div>
                         ))}
@@ -506,15 +540,43 @@ const AdminPanel = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="prod-price">السعر</Label>
+                    <Label>الجودة المتاحة</Label>
+                    <div className="flex flex-wrap gap-3 mt-2">
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={editingId ? editingProduct.newAvailable : newProduct.newAvailable}
+                          onChange={(e) => (editingId
+                            ? setEditingProduct({ ...editingProduct, newAvailable: e.target.checked })
+                            : setNewProduct({ ...newProduct, newAvailable: e.target.checked })
+                          )}
+                        />
+                        جديد
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={editingId ? editingProduct.importedAvailable : newProduct.importedAvailable}
+                          onChange={(e) => (editingId
+                            ? setEditingProduct({ ...editingProduct, importedAvailable: e.target.checked })
+                            : setNewProduct({ ...newProduct, importedAvailable: e.target.checked })
+                          )}
+                        />
+                        استيراد
+                      </label>
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="prod-price">سعر الجديد</Label>
                     <Input
                       id="prod-price"
-                      value={editingId ? editingProduct.price : newProduct.price}
+                      value={editingId ? editingProduct.newPrice : newProduct.newPrice}
                       onChange={(e) => (editingId
-                        ? setEditingProduct({ ...editingProduct, price: e.target.value })
-                        : setNewProduct({ ...newProduct, price: e.target.value })
+                        ? setEditingProduct({ ...editingProduct, newPrice: e.target.value })
+                        : setNewProduct({ ...newProduct, newPrice: e.target.value })
                       )}
                       placeholder="1950"
+                      disabled={editingId ? !editingProduct.newAvailable : !newProduct.newAvailable}
                     />
                   </div>
                   <div>
@@ -631,7 +693,14 @@ const AdminPanel = () => {
                         <div className="flex-1">
                           <p className="font-medium">{product.title}</p>
                           <p className="text-xs text-muted-foreground">الوصف: {product.description}</p>
-                          <p className="text-xs text-muted-foreground">السعر: ج.م {product.price.toFixed(0)}</p>
+                          <p className="text-xs text-muted-foreground">
+                            جديد: {product.newAvailable && typeof product.newPrice === 'number'
+                              ? `ج.م ${product.newPrice.toFixed(0)}`
+                              : 'غير متاح'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            استيراد: {product.importedAvailable ? 'متاح' : 'غير متاح'}
+                          </p>
                           <p className="text-xs text-muted-foreground">الفئة: {product.category}</p>
                           <p className="text-xs text-muted-foreground">
                             الماركات: {formatCarBrands(product.carBrands)}

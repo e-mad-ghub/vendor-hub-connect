@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,18 @@ const Cart = () => {
   const navigate = useNavigate();
   const { items, removeFromCart, updateQuantity, getCartTotal, getDetailedItems } = useCart();
   const detailedItems = getDetailedItems();
+  const groupedItems = useMemo(() => {
+    const map = new Map<string, { productId: string; product: typeof detailedItems[number]['product']; items: typeof detailedItems }>();
+    detailedItems.forEach((item) => {
+      const existing = map.get(item.productId);
+      if (existing) {
+        existing.items.push(item);
+      } else {
+        map.set(item.productId, { productId: item.productId, product: item.product, items: [item] });
+      }
+    });
+    return Array.from(map.values());
+  }, [detailedItems]);
   const subtotal = getCartTotal();
 
   if (items.length === 0) {
@@ -36,14 +48,19 @@ const Cart = () => {
     <Layout>
       <Seo title="عربة التسوق" description="راجع منتجاتك واطلب عرض سعر عبر واتساب." />
       <div className="container py-4 md:py-8">
-        <h1 className="text-2xl md:text-3xl font-bold mb-6">عربة التسوق ({items.length} منتج)</h1>
+        <h1 className="text-2xl md:text-3xl font-bold mb-6">عربة التسوق ({groupedItems.length} منتج)</h1>
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
             <div className="bg-card rounded-xl shadow-card overflow-hidden">
               <div className="divide-y divide-border">
-                {detailedItems.map(({ productId, quantity, product }) => (
+                {groupedItems.map(({ productId, product, items: productItems }) => {
+                  const hasNew = productItems.some(item => item.quality === 'new');
+                  const hasImported = productItems.some(item => item.quality === 'imported');
+                  const primaryItem = productItems.find(item => item.quality === 'new') || productItems[0];
+                  const displayQuantity = primaryItem?.quantity || 1;
+                  return (
                   <div key={productId} className="p-4 flex gap-4">
                     <Link to={`/product/${productId}`} className="w-20 h-20 md:w-24 md:h-24">
                       <div className="w-full h-full rounded-lg bg-muted flex items-center justify-center text-[10px] text-muted-foreground overflow-hidden">
@@ -67,19 +84,32 @@ const Cart = () => {
                           {product.title}
                         </h3>
                       </Link>
-                      <p className="text-lg font-bold text-primary mt-1">ج.م {product.price.toFixed(2)}</p>
+                      <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                        {hasNew && (
+                          <p>جديد: ج.م {(productItems.find(item => item.quality === 'new')?.unitPrice || 0).toFixed(2)}</p>
+                        )}
+                        {hasImported && (
+                          <p>استيراد: سعر حسب العرض</p>
+                        )}
+                      </div>
 
                       <div className="flex items-center justify-between mt-2">
                         <div className="flex items-center border border-border rounded-lg">
                           <button
-                            onClick={() => updateQuantity(productId, quantity - 1)}
+                            onClick={() => {
+                              if (hasNew) updateQuantity(productId, 'new', displayQuantity - 1);
+                              if (hasImported) updateQuantity(productId, 'imported', displayQuantity - 1);
+                            }}
                             className="p-1.5 hover:bg-muted transition-colors"
                           >
                             <Minus className="h-3 w-3" />
                           </button>
-                          <span className="w-8 text-center text-sm font-medium">{quantity}</span>
+                          <span className="w-8 text-center text-sm font-medium">{displayQuantity}</span>
                           <button
-                            onClick={() => updateQuantity(productId, quantity + 1)}
+                            onClick={() => {
+                              if (hasNew) updateQuantity(productId, 'new', displayQuantity + 1);
+                              if (hasImported) updateQuantity(productId, 'imported', displayQuantity + 1);
+                            }}
                             className="p-1.5 hover:bg-muted transition-colors"
                           >
                             <Plus className="h-3 w-3" />
@@ -87,7 +117,10 @@ const Cart = () => {
                         </div>
 
                         <button
-                          onClick={() => removeFromCart(productId)}
+                          onClick={() => {
+                            if (hasNew) removeFromCart(productId, 'new');
+                            if (hasImported) removeFromCart(productId, 'imported');
+                          }}
                           className="text-muted-foreground hover:text-destructive transition-colors p-2"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -95,7 +128,7 @@ const Cart = () => {
                       </div>
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
             </div>
           </div>
