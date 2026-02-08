@@ -14,6 +14,7 @@ import { InlineError } from '@/components/InlineError';
 import { Seo } from '@/components/Seo';
 import { trackEvent } from '@/lib/analytics';
 import { sanitizePhoneInput, validatePhone } from '@/lib/validation';
+import { formatCarBrands } from '@/lib/brands';
 
 const DEFAULT_TEMPLATE =
   'أهلًا، أنا اسمي [Customer Name]. عايز عرض سعر للقطع التالية:\n[Items]\nمن فضلك أكد السعر والتوفر. شكرًا.';
@@ -52,24 +53,31 @@ const Checkout = () => {
       .map(({ product, quantity, quality, unitPrice }) => {
         const qualityLabel = quality === 'new' ? 'جديد' : 'استيراد';
         const priceLabel = quality === 'new' ? `ج.م ${unitPrice.toFixed(2)}` : 'سعر حسب العرض';
-        return `- ${product.title} (${qualityLabel}) x ${quantity} — ${priceLabel}`;
+        const brands = formatCarBrands(product.carBrands);
+        return [
+          `• ${product.title}`,
+          `  - الجودة: ${qualityLabel}`,
+          `  - الكمية: ${quantity}`,
+          `  - السعر: ${priceLabel}`,
+          `  - الماركات/الموديلات: ${brands}`,
+        ].join('\n');
       })
       .join('\n');
   }, [detailedItems]);
 
   const buildMessage = () => {
-    const template = DEFAULT_TEMPLATE;
-    let message = template
-      .replace(/\[Customer Name\]/g, customerName.trim())
-      .replace(/\[Customer Phone\]/g, customerPhone.trim())
-      .replace(/\[Items\]/g, itemsText);
+    const header = [
+      'طلب عرض سعر',
+      `الاسم: ${customerName.trim()}`,
+      `رقم التليفون: ${customerPhone.trim()}`,
+      '',
+      'تفاصيل الطلب:',
+      itemsText,
+      '',
+      'ملاحظة: من فضلك أكد السعر والتوفر.',
+    ].join('\n');
 
-    if (!template.includes('[Items]')) {
-      message = `${message}\n${itemsText}`;
-    }
-    message = `${message}\nرقم التليفون: ${customerPhone.trim()}`;
-
-    return message.trim();
+    return header.trim();
   };
 
   if (items.length === 0) {
