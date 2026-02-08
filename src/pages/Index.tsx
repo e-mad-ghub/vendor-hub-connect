@@ -98,7 +98,7 @@ const Index = () => {
     <Layout>
       <Seo
         title="الرئيسية"
-        description="سوق الحرفيين لقطع غيار السيارات. اطلب عرض سعر سريع عبر واتساب وتأكد من التوافر."
+        description="معانا هتقدر توصل لأي قطعه غيار بتدور عليها في مصر سواء جديدة او استيراد ف ثواني من موبايلك و توصلك لحد عربيتك"
       />
       {/* Hero Banner */}
       <section className="bg-gradient-to-r from-primary/10 via-primary/5 to-background">
