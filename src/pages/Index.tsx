@@ -531,12 +531,12 @@ const Index = () => {
       {/* CTA Banner */}
       <section className="container my-10">
         <div className="bg-gradient-to-r from-primary to-primary/80 rounded-2xl p-8 md:p-12 text-center text-primary-foreground">
-          <h3 className="text-2xl md:text-3xl font-bold mb-4">جاهز تطلب عرض سعر؟</h3>
+          <h3 className="text-2xl md:text-3xl font-bold mb-4">هل ترغب في عرض سعر دقيق وسريع؟</h3>
           <p className="mb-6 opacity-90 max-w-md mx-auto">
-            المنصة دلوقتي شغالة كبائع واحد. أضف منتجاتك للسلة واطلب عرض سعر عبر واتساب لتأكيد السعر والتوافر.
+            أضف المنتجات المناسبة إلى السلة ثم أرسل طلب عرض السعر عبر واتساب، وسيقوم فريقنا بمراجعة التوفر وتأكيد التفاصيل قبل إتمام الاتفاق.
           </p>
           <p className="text-sm opacity-90">
-            التواصل والمتابعة بيتموا يدويًا عبر واتساب.
+            يتم التواصل والمتابعة مباشرة عبر واتساب لضمان سرعة الخدمة ودقة المعلومات.
           </p>
         </div>
       </section>
