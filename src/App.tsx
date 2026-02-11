@@ -21,7 +21,6 @@ const Checkout = React.lazy(() => import("./pages/Checkout"));
 const Login = React.lazy(() => import("./pages/Login"));
 const AdminPanel = React.lazy(() => import("./pages/AdminPanel"));
 const AdminBrands = React.lazy(() => import("./pages/AdminBrands"));
-const About = React.lazy(() => import("./pages/About"));
 const Contact = React.lazy(() => import("./pages/Contact"));
 const Terms = React.lazy(() => import("./pages/Terms"));
 const Privacy = React.lazy(() => import("./pages/Privacy"));
@@ -73,7 +72,6 @@ const App = () => (
                     </ProtectedRoute>
                   )}
                 />
-                <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />

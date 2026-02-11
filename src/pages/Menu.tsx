@@ -16,7 +16,6 @@ const Menu = () => (
           <p className="font-medium mb-2">الفئات</p>
           {categories.map(c => (<Link key={c.id} to={`/category/${c.name}`} className="block py-2 text-muted-foreground">{c.icon} {c.name}</Link>))}
         </div>
-        <Link to="/about" className="block p-3 bg-card rounded-lg">عنّا</Link>
         <Link to="/contact" className="block p-3 bg-card rounded-lg">اتصل بينا</Link>
         <Link to="/terms" className="block p-3 bg-card rounded-lg">الشروط</Link>
         <Link to="/privacy" className="block p-3 bg-card rounded-lg">الخصوصية</Link>
