@@ -5,10 +5,9 @@ import { formatCarBrands } from '@/lib/brands';
 
 interface ProductCardProps {
   product: Product;
-  fitmentHint?: string;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product, fitmentHint }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const hasNew = !!product.newAvailable && typeof product.newPrice === 'number';
   const hasImported = !!product.importedAvailable;
   const newPrice = typeof product.newPrice === 'number' ? product.newPrice : 0;
@@ -22,6 +21,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, fitmentHint }
             className="w-full h-full object-cover"
             loading="lazy"
             decoding="async"
+            fetchPriority="low"
+            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+            width={400}
+            height={400}
           />
         ) : (
           'صورة المنتج'
@@ -55,10 +58,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, fitmentHint }
         <p className="text-xs text-muted-foreground mt-1">
           الماركات: {formatCarBrands(product.carBrands)}
         </p>
-
-        {fitmentHint && (
-          <p className="text-[11px] text-amber-600 mt-1 font-medium">{fitmentHint}</p>
-        )}
       </div>
     </Link>
   );

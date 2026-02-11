@@ -9,6 +9,7 @@ import { defaultBrandOptions, type BrandOption, BRAND_OPTIONS_KEY, translateBran
 import { LoadingState } from '@/components/LoadingState';
 import { Seo } from '@/components/Seo';
 import { toast } from 'sonner';
+import { getErrorMessage } from '@/lib/error';
 
 const AdminBrands = () => {
   const { user, isLoading: authLoading } = useAuth();
@@ -122,8 +123,8 @@ const AdminBrands = () => {
       localStorage.setItem(BRAND_OPTIONS_KEY, JSON.stringify(brandOptions));
       setBrandOptionsDirty(false);
       toast.success('تم حفظ الماركات والموديلات');
-    } catch (e: any) {
-      toast.error(e?.message || 'تعذر حفظ الماركات');
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e, 'تعذر حفظ الماركات'));
     }
   };
 

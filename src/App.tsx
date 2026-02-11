@@ -27,7 +27,6 @@ const Privacy = React.lazy(() => import("./pages/Privacy"));
 const RefundPolicy = React.lazy(() => import("./pages/RefundPolicy"));
 const Menu = React.lazy(() => import("./pages/Menu"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
-const SetupAdmin = React.lazy(() => import("./pages/SetupAdmin"));
 const NotAuthorized = React.lazy(() => import("./pages/NotAuthorized"));
 
 const queryClient = new QueryClient();
@@ -77,7 +76,6 @@ const App = () => (
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/refund-policy" element={<RefundPolicy />} />
                 <Route path="/menu" element={<Menu />} />
-                <Route path="/setup-admin" element={<SetupAdmin />} />
                 <Route path="/not-authorized" element={<NotAuthorized />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

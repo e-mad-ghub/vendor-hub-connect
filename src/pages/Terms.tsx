@@ -4,6 +4,7 @@ import { Seo } from '@/components/Seo';
 import { api } from '@/lib/api';
 import { LoadingState } from '@/components/LoadingState';
 import { InlineError } from '@/components/InlineError';
+import { getErrorMessage } from '@/lib/error';
 
 const Terms = () => {
   const [supportEmail, setSupportEmail] = useState('');
@@ -18,8 +19,8 @@ const Terms = () => {
       const data = await api.getCustomerServiceSettings();
       setSupportEmail(data.supportEmail);
       setLastUpdated(data.lastUpdated);
-    } catch (e: any) {
-      setLoadError(e?.message || 'تعذر تحميل بيانات التواصل.');
+    } catch (e: unknown) {
+      setLoadError(getErrorMessage(e, 'تعذر تحميل بيانات التواصل.'));
     } finally {
       setIsLoading(false);
     }

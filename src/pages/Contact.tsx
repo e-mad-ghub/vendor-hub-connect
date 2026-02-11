@@ -9,6 +9,7 @@ import { Seo } from '@/components/Seo';
 import { api } from '@/lib/api';
 import { LoadingState } from '@/components/LoadingState';
 import { InlineError } from '@/components/InlineError';
+import { getErrorMessage } from '@/lib/error';
 
 const Contact = () => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
@@ -34,8 +35,8 @@ const Contact = () => {
         supportAddress: data.supportAddress,
         lastUpdated: data.lastUpdated,
       });
-    } catch (e: any) {
-      setLoadError(e?.message || 'تعذر تحميل بيانات خدمة العملاء.');
+    } catch (e: unknown) {
+      setLoadError(getErrorMessage(e, 'تعذر تحميل بيانات خدمة العملاء.'));
     } finally {
       setIsLoading(false);
     }

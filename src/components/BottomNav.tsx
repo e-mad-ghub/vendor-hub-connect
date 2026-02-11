@@ -14,7 +14,7 @@ export const BottomNav: React.FC = () => {
     { path: '/', icon: Home, label: 'الرئيسية' },
     { path: '/search', icon: Search, label: 'بحث' },
     { path: '/cart', icon: ShoppingCart, label: 'العربة', badge: cartCount },
-    { path: isAuthenticated ? '/account' : '/login', icon: User, label: isAuthenticated ? 'حسابي' : 'تسجيل' },
+    { path: isAuthenticated ? '/admin' : '/login', icon: User, label: isAuthenticated ? 'لوحتي' : 'تسجيل' },
     { path: '/menu', icon: Menu, label: 'المزيد' },
   ];
 

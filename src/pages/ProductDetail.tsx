@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Seo } from '@/components/Seo';
 import { trackEvent } from '@/lib/analytics';
 import { formatCarBrands } from '@/lib/brands';
+import { pushRecentViewedProduct } from '@/lib/customerContext';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -36,7 +37,12 @@ const ProductDetail = () => {
       new: availability.hasNew,
       imported: availability.hasImported,
     });
-  }, [product?.id, availability.hasNew, availability.hasImported]);
+  }, [product, availability.hasNew, availability.hasImported]);
+
+  useEffect(() => {
+    if (!product?.id) return;
+    pushRecentViewedProduct(product.id);
+  }, [product?.id]);
 
   if (!product) {
     return (

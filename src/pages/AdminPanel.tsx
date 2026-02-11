@@ -22,6 +22,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { Seo } from '@/components/Seo';
 import { sanitizePhoneInput, validatePhone } from '@/lib/validation';
 import { formatCarBrands } from '@/lib/brands';
+import { getErrorMessage } from '@/lib/error';
 
 const AdminPanel = () => {
   const { user, logout, isLoading: authLoading } = useAuth();
@@ -82,10 +83,11 @@ const AdminPanel = () => {
       setPhoneNumber(settings?.phoneNumber || '');
       const customerServiceData = await api.getCustomerServiceSettings();
       setCustomerService(customerServiceData);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setRequests([]);
-      setRequestsError(e?.message || 'تعذر تحميل الطلبات.');
-      setSettingsError(e?.message || 'تعذر تحميل إعدادات واتساب.');
+      const message = getErrorMessage(e, 'تعذر تحميل البيانات.');
+      setRequestsError(message);
+      setSettingsError(message);
     } finally {
       setIsLoading(false);
     }
@@ -151,8 +153,8 @@ const AdminPanel = () => {
       });
       setPhoneNumber(updated.phoneNumber || '');
       toast.success('تم تحديث إعدادات واتساب');
-    } catch (e: any) {
-      toast.error(e.message || 'تعذر حفظ الإعدادات');
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e, 'تعذر حفظ الإعدادات'));
     } finally {
       setSaving(false);
     }
@@ -183,8 +185,8 @@ const AdminPanel = () => {
       });
       setCustomerService(updated);
       toast.success('تم تحديث بيانات خدمة العملاء');
-    } catch (e: any) {
-      toast.error(e?.message || 'تعذر حفظ بيانات خدمة العملاء');
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e, 'تعذر حفظ بيانات خدمة العملاء'));
     } finally {
       setCustomerServiceSaving(false);
     }
@@ -232,8 +234,8 @@ const AdminPanel = () => {
       setRequests((prev) => prev.map((item) => (item.id === request.id ? { ...item, status: 'followed_up' } : item)));
       const waUrl = `https://wa.me/${phoneDigits}?text=${encodeURIComponent('أهلًا، بخصوص طلب عرض السعر عندنا...')}`;
       window.location.href = waUrl;
-    } catch (e: any) {
-      toast.error(e?.message || 'تعذر متابعة الطلب');
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e, 'تعذر متابعة الطلب'));
     } finally {
       setPendingRequestIds((prev) => {
         const next = new Set(prev);
@@ -255,8 +257,8 @@ const AdminPanel = () => {
       await api.updateQuoteRequestStatus(requestId, 'cancelled');
       setRequests((prev) => prev.map((item) => (item.id === requestId ? { ...item, status: 'cancelled' } : item)));
       toast.success('تم إلغاء الطلب');
-    } catch (e: any) {
-      toast.error(e?.message || 'تعذر إلغاء الطلب');
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e, 'تعذر إلغاء الطلب'));
     } finally {
       setPendingRequestIds((prev) => {
         const next = new Set(prev);
