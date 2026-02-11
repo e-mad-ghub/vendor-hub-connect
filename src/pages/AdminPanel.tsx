@@ -512,17 +512,14 @@ const AdminPanel = () => {
           <TabsContent value="products">
             <div className="bg-card rounded-lg md:rounded-xl shadow-card p-4 md:p-6 space-y-6">
               <div>
-                <h3 className="font-semibold mb-4">{editingId ? 'تعديل المنتج' : 'إضافة منتج جديد'}</h3>
+                <h3 className="font-semibold mb-4">إضافة منتج جديد</h3>
                 <div className="grid md:grid-cols-2 gap-3 md:gap-4">
                   <div className="md:col-span-2">
                     <Label htmlFor="prod-title">اسم المنتج</Label>
                     <Input
                       id="prod-title"
-                      value={editingId ? editingProduct.title : newProduct.title}
-                      onChange={(e) => (editingId
-                        ? setEditingProduct({ ...editingProduct, title: e.target.value })
-                        : setNewProduct({ ...newProduct, title: e.target.value })
-                      )}
+                      value={newProduct.title}
+                      onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
                       placeholder="مثال: بطارية فارتا 70 أمبير"
                     />
                   </div>
@@ -530,11 +527,8 @@ const AdminPanel = () => {
                     <Label htmlFor="prod-desc">الوصف</Label>
                     <Textarea
                       id="prod-desc"
-                      value={editingId ? editingProduct.description : newProduct.description}
-                      onChange={(e) => (editingId
-                        ? setEditingProduct({ ...editingProduct, description: e.target.value })
-                        : setNewProduct({ ...newProduct, description: e.target.value })
-                      )}
+                      value={newProduct.description}
+                      onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
                       placeholder="وصف مختصر للمنتج"
                       rows={3}
                     />
@@ -545,22 +539,16 @@ const AdminPanel = () => {
                       <label className="flex items-center gap-2 text-sm">
                         <input
                           type="checkbox"
-                          checked={editingId ? editingProduct.newAvailable : newProduct.newAvailable}
-                          onChange={(e) => (editingId
-                            ? setEditingProduct({ ...editingProduct, newAvailable: e.target.checked })
-                            : setNewProduct({ ...newProduct, newAvailable: e.target.checked })
-                          )}
+                          checked={newProduct.newAvailable}
+                          onChange={(e) => setNewProduct({ ...newProduct, newAvailable: e.target.checked })}
                         />
                         جديد
                       </label>
                       <label className="flex items-center gap-2 text-sm">
                         <input
                           type="checkbox"
-                          checked={editingId ? editingProduct.importedAvailable : newProduct.importedAvailable}
-                          onChange={(e) => (editingId
-                            ? setEditingProduct({ ...editingProduct, importedAvailable: e.target.checked })
-                            : setNewProduct({ ...newProduct, importedAvailable: e.target.checked })
-                          )}
+                          checked={newProduct.importedAvailable}
+                          onChange={(e) => setNewProduct({ ...newProduct, importedAvailable: e.target.checked })}
                         />
                         استيراد
                       </label>
@@ -570,23 +558,17 @@ const AdminPanel = () => {
                     <Label htmlFor="prod-price">سعر الجديد</Label>
                     <Input
                       id="prod-price"
-                      value={editingId ? editingProduct.newPrice : newProduct.newPrice}
-                      onChange={(e) => (editingId
-                        ? setEditingProduct({ ...editingProduct, newPrice: e.target.value })
-                        : setNewProduct({ ...newProduct, newPrice: e.target.value })
-                      )}
+                      value={newProduct.newPrice}
+                      onChange={(e) => setNewProduct({ ...newProduct, newPrice: e.target.value })}
                       placeholder="1950"
-                      disabled={editingId ? !editingProduct.newAvailable : !newProduct.newAvailable}
+                      disabled={!newProduct.newAvailable}
                     />
                   </div>
                   <div>
                     <Label htmlFor="prod-category">الفئة</Label>
                     <Select
-                      value={editingId ? editingProduct.category : newProduct.category}
-                      onValueChange={(value) => (editingId
-                        ? setEditingProduct({ ...editingProduct, category: value })
-                        : setNewProduct({ ...newProduct, category: value })
-                      )}
+                      value={newProduct.category}
+                      onValueChange={(value) => setNewProduct({ ...newProduct, category: value })}
                     >
                       <SelectTrigger id="prod-category">
                         <SelectValue placeholder="اختر الفئة" />
@@ -609,8 +591,8 @@ const AdminPanel = () => {
                           <label className="flex items-center gap-2">
                             <input
                               type="checkbox"
-                              checked={(editingId ? editingProductBrands : newProductBrands).includes(option.brand)}
-                              onChange={() => toggleBrandSelection(option.brand, !!editingId)}
+                              checked={newProductBrands.includes(option.brand)}
+                              onChange={() => toggleBrandSelection(option.brand, false)}
                             />
                             <span className="text-sm font-medium">{option.brand}</span>
                           </label>
@@ -618,13 +600,13 @@ const AdminPanel = () => {
                             <div className="grid gap-2 pl-6">
                               {option.models.map((model, modelIndex) => {
                                 const value = `${option.brand} - ${model}`;
-                                const selected = (editingId ? editingProductBrands : newProductBrands).includes(value);
+                                const selected = newProductBrands.includes(value);
                                 return (
                                   <label key={`${value}-${modelIndex}`} className="flex items-center gap-2">
                                     <input
                                       type="checkbox"
                                       checked={selected}
-                                      onChange={() => toggleBrandSelection(value, !!editingId)}
+                                      onChange={() => toggleBrandSelection(value, false)}
                                     />
                                     <span className="text-sm text-muted-foreground">{model}</span>
                                   </label>
@@ -644,12 +626,12 @@ const AdminPanel = () => {
                       type="file"
                       accept="image/*"
                       capture="environment"
-                      onChange={(e) => handleImageChange(e.target.files?.[0] || null, !!editingId)}
+                      onChange={(e) => handleImageChange(e.target.files?.[0] || null, false)}
                     />
-                    {(editingId ? editingProduct.imageDataUrl : newProduct.imageDataUrl) && (
+                    {newProduct.imageDataUrl && (
                       <div className="mt-3">
                         <img
-                          src={editingId ? editingProduct.imageDataUrl : newProduct.imageDataUrl}
+                          src={newProduct.imageDataUrl}
                           alt="معاينة المنتج"
                           className="h-32 w-32 rounded object-cover border border-border"
                         />
@@ -658,14 +640,7 @@ const AdminPanel = () => {
                   </div>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {editingId ? (
-                    <>
-                      <Button onClick={handleSaveEdit}>حفظ التعديل</Button>
-                      <Button variant="outline" onClick={cancelEdit}>إلغاء</Button>
-                    </>
-                  ) : (
-                    <Button onClick={handleCreateProduct}>إضافة المنتج</Button>
-                  )}
+                  <Button onClick={handleCreateProduct}>إضافة المنتج</Button>
                 </div>
               </div>
 
@@ -675,47 +650,196 @@ const AdminPanel = () => {
                   <p className="text-sm text-muted-foreground">مافيش منتجات لسه.</p>
                 ) : (
                   <div className="space-y-3">
-                    {products.map((product) => (
-                      <div key={product.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                        <div className="w-12 h-12 rounded bg-muted flex items-center justify-center text-[10px] text-muted-foreground overflow-hidden">
-                          {product.imageDataUrl ? (
-                            <img
-                              src={product.imageDataUrl}
-                              alt={product.title}
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                              decoding="async"
-                            />
+                    {products.map((product) => {
+                      const isInlineEditing = editingId === product.id;
+
+                      return (
+                        <div
+                          key={product.id}
+                          className={[
+                            'rounded-lg border transition-all',
+                            isInlineEditing
+                              ? 'border-primary/40 bg-card p-4 md:p-5 shadow-card-hover space-y-4'
+                              : 'border-border/50 bg-muted/50 p-3',
+                          ].join(' ')}
+                        >
+                          {!isInlineEditing ? (
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                              <div className="w-12 h-12 rounded bg-muted flex items-center justify-center text-[10px] text-muted-foreground overflow-hidden">
+                                {product.imageDataUrl ? (
+                                  <img
+                                    src={product.imageDataUrl}
+                                    alt={product.title}
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                    decoding="async"
+                                  />
+                                ) : (
+                                  'صورة'
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-medium">{product.title}</p>
+                                <p className="text-xs text-muted-foreground">الوصف: {product.description}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  جديد: {product.newAvailable && typeof product.newPrice === 'number'
+                                    ? `ج.م ${product.newPrice.toFixed(0)}`
+                                    : 'غير متاح'}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  استيراد: {product.importedAvailable ? 'متاح' : 'غير متاح'}
+                                </p>
+                                <p className="text-xs text-muted-foreground">الفئة: {product.category}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  الماركات: {formatCarBrands(product.carBrands)}
+                                </p>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Button size="sm" variant="outline" onClick={() => startEdit(product.id)}>
+                                  تعديل
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => deleteProduct(product.id)}>
+                                  حذف
+                                </Button>
+                              </div>
+                            </div>
                           ) : (
-                            'صورة'
+                            <>
+                              <div className="flex items-center justify-between gap-2">
+                                <h4 className="font-semibold text-primary">تعديل المنتج: {product.title}</h4>
+                                <div className="flex items-center gap-2">
+                                  <Button size="sm" onClick={handleSaveEdit}>حفظ التعديل</Button>
+                                  <Button size="sm" variant="outline" onClick={cancelEdit}>إلغاء</Button>
+                                </div>
+                              </div>
+
+                              <div className="grid md:grid-cols-2 gap-3 md:gap-4">
+                                <div className="md:col-span-2">
+                                  <Label htmlFor={`edit-title-${product.id}`}>اسم المنتج</Label>
+                                  <Input
+                                    id={`edit-title-${product.id}`}
+                                    value={editingProduct.title}
+                                    onChange={(e) => setEditingProduct({ ...editingProduct, title: e.target.value })}
+                                  />
+                                </div>
+                                <div className="md:col-span-2">
+                                  <Label htmlFor={`edit-desc-${product.id}`}>الوصف</Label>
+                                  <Textarea
+                                    id={`edit-desc-${product.id}`}
+                                    value={editingProduct.description}
+                                    onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                                    rows={4}
+                                  />
+                                </div>
+                                <div>
+                                  <Label>الجودة المتاحة</Label>
+                                  <div className="flex flex-wrap gap-3 mt-2">
+                                    <label className="flex items-center gap-2 text-sm">
+                                      <input
+                                        type="checkbox"
+                                        checked={editingProduct.newAvailable}
+                                        onChange={(e) => setEditingProduct({ ...editingProduct, newAvailable: e.target.checked })}
+                                      />
+                                      جديد
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm">
+                                      <input
+                                        type="checkbox"
+                                        checked={editingProduct.importedAvailable}
+                                        onChange={(e) => setEditingProduct({ ...editingProduct, importedAvailable: e.target.checked })}
+                                      />
+                                      استيراد
+                                    </label>
+                                  </div>
+                                </div>
+                                <div>
+                                  <Label htmlFor={`edit-price-${product.id}`}>سعر الجديد</Label>
+                                  <Input
+                                    id={`edit-price-${product.id}`}
+                                    value={editingProduct.newPrice}
+                                    onChange={(e) => setEditingProduct({ ...editingProduct, newPrice: e.target.value })}
+                                    disabled={!editingProduct.newAvailable}
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor={`edit-category-${product.id}`}>الفئة</Label>
+                                  <Select
+                                    value={editingProduct.category}
+                                    onValueChange={(value) => setEditingProduct({ ...editingProduct, category: value })}
+                                  >
+                                    <SelectTrigger id={`edit-category-${product.id}`}>
+                                      <SelectValue placeholder="اختر الفئة" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="غير محدد">غير محدد</SelectItem>
+                                      {categories.map((cat) => (
+                                        <SelectItem key={cat.id} value={cat.name}>
+                                          {cat.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="md:col-span-2">
+                                  <Label htmlFor={`edit-brands-${product.id}`}>الماركات المدعومة</Label>
+                                  <div id={`edit-brands-${product.id}`} className="border border-border rounded-lg p-3 space-y-3 max-h-64 overflow-y-auto">
+                                    {brandOptions.map((option, brandIndex) => (
+                                      <div key={`${option.brand}-${brandIndex}`} className="space-y-2">
+                                        <label className="flex items-center gap-2">
+                                          <input
+                                            type="checkbox"
+                                            checked={editingProductBrands.includes(option.brand)}
+                                            onChange={() => toggleBrandSelection(option.brand, true)}
+                                          />
+                                          <span className="text-sm font-medium">{option.brand}</span>
+                                        </label>
+                                        {option.models.length > 0 && (
+                                          <div className="grid gap-2 pl-6">
+                                            {option.models.map((model, modelIndex) => {
+                                              const value = `${option.brand} - ${model}`;
+                                              const selected = editingProductBrands.includes(value);
+                                              return (
+                                                <label key={`${value}-${modelIndex}`} className="flex items-center gap-2">
+                                                  <input
+                                                    type="checkbox"
+                                                    checked={selected}
+                                                    onChange={() => toggleBrandSelection(value, true)}
+                                                  />
+                                                  <span className="text-sm text-muted-foreground">{model}</span>
+                                                </label>
+                                              );
+                                            })}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                                <div className="md:col-span-2">
+                                  <Label htmlFor={`edit-image-${product.id}`}>صورة المنتج</Label>
+                                  <Input
+                                    id={`edit-image-${product.id}`}
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    onChange={(e) => handleImageChange(e.target.files?.[0] || null, true)}
+                                  />
+                                  {editingProduct.imageDataUrl && (
+                                    <div className="mt-3">
+                                      <img
+                                        src={editingProduct.imageDataUrl}
+                                        alt="معاينة المنتج"
+                                        className="h-32 w-32 rounded object-cover border border-border"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </>
                           )}
                         </div>
-                        <div className="flex-1">
-                          <p className="font-medium">{product.title}</p>
-                          <p className="text-xs text-muted-foreground">الوصف: {product.description}</p>
-                          <p className="text-xs text-muted-foreground">
-                            جديد: {product.newAvailable && typeof product.newPrice === 'number'
-                              ? `ج.م ${product.newPrice.toFixed(0)}`
-                              : 'غير متاح'}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            استيراد: {product.importedAvailable ? 'متاح' : 'غير متاح'}
-                          </p>
-                          <p className="text-xs text-muted-foreground">الفئة: {product.category}</p>
-                          <p className="text-xs text-muted-foreground">
-                            الماركات: {formatCarBrands(product.carBrands)}
-                          </p>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Button size="sm" variant="outline" onClick={() => startEdit(product.id)}>
-                            تعديل
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => deleteProduct(product.id)}>
-                            حذف
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
