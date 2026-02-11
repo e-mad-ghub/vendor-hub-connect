@@ -5,9 +5,10 @@ import { formatCarBrands } from '@/lib/brands';
 
 interface ProductCardProps {
   product: Product;
+  fitmentHint?: string;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, fitmentHint }) => {
   const hasNew = !!product.newAvailable && typeof product.newPrice === 'number';
   const hasImported = !!product.importedAvailable;
   const newPrice = typeof product.newPrice === 'number' ? product.newPrice : 0;
@@ -54,6 +55,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <p className="text-xs text-muted-foreground mt-1">
           الماركات: {formatCarBrands(product.carBrands)}
         </p>
+
+        {fitmentHint && (
+          <p className="text-[11px] text-amber-600 mt-1 font-medium">{fitmentHint}</p>
+        )}
       </div>
     </Link>
   );
