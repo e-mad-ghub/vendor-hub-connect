@@ -89,7 +89,7 @@ const Cart = () => {
                           <p>جديد: ج.م {(productItems.find(item => item.quality === 'new')?.unitPrice || 0).toFixed(2)}</p>
                         )}
                         {hasImported && (
-                          <p>استيراد: سعر حسب العرض</p>
+                          <p>استيراد: السعر بيتحدد بعد الطلب</p>
                         )}
                       </div>
 

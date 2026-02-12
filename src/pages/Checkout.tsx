@@ -53,7 +53,7 @@ const Checkout = () => {
     return detailedItems
       .map(({ product, quantity, quality, unitPrice }) => {
         const qualityLabel = quality === 'new' ? 'جديد' : 'استيراد';
-        const priceLabel = quality === 'new' ? `ج.م ${unitPrice.toFixed(2)}` : 'سعر حسب العرض';
+        const priceLabel = quality === 'new' ? `ج.م ${unitPrice.toFixed(2)}` : 'السعر بيتحدد بعد الطلب';
         const brands = formatCarBrands(product.carBrands);
         return [
           `• ${product.title}`,
@@ -254,7 +254,7 @@ const Checkout = () => {
                           {product.title} ({quality === 'new' ? 'جديد' : 'استيراد'}) × {quantity}
                         </span>
                         <span className="whitespace-nowrap">
-                          {quality === 'new' ? `ج.م ${unitPrice.toFixed(2)}` : 'سعر حسب العرض'}
+                          {quality === 'new' ? `ج.م ${unitPrice.toFixed(2)}` : 'السعر بيتحدد بعد الطلب'}
                         </span>
                       </div>
                     ))}

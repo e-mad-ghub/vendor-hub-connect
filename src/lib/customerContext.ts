@@ -9,10 +9,13 @@ export type SavedSearch = {
 const RECENT_VIEWS_KEY = 'vhc_recent_viewed_product_ids';
 const RECENT_QUERIES_KEY = 'vhc_recent_part_queries';
 const SAVED_SEARCHES_KEY = 'vhc_saved_searches';
+const FAVORITE_PRODUCT_IDS_KEY = 'vhc_favorite_product_ids';
+export const FAVORITES_CHANGED_EVENT = 'vhc:favorites-changed';
 
 const MAX_RECENT_VIEWS = 8;
 const MAX_RECENT_QUERIES = 8;
 const MAX_SAVED_SEARCHES = 12;
+const MAX_FAVORITES = 60;
 
 const readJson = <T,>(key: string, fallback: T): T => {
   if (typeof window === 'undefined') return fallback;
@@ -89,4 +92,27 @@ export const saveSearch = (input: Omit<SavedSearch, 'id' | 'createdAt'>): SavedS
   current.unshift(next);
   writeJson(SAVED_SEARCHES_KEY, current.slice(0, MAX_SAVED_SEARCHES));
   return next;
+};
+
+export const getFavoriteProductIds = (): string[] =>
+  readJson<string[]>(FAVORITE_PRODUCT_IDS_KEY, []).filter(Boolean);
+
+export const isFavoriteProduct = (productId: string): boolean =>
+  getFavoriteProductIds().includes(productId);
+
+export const toggleFavoriteProduct = (productId: string): boolean => {
+  if (!productId) return false;
+
+  const current = getFavoriteProductIds();
+  const alreadyFavorite = current.includes(productId);
+
+  const next = alreadyFavorite
+    ? current.filter((id) => id !== productId)
+    : [productId, ...current.filter((id) => id !== productId)].slice(0, MAX_FAVORITES);
+
+  writeJson(FAVORITE_PRODUCT_IDS_KEY, next);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(FAVORITES_CHANGED_EVENT, { detail: { productId, favorite: !alreadyFavorite } }));
+  }
+  return !alreadyFavorite;
 };

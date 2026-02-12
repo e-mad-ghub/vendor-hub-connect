@@ -189,7 +189,7 @@ const Index = () => {
       recentViewedIds
         .map((id) => productsById.get(id))
         .filter((item): item is NonNullable<typeof item> => !!item)
-        .slice(0, 6),
+        .slice(0, 2),
     [recentViewedIds, productsById]
   );
   const hasNoResults = filteredProducts.length === 0;
