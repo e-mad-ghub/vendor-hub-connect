@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getErrorMessage } from '@/lib/error';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 interface AuthUser {
@@ -169,8 +170,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       return { success: true };
-    } catch (err: any) {
-      const errorMsg = err.message || 'حدث خطأ';
+    } catch (err: unknown) {
+      const errorMsg = getErrorMessage(err, 'حدث خطأ');
       console.error('Login exception:', errorMsg);
       return { success: false, error: errorMsg };
     }
@@ -200,8 +201,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'حدث خطأ' };
+    } catch (err: unknown) {
+      return { success: false, error: getErrorMessage(err, 'حدث خطأ') };
     }
   }, []);
 

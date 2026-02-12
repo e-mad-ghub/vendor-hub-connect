@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { ProductCard } from '@/components/ProductCard';
 import { CategoryChips } from '@/components/CategoryChips';
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowRight, Truck, Shield, RefreshCw, Headphones } from 'lucide-react';
+import { ArrowRight, Truck, Shield, RefreshCw, Headphones, MessageCircle } from 'lucide-react';
 import { categories } from '@/data/mockData';
 import { useProducts } from '@/data/productsStore';
 import { api } from '@/lib/api';
@@ -15,16 +15,213 @@ import { toast } from 'sonner';
 import { sanitizePhoneInput, validatePhone } from '@/lib/validation';
 import { Seo } from '@/components/Seo';
 import { trackEvent } from '@/lib/analytics';
+import { CarFitmentFilter } from '@/components/CarFitmentFilter';
+import { extractFitmentOptions, filterHomeProducts } from '@/lib/fitment';
+import { getErrorMessage } from '@/lib/error';
+import {
+  getRecentPartQueries,
+  getRecentViewedProductIds,
+  getSavedSearches,
+  pushRecentPartQuery,
+  saveSearch,
+  type SavedSearch,
+} from '@/lib/customerContext';
+
+const HOME_FILTERS_STORAGE_KEY = 'vhc_home_fitment_filters';
 
 const Index = () => {
   const { products } = useProducts();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customPartName, setCustomPartName] = useState('');
   const [customCarBrand, setCustomCarBrand] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const featuredProducts = products.slice(0, 8);
-  const newArrivals = [...products].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 6);
+
+  const [selectedBrand, setSelectedBrand] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
+  const [nameQueryInput, setNameQueryInput] = useState('');
+  const [debouncedNameQuery, setDebouncedNameQuery] = useState('');
+  const [modelResetHint, setModelResetHint] = useState('');
+  const [isOpeningWhatsApp, setIsOpeningWhatsApp] = useState(false);
+  const [recentQueries, setRecentQueries] = useState<string[]>([]);
+  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
+  const [recentViewedIds, setRecentViewedIds] = useState<string[]>([]);
+
+  const didInitRef = useRef(false);
+
+  const fitmentOptions = useMemo(() => extractFitmentOptions(products), [products]);
+
+  const availableModels = useMemo(() => {
+    if (!selectedBrand) return [];
+    return fitmentOptions.modelsByBrand[selectedBrand] || [];
+  }, [fitmentOptions.modelsByBrand, selectedBrand]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setDebouncedNameQuery(nameQueryInput);
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [nameQueryInput]);
+
+  useEffect(() => {
+    if (didInitRef.current) return;
+
+    const urlBrand = searchParams.get('brand') || '';
+    const urlModel = searchParams.get('model') || '';
+    const urlQuery = searchParams.get('q') || '';
+
+    let localBrand = '';
+    let localModel = '';
+    let localQuery = '';
+
+    try {
+      const raw = localStorage.getItem(HOME_FILTERS_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as {
+          brand?: string;
+          model?: string;
+          q?: string;
+          includeUncertain?: boolean;
+        };
+        localBrand = parsed.brand || '';
+        localModel = parsed.model || '';
+        localQuery = parsed.q || '';
+      }
+    } catch {
+      // Ignore malformed storage and continue with defaults.
+    }
+
+    const nextBrand = urlBrand || localBrand;
+    const nextModel = urlModel || localModel;
+    const nextQuery = urlQuery || localQuery;
+
+    setSelectedBrand(nextBrand);
+    setSelectedModel(nextBrand ? nextModel : '');
+    setNameQueryInput(nextQuery);
+    setDebouncedNameQuery(nextQuery);
+    setRecentQueries(getRecentPartQueries());
+    setSavedSearches(getSavedSearches());
+    setRecentViewedIds(getRecentViewedProductIds());
+
+    didInitRef.current = true;
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!didInitRef.current) return;
+
+    try {
+      localStorage.setItem(
+        HOME_FILTERS_STORAGE_KEY,
+        JSON.stringify({
+          brand: selectedBrand,
+          model: selectedModel,
+          q: nameQueryInput,
+        })
+      );
+    } catch {
+      // Ignore storage write failures.
+    }
+  }, [selectedBrand, selectedModel, nameQueryInput]);
+
+  useEffect(() => {
+    if (!didInitRef.current) return;
+
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (selectedBrand) nextParams.set('brand', selectedBrand);
+    else nextParams.delete('brand');
+
+    if (selectedModel) nextParams.set('model', selectedModel);
+    else nextParams.delete('model');
+
+    if (nameQueryInput.trim()) nextParams.set('q', nameQueryInput.trim());
+    else nextParams.delete('q');
+
+    const currentString = searchParams.toString();
+    const nextString = nextParams.toString();
+
+    if (currentString !== nextString) {
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [selectedBrand, selectedModel, nameQueryInput, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    if (!selectedBrand) {
+      setSelectedModel('');
+      setModelResetHint('');
+      return;
+    }
+
+    if (!selectedModel) return;
+
+    if (!availableModels.includes(selectedModel)) {
+      setSelectedModel('');
+      setModelResetHint('الموديل المختار لم يعد متاحًا وتمت إعادة ضبطه تلقائيًا.');
+    }
+  }, [selectedBrand, selectedModel, availableModels]);
+
+  useEffect(() => {
+    if (!didInitRef.current) return;
+    const normalized = debouncedNameQuery.trim();
+    if (normalized.length < 2) return;
+    pushRecentPartQuery(normalized);
+    setRecentQueries(getRecentPartQueries());
+  }, [debouncedNameQuery]);
+
+  const filtered = useMemo(
+    () =>
+      filterHomeProducts(products, {
+        selectedBrand,
+        selectedModel,
+        nameQuery: debouncedNameQuery,
+        includeUncertain: false,
+      }),
+    [products, selectedBrand, selectedModel, debouncedNameQuery]
+  );
+
+  const filteredProducts = filtered.items;
+  const productsById = useMemo(() => new Map(products.map((item) => [item.id, item])), [products]);
+  const recentViewedProducts = useMemo(
+    () =>
+      recentViewedIds
+        .map((id) => productsById.get(id))
+        .filter((item): item is NonNullable<typeof item> => !!item)
+        .slice(0, 2),
+    [recentViewedIds, productsById]
+  );
+  const hasNoResults = filteredProducts.length === 0;
+
+  const fallbackSuggestions = useMemo(() => {
+    if (!hasNoResults) return [];
+
+    const normalizedQuery = debouncedNameQuery.trim().toLowerCase();
+    let candidates = [...products];
+
+    if (selectedBrand) {
+      candidates = candidates.filter((product) =>
+        (product.carBrands || []).some((entry) => entry.startsWith(selectedBrand))
+      );
+    }
+
+    if (normalizedQuery) {
+      const queryMatches = candidates.filter((product) =>
+        product.title.toLowerCase().includes(normalizedQuery)
+      );
+      if (queryMatches.length > 0) {
+        candidates = queryMatches;
+      }
+    }
+
+    return candidates.slice(0, 6);
+  }, [hasNoResults, products, selectedBrand, debouncedNameQuery]);
+
+  const featuredProducts = filteredProducts.slice(0, 8);
+  const newArrivals = [...filteredProducts]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 6);
 
   const features = [
     { icon: Truck, title: 'شحن مرن', desc: 'ننسق معاك بعد تأكيد العرض' },
@@ -47,6 +244,19 @@ const Index = () => {
       `  - الماركات/الموديلات: ${customCarBrand.trim() || 'غير محدد'}`,
       '',
       'ملاحظة: من فضلك أكد السعر والتوفر. شكرًا.',
+    ].join('\n');
+  };
+
+  const buildMissingPartMessage = () => {
+    const fitmentLabel = selectedBrand
+      ? `الماركة: ${selectedBrand}${selectedModel ? ` | الموديل: ${selectedModel}` : ''}`
+      : 'الماركة/الموديل: غير محدد';
+
+    return [
+      'مرحبًا، أبحث عن قطعة غير متوفرة في النتائج الحالية.',
+      fitmentLabel,
+      `بحث بالاسم: ${debouncedNameQuery || 'بدون'}`,
+      'من فضلك أكد التوفر والسعر عبر واتساب.',
     ].join('\n');
   };
 
@@ -92,11 +302,83 @@ const Index = () => {
       });
       trackEvent('Request Quote Submit', { source: 'custom', hasBrand: !!customCarBrand.trim() });
       window.location.href = `https://wa.me/${phoneDigits}?text=${encodeURIComponent(message)}`;
-    } catch (e: any) {
-      toast.error(e.message || 'تعذر إرسال الطلب');
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e, 'تعذر إرسال الطلب'));
     } finally {
       setIsSending(false);
     }
+  };
+
+  const handleShareFilters = async () => {
+    const url = window.location.href;
+
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.success('تم نسخ رابط الفلاتر');
+        return;
+      } catch {
+        // Fallback below.
+      }
+    }
+
+    window.prompt('انسخ الرابط التالي:', url);
+  };
+
+  const clearAllFilters = () => {
+    setSelectedBrand('');
+    setSelectedModel('');
+    setNameQueryInput('');
+    setDebouncedNameQuery('');
+    setModelResetHint('');
+  };
+
+  const clearModelOnly = () => {
+    setSelectedModel('');
+    setModelResetHint('');
+  };
+
+  const clearCarOnly = () => {
+    setSelectedBrand('');
+    setSelectedModel('');
+    setModelResetHint('');
+  };
+
+  const handleMissingPartWhatsApp = async () => {
+    if (isOpeningWhatsApp) return;
+
+    setIsOpeningWhatsApp(true);
+    try {
+      const settings = await api.getWhatsAppSettings();
+      const phoneDigits = settings.phoneNumber.replace(/\D/g, '');
+      if (!phoneDigits) {
+        toast.error('رقم واتساب غير مُعد. تواصل مع الأدمن.');
+        return;
+      }
+
+      const message = buildMissingPartMessage();
+      window.location.href = `https://wa.me/${phoneDigits}?text=${encodeURIComponent(message)}`;
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e, 'تعذر فتح واتساب'));
+    } finally {
+      setIsOpeningWhatsApp(false);
+    }
+  };
+
+  const handleSaveCurrentSearch = () => {
+    const saved = saveSearch({
+      brand: selectedBrand,
+      model: selectedModel,
+      q: debouncedNameQuery,
+    });
+
+    if (!saved) {
+      toast.error('حدد فلتر أو كلمة بحث أولاً لحفظ البحث');
+      return;
+    }
+
+    setSavedSearches(getSavedSearches());
+    toast.success('تم حفظ البحث. يمكنك الرجوع له لاحقًا.');
   };
 
   return (
@@ -181,6 +463,10 @@ const Index = () => {
                 src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDBAELcCBZvFeMrydahzOwchiBAohWXYTgmA&s"
                 alt="ميكانيكي بيصلح عربية داخل ورشة"
                 className="rounded-xl shadow-card-hover object-cover w-full h-full"
+                loading="lazy"
+                decoding="async"
+                width={960}
+                height={640}
               />
             </div>
           </div>
@@ -191,6 +477,79 @@ const Index = () => {
       <section className="container mt-6">
         <CategoryChips categories={categories} />
       </section>
+
+      <CarFitmentFilter
+        brands={fitmentOptions.brands}
+        models={availableModels}
+        selectedBrand={selectedBrand}
+        selectedModel={selectedModel}
+        nameQuery={nameQueryInput}
+        resultCount={filteredProducts.length}
+        isModelDisabled={!selectedBrand}
+        onBrandChange={(value) => {
+          setSelectedBrand(value);
+          setSelectedModel('');
+          setModelResetHint('');
+        }}
+        onModelChange={(value) => {
+          setSelectedModel(value);
+          setModelResetHint('');
+        }}
+        onNameQueryChange={setNameQueryInput}
+        onClearModel={clearModelOnly}
+        onClearAll={clearAllFilters}
+        onClearCarOnly={clearCarOnly}
+        onShare={handleShareFilters}
+      />
+
+      {modelResetHint && (
+        <section className="container mt-3">
+          <p className="text-xs text-muted-foreground">{modelResetHint}</p>
+        </section>
+      )}
+
+      {(recentQueries.length > 0 || savedSearches.length > 0) && (
+        <section className="container mt-4 space-y-3">
+          {recentQueries.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-muted-foreground">آخر عمليات البحث:</span>
+              {recentQueries.slice(0, 6).map((query) => (
+                <button
+                  key={query}
+                  type="button"
+                  className="inline-flex items-center rounded-full border border-border px-3 py-1 text-xs hover:bg-muted transition-colors"
+                  onClick={() => setNameQueryInput(query)}
+                >
+                  {query}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {savedSearches.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-muted-foreground">عمليات بحث محفوظة:</span>
+              {savedSearches.slice(0, 4).map((saved) => {
+                const label = [saved.brand, saved.model, saved.q].filter(Boolean).join(' · ') || 'بحث محفوظ';
+                return (
+                  <button
+                    key={saved.id}
+                    type="button"
+                    className="inline-flex items-center rounded-full border border-border px-3 py-1 text-xs hover:bg-muted transition-colors"
+                    onClick={() => {
+                      setSelectedBrand(saved.brand);
+                      setSelectedModel(saved.model);
+                      setNameQueryInput(saved.q);
+                    }}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Features */}
       <section className="container my-8">
@@ -209,55 +568,107 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Featured Products */}
-      <section className="container my-10">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-xl md:text-2xl font-bold text-foreground">منتجات مختارة</h3>
-            <p className="text-sm text-muted-foreground">متختارة مخصوص ليك</p>
+      {recentViewedProducts.length > 0 && (
+        <section className="container my-10">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-xl md:text-2xl font-bold text-foreground">تابع من حيث توقفت</h3>
+              <p className="text-sm text-muted-foreground">آخر المنتجات التي شاهدتها</p>
+            </div>
           </div>
-          <Link to="/search">
-            <Button variant="ghost" size="sm" className="text-primary">
-              شوف الكل <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {featuredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      </section>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {recentViewedProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+      )}
 
-      {/* New Arrivals */}
-      <section className="container my-10">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-xl md:text-2xl font-bold text-foreground">وصلت جديد</h3>
-            <p className="text-sm text-muted-foreground">أحدث منتجات تجارنا</p>
+      {hasNoResults ? (
+        <section className="container my-10">
+          <div className="bg-card rounded-xl shadow-card p-6 text-center space-y-5">
+            <h3 className="text-xl font-semibold">لا توجد نتائج مطابقة. جرّب تغيير الماركة/الموديل أو مسح الفلاتر.</h3>
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button variant="outline" onClick={clearModelOnly} disabled={!selectedModel}>
+                مسح الموديل فقط
+              </Button>
+              <Button variant="outline" onClick={clearAllFilters}>
+                مسح كل الفلاتر
+              </Button>
+              <Button variant="outline" onClick={handleSaveCurrentSearch}>
+                حفظ هذا البحث
+              </Button>
+              <Button onClick={handleMissingPartWhatsApp} disabled={isOpeningWhatsApp}>
+                <MessageCircle className="h-4 w-4 ml-2" />
+                طلب قطعة غير موجودة؟ تواصل واتساب
+              </Button>
+            </div>
+
+            {fallbackSuggestions.length > 0 && (
+              <div className="pt-4 border-t border-border text-right">
+                <p className="text-sm text-muted-foreground mb-3">اقتراحات قريبة قد تهمك:</p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {fallbackSuggestions.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-          <Link to="/search?sort=newest">
-            <Button variant="ghost" size="sm" className="text-primary">
-              شوف الكل <ArrowRight className="ml-1 h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {newArrivals.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      </section>
+        </section>
+      ) : (
+        <>
+          {/* Featured Products */}
+          <section className="container my-10">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-xl md:text-2xl font-bold text-foreground">منتجات مختارة</h3>
+                <p className="text-sm text-muted-foreground">متختارة مخصوص ليك</p>
+              </div>
+              <Link to="/search">
+                <Button variant="ghost" size="sm" className="text-primary">
+                  شوف الكل <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {featuredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </section>
+
+          {/* New Arrivals */}
+          <section className="container my-10">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-xl md:text-2xl font-bold text-foreground">وصلت جديد</h3>
+                <p className="text-sm text-muted-foreground">أحدث منتجات تجارنا</p>
+              </div>
+              <Link to="/search?sort=newest">
+                <Button variant="ghost" size="sm" className="text-primary">
+                  شوف الكل <ArrowRight className="ml-1 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {newArrivals.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </section>
+        </>
+      )}
 
       {/* CTA Banner */}
       <section className="container my-10">
         <div className="bg-gradient-to-r from-primary to-primary/80 rounded-2xl p-8 md:p-12 text-center text-primary-foreground">
-          <h3 className="text-2xl md:text-3xl font-bold mb-4">جاهز تطلب عرض سعر؟</h3>
+          <h3 className="text-2xl md:text-3xl font-bold mb-4">هل ترغب في عرض سعر دقيق وسريع؟</h3>
           <p className="mb-6 opacity-90 max-w-md mx-auto">
-            المنصة دلوقتي شغالة كبائع واحد. أضف منتجاتك للسلة واطلب عرض سعر عبر واتساب لتأكيد السعر والتوافر.
+            أضف المنتجات المناسبة إلى السلة ثم أرسل طلب عرض السعر عبر واتساب، وسيقوم فريقنا بمراجعة التوفر وتأكيد التفاصيل قبل إتمام الاتفاق.
           </p>
           <p className="text-sm opacity-90">
-            التواصل والمتابعة بيتموا يدويًا عبر واتساب.
+            يتم التواصل والمتابعة مباشرة عبر واتساب لضمان سرعة الخدمة ودقة المعلومات.
           </p>
         </div>
       </section>

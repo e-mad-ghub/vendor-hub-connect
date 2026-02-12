@@ -15,6 +15,7 @@ import { Seo } from '@/components/Seo';
 import { trackEvent } from '@/lib/analytics';
 import { sanitizePhoneInput, validatePhone } from '@/lib/validation';
 import { formatCarBrands } from '@/lib/brands';
+import { getErrorMessage } from '@/lib/error';
 
 const DEFAULT_TEMPLATE =
   'أهلًا، أنا اسمي [Customer Name]. عايز عرض سعر للقطع التالية:\n[Items]\nمن فضلك أكد السعر والتوفر. شكرًا.';
@@ -36,9 +37,9 @@ const Checkout = () => {
     try {
       const data = await api.getWhatsAppSettings();
       setSettings(data);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setSettings(null);
-      setSettingsError(e?.message || 'تعذر تحميل إعدادات واتساب.');
+      setSettingsError(getErrorMessage(e, 'تعذر تحميل إعدادات واتساب.'));
     } finally {
       setSettingsLoading(false);
     }
@@ -52,7 +53,7 @@ const Checkout = () => {
     return detailedItems
       .map(({ product, quantity, quality, unitPrice }) => {
         const qualityLabel = quality === 'new' ? 'جديد' : 'استيراد';
-        const priceLabel = quality === 'new' ? `ج.م ${unitPrice.toFixed(2)}` : 'سعر حسب العرض';
+        const priceLabel = quality === 'new' ? `ج.م ${unitPrice.toFixed(2)}` : 'السعر بيتحدد بعد الطلب';
         const brands = formatCarBrands(product.carBrands);
         return [
           `• ${product.title}`,
@@ -162,8 +163,8 @@ const Checkout = () => {
       const waUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
       window.location.href = waUrl;
       clearCart();
-    } catch (e: any) {
-      toast.error(e.message || 'تعذر إرسال طلب عرض السعر');
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e, 'تعذر إرسال طلب عرض السعر'));
     } finally {
       setIsSubmitting(false);
     }
@@ -253,7 +254,7 @@ const Checkout = () => {
                           {product.title} ({quality === 'new' ? 'جديد' : 'استيراد'}) × {quantity}
                         </span>
                         <span className="whitespace-nowrap">
-                          {quality === 'new' ? `ج.م ${unitPrice.toFixed(2)}` : 'سعر حسب العرض'}
+                          {quality === 'new' ? `ج.م ${unitPrice.toFixed(2)}` : 'السعر بيتحدد بعد الطلب'}
                         </span>
                       </div>
                     ))}

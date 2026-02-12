@@ -4,6 +4,7 @@ import { Seo } from '@/components/Seo';
 import { api } from '@/lib/api';
 import { LoadingState } from '@/components/LoadingState';
 import { InlineError } from '@/components/InlineError';
+import { getErrorMessage } from '@/lib/error';
 
 const RefundPolicy = () => {
   const [policy, setPolicy] = useState('');
@@ -16,8 +17,8 @@ const RefundPolicy = () => {
     try {
       const data = await api.getCustomerServiceSettings();
       setPolicy(data.returnPolicy);
-    } catch (e: any) {
-      setLoadError(e?.message || 'تعذر تحميل سياسة الاسترجاع.');
+    } catch (e: unknown) {
+      setLoadError(getErrorMessage(e, 'تعذر تحميل سياسة الاسترجاع.'));
     } finally {
       setIsLoading(false);
     }

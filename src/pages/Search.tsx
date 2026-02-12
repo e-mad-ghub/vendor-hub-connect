@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { ProductCard } from '@/components/ProductCard';
@@ -17,13 +17,32 @@ const Search = () => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
   
-  const [priceRange, setPriceRange] = useState([0, 500]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('relevance');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const { products } = useProducts();
+  const didInitPriceRangeRef = useRef(false);
+
+  const maxPrice = useMemo(() => {
+    const highest = products.reduce((acc, product) => {
+      if (product.newAvailable && typeof product.newPrice === 'number') {
+        return Math.max(acc, product.newPrice);
+      }
+      return acc;
+    }, 0);
+
+    if (highest <= 500) return 500;
+    return Math.ceil(highest / 100) * 100;
+  }, [products]);
+
+  useEffect(() => {
+    if (didInitPriceRangeRef.current) return;
+    setPriceRange([0, maxPrice]);
+    didInitPriceRangeRef.current = true;
+  }, [maxPrice]);
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
@@ -87,12 +106,12 @@ const Search = () => {
   };
 
   const clearFilters = () => {
-    setPriceRange([0, 500]);
+    setPriceRange([0, maxPrice]);
     setSelectedCategories([]);
     setSelectedBrands([]);
   };
 
-  const hasActiveFilters = priceRange[0] > 0 || priceRange[1] < 500 || selectedCategories.length > 0 || selectedBrands.length > 0;
+  const hasActiveFilters = priceRange[0] > 0 || priceRange[1] < maxPrice || selectedCategories.length > 0 || selectedBrands.length > 0;
 
   const allBrands = useMemo(() => {
     const set = new Set<string>();
@@ -119,13 +138,13 @@ const Search = () => {
           value={priceRange}
           onValueChange={setPriceRange}
           min={0}
-          max={500}
+          max={maxPrice}
           step={10}
           className="mb-2"
         />
         <div className="flex justify-between text-sm text-muted-foreground">
           <span>ج.م {priceRange[0]}</span>
-          <span>ج.م {priceRange[1]}+</span>
+          <span>ج.م {priceRange[1]}</span>
         </div>
       </div>
 

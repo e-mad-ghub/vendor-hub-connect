@@ -28,7 +28,7 @@ const defaultSettings: WhatsAppSettings = {
 };
 
 const defaultCustomerServiceSettings: CustomerServiceSettings = {
-  supportEmail: 'support@markethub.demo',
+  supportEmail: 'support@souq-elherafyeen.com',
   supportPhone: '+1 (555) 123-4567',
   supportAddress: '123 Market Street, Demo City',
   faqContent: 'لو عندك أي سؤال، تقدر تبعتلنا رسالة وسنرد عليك في أقرب وقت.',

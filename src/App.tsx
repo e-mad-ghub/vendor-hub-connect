@@ -21,14 +21,12 @@ const Checkout = React.lazy(() => import("./pages/Checkout"));
 const Login = React.lazy(() => import("./pages/Login"));
 const AdminPanel = React.lazy(() => import("./pages/AdminPanel"));
 const AdminBrands = React.lazy(() => import("./pages/AdminBrands"));
-const About = React.lazy(() => import("./pages/About"));
 const Contact = React.lazy(() => import("./pages/Contact"));
 const Terms = React.lazy(() => import("./pages/Terms"));
 const Privacy = React.lazy(() => import("./pages/Privacy"));
 const RefundPolicy = React.lazy(() => import("./pages/RefundPolicy"));
 const Menu = React.lazy(() => import("./pages/Menu"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
-const SetupAdmin = React.lazy(() => import("./pages/SetupAdmin"));
 const NotAuthorized = React.lazy(() => import("./pages/NotAuthorized"));
 
 const queryClient = new QueryClient();
@@ -73,13 +71,11 @@ const App = () => (
                     </ProtectedRoute>
                   )}
                 />
-                <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/refund-policy" element={<RefundPolicy />} />
                 <Route path="/menu" element={<Menu />} />
-                <Route path="/setup-admin" element={<SetupAdmin />} />
                 <Route path="/not-authorized" element={<NotAuthorized />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

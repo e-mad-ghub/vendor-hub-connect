@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Seo } from '@/components/Seo';
 import { trackEvent } from '@/lib/analytics';
 import { formatCarBrands } from '@/lib/brands';
+import { pushRecentViewedProduct } from '@/lib/customerContext';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,7 +18,9 @@ const ProductDetail = () => {
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selectedQualities, setSelectedQualities] = useState<{ new: boolean; imported: boolean }>({ new: false, imported: false });
+  const previousProductIdRef = useRef<string | null>(null);
   const product = getProductById(id || '');
+  const productId = product?.id ?? null;
   const relatedProducts = product
     ? getProductsByCategory(product.category).filter(p => p.id !== product?.id).slice(0, 4)
     : [];
@@ -31,12 +34,34 @@ const ProductDetail = () => {
   }, [product]);
 
   useEffect(() => {
-    if (!product) return;
-    setSelectedQualities({
-      new: availability.hasNew,
-      imported: availability.hasImported,
+    if (!productId) return;
+
+    const isProductChanged = previousProductIdRef.current !== productId;
+    previousProductIdRef.current = productId;
+
+    setSelectedQualities((prev) => {
+      if (isProductChanged) {
+        return {
+          new: availability.hasNew,
+          imported: availability.hasImported,
+        };
+      }
+
+      // Keep customer selection, but safely unset qualities that became unavailable.
+      const next = {
+        new: availability.hasNew ? prev.new : false,
+        imported: availability.hasImported ? prev.imported : false,
+      };
+
+      if (next.new === prev.new && next.imported === prev.imported) return prev;
+      return next;
     });
-  }, [product?.id, availability.hasNew, availability.hasImported]);
+  }, [productId, availability.hasNew, availability.hasImported]);
+
+  useEffect(() => {
+    if (!product?.id) return;
+    pushRecentViewedProduct(product.id);
+  }, [product?.id]);
 
   if (!product) {
     return (
@@ -255,7 +280,7 @@ const ProductDetail = () => {
             <p className="text-xl font-bold text-primary">
               {availability.hasNew && selectedQualities.new
                 ? `ج.م ${availability.newPrice.toFixed(2)}`
-                : 'سعر حسب العرض'}
+                : 'السعر بيتحدد بعد الطلب'}
             </p>
           </div>
           <Button onClick={handleAddToCart} size="sm" variant="outline" disabled={!selectedQualities.new && !selectedQualities.imported}>

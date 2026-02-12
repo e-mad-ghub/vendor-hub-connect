@@ -9,6 +9,7 @@ import { Seo } from '@/components/Seo';
 import { api } from '@/lib/api';
 import { LoadingState } from '@/components/LoadingState';
 import { InlineError } from '@/components/InlineError';
+import { getErrorMessage } from '@/lib/error';
 
 const Contact = () => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
@@ -34,8 +35,8 @@ const Contact = () => {
         supportAddress: data.supportAddress,
         lastUpdated: data.lastUpdated,
       });
-    } catch (e: any) {
-      setLoadError(e?.message || 'تعذر تحميل بيانات خدمة العملاء.');
+    } catch (e: unknown) {
+      setLoadError(getErrorMessage(e, 'تعذر تحميل بيانات خدمة العملاء.'));
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +70,29 @@ const Contact = () => {
         ) : (
         <div className="grid md:grid-cols-2 gap-8">
           <div>
-            <h2 className="text-xl font-semibold mb-4">تواصل معانا</h2>
+            <h2 className="text-2xl font-bold mb-4">خدمة العملاء</h2>
+            <div className="space-y-3 text-sm text-muted-foreground leading-7 mb-6">
+              <p>
+                فريق خدمة العملاء موجود لمساعدتك في كل خطوة، بداية من البحث عن القطعة المناسبة لحد تأكيد الطلب والمتابعة.
+              </p>
+              <p>تقدر تتواصل معانا من خلال واتساب علشان:</p>
+              <ul className="space-y-1 pr-5 list-disc marker:text-primary">
+                <li>تطلب عرض سعر سريع.</li>
+                <li>تتأكد من توافق القطعة مع عربيتك.</li>
+                <li>تسأل عن التوفر والتفاصيل قبل الشراء.</li>
+              </ul>
+              <p>
+                <span className="text-foreground font-medium">مواعيد العمل:</span> يومياً من الساعة 9 صباحاً حتى 6 مساءً.
+              </p>
+              <p>
+                <span className="text-foreground font-medium">طريقة الدفع:</span> بيتم الدفع عن طريق InstaPay بعد الاتفاق النهائي على القطعة المناسبة وتأكيد التفاصيل.
+              </p>
+              <p>
+                لو ما لقيتش القطعة اللي بتدور عليها، ابعتلنا مباشرة وإن شاء الله نساعدك نوصلها في أسرع وقت ممكن.
+              </p>
+            </div>
+
+            <h3 className="text-lg font-semibold mb-4">تواصل معانا</h3>
             <div className="space-y-4">
               <div className="flex items-center gap-3"><Mail className="h-5 w-5 text-primary" /><span>{settings.supportEmail}</span></div>
               <div className="flex items-center gap-3"><Phone className="h-5 w-5 text-primary" /><span>{settings.supportPhone}</span></div>

@@ -39,7 +39,7 @@ const Privacy = () => (
         <h2 className="text-xl font-semibold text-foreground mt-6">التواصل</h2>
         <p>
           لو عندك أي استفسار بخصوص الخصوصية، تواصل معنا عبر البريد:
-          <span className="font-semibold"> support@markethub.demo</span>
+          <span className="font-semibold"> support@souq-elherafyeen.com</span>
         </p>
 
         <p className="text-sm italic mt-8">آخر تحديث: {LAST_UPDATED}</p>
