@@ -13,7 +13,7 @@ import { MessageCircle, FileDown, Settings, Package, Key } from 'lucide-react';
 import { toast } from 'sonner';
 import { useProducts } from '@/data/productsStore';
 import { categories } from '@/data/mockData';
-import { defaultBrandOptions, type BrandOption, BRAND_OPTIONS_KEY, translateBrandOptions } from '@/data/brandOptions';
+import { defaultBrandOptions, type BrandOption } from '@/data/brandOptions';
 import type { QuoteRequest } from '@/types/marketplace';
 import { PasswordChangeForm } from '@/components/PasswordChangeForm';
 import { LoadingState } from '@/components/LoadingState';
@@ -66,7 +66,6 @@ const AdminPanel = () => {
   });
   const [editingProductBrands, setEditingProductBrands] = React.useState<string[]>([]);
 
-  const BRAND_OPTIONS_KEY = 'vhc_brand_options';
   const [brandOptions, setBrandOptions] = React.useState<BrandOption[]>([]);
 
   const loadAdminData = React.useCallback(async () => {
@@ -98,21 +97,9 @@ const AdminPanel = () => {
   }, [loadAdminData]);
 
   React.useEffect(() => {
-    try {
-      const raw = localStorage.getItem(BRAND_OPTIONS_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as BrandOption[];
-        const translated = translateBrandOptions(parsed);
-        if (JSON.stringify(parsed) !== JSON.stringify(translated)) {
-          localStorage.setItem(BRAND_OPTIONS_KEY, JSON.stringify(translated));
-        }
-        setBrandOptions(translated);
-        return;
-      }
-      setBrandOptions(defaultBrandOptions);
-    } catch {
-      setBrandOptions(defaultBrandOptions);
-    }
+    api.getBrandOptions()
+      .then((data) => setBrandOptions(data))
+      .catch(() => setBrandOptions(defaultBrandOptions));
   }, []);
 
   if (authLoading) {
@@ -268,7 +255,7 @@ const AdminPanel = () => {
     }
   };
 
-  const handleCreateProduct = () => {
+  const handleCreateProduct = async () => {
     if (isLoading) return;
     if (!newProduct.title.trim()) {
       toast.error('من فضلك اكتب اسم المنتج');
@@ -283,27 +270,31 @@ const AdminPanel = () => {
       toast.error('ادخل سعر صالح للجديد');
       return;
     }
-    createProduct({
-      title: newProduct.title.trim(),
-      description: newProduct.description.trim(),
-      newAvailable: newProduct.newAvailable,
-      newPrice: newProduct.newAvailable ? price : undefined,
-      importedAvailable: newProduct.importedAvailable,
-      category: newProduct.category.trim() || 'غير محدد',
-      carBrands: newProductBrands,
-      imageDataUrl: newProduct.imageDataUrl,
-    });
-    setNewProduct({
-      title: '',
-      description: '',
-      newPrice: '',
-      newAvailable: true,
-      importedAvailable: false,
-      category: '',
-      imageDataUrl: '',
-    });
-    setNewProductBrands([]);
-    toast.success('تمت إضافة المنتج');
+    try {
+      await createProduct({
+        title: newProduct.title.trim(),
+        description: newProduct.description.trim(),
+        newAvailable: newProduct.newAvailable,
+        newPrice: newProduct.newAvailable ? price : undefined,
+        importedAvailable: newProduct.importedAvailable,
+        category: newProduct.category.trim() || 'غير محدد',
+        carBrands: newProductBrands,
+        imageDataUrl: newProduct.imageDataUrl,
+      });
+      setNewProduct({
+        title: '',
+        description: '',
+        newPrice: '',
+        newAvailable: true,
+        importedAvailable: false,
+        category: '',
+        imageDataUrl: '',
+      });
+      setNewProductBrands([]);
+      toast.success('تمت إضافة المنتج');
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e, 'تعذر إضافة المنتج'));
+    }
   };
 
   const startEdit = (productId: string) => {
@@ -336,7 +327,7 @@ const AdminPanel = () => {
     setEditingProductBrands([]);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (isLoading) return;
     if (!editingId) return;
     if (!editingProduct.title.trim()) {
@@ -352,18 +343,22 @@ const AdminPanel = () => {
       toast.error('ادخل سعر صالح للجديد');
       return;
     }
-    editProduct(editingId, {
-      title: editingProduct.title.trim(),
-      description: editingProduct.description.trim(),
-      newAvailable: editingProduct.newAvailable,
-      newPrice: editingProduct.newAvailable ? price : undefined,
-      importedAvailable: editingProduct.importedAvailable,
-      category: editingProduct.category.trim() || 'غير محدد',
-      carBrands: editingProductBrands,
-      imageDataUrl: editingProduct.imageDataUrl,
-    });
-    toast.success('تم تحديث المنتج');
-    cancelEdit();
+    try {
+      await editProduct(editingId, {
+        title: editingProduct.title.trim(),
+        description: editingProduct.description.trim(),
+        newAvailable: editingProduct.newAvailable,
+        newPrice: editingProduct.newAvailable ? price : undefined,
+        importedAvailable: editingProduct.importedAvailable,
+        category: editingProduct.category.trim() || 'غير محدد',
+        carBrands: editingProductBrands,
+        imageDataUrl: editingProduct.imageDataUrl,
+      });
+      toast.success('تم تحديث المنتج');
+      cancelEdit();
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e, 'تعذر تحديث المنتج'));
+    }
   };
 
   const toggleBrandSelection = (value: string, isEditing: boolean) => {
@@ -700,7 +695,18 @@ const AdminPanel = () => {
                                 <Button size="sm" variant="outline" onClick={() => startEdit(product.id)}>
                                   تعديل
                                 </Button>
-                                <Button size="sm" variant="outline" onClick={() => deleteProduct(product.id)}>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={async () => {
+                                    try {
+                                      await deleteProduct(product.id);
+                                      toast.success('تم حذف المنتج');
+                                    } catch (e: unknown) {
+                                      toast.error(getErrorMessage(e, 'تعذر حذف المنتج'));
+                                    }
+                                  }}
+                                >
                                   حذف
                                 </Button>
                               </div>
