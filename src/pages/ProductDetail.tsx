@@ -41,6 +41,7 @@ const ProductDetail = () => {
 
     setSelectedQualities((prev) => {
       if (isProductChanged) {
+        setQuantity(1);
         return {
           new: availability.hasNew,
           imported: availability.hasImported,
@@ -52,7 +53,6 @@ const ProductDetail = () => {
         new: availability.hasNew ? prev.new : false,
         imported: availability.hasImported ? prev.imported : false,
       };
-
       if (next.new === prev.new && next.imported === prev.imported) return prev;
       return next;
     });
@@ -162,7 +162,7 @@ const ProductDetail = () => {
               <p className="font-medium">اختر الجودة:</p>
               <div className="flex flex-wrap gap-3">
                 {availability.hasNew && (
-                  <label className="flex items-center gap-2 text-sm">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
                     <input
                       type="checkbox"
                       checked={selectedQualities.new}
@@ -171,11 +171,8 @@ const ProductDetail = () => {
                     جديد
                   </label>
                 )}
-                {availability.hasNew && availability.hasImported && (
-                  <span className="text-xs text-muted-foreground">أو</span>
-                )}
                 {availability.hasImported && (
-                  <label className="flex items-center gap-2 text-sm">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
                     <input
                       type="checkbox"
                       checked={selectedQualities.imported}
@@ -190,7 +187,7 @@ const ProductDetail = () => {
               </div>
               {(selectedQualities.new && selectedQualities.imported) && (
                 <p className="text-xs text-muted-foreground">
-                  دلوقتي حضرتك طلبت فحص الجديد والاستيراد مع بعض عشان مقارنة السعر، وبعد التأكيد تقدر تختار واحد بس اللي يناسبك.
+                  الكمية المحددة هتتطبق على كل جودة مختارة. مثال: كمية 2 + جديد واستيراد = 2 جديد و2 استيراد. وبعد التنسيق على واتساب تقدر تختار جودة واحدة فقط للتأكيد النهائي.
                 </p>
               )}
             </div>
