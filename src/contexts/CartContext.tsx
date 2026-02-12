@@ -66,7 +66,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [items]);
 
   const getCartCount = useCallback(() => {
-    return new Set(items.map(item => item.productId)).size;
+    return items.reduce((total, item) => total + item.quantity, 0);
   }, [items]);
 
   const getDetailedItems = useCallback(() => {
