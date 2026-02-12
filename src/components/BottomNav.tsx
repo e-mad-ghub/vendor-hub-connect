@@ -7,16 +7,20 @@ import { useAuth } from '@/contexts/AuthContext';
 export const BottomNav: React.FC = () => {
   const location = useLocation();
   const { getCartCount } = useCart();
-  const { isAuthenticated, user } = useAuth();
+  const { user } = useAuth();
   const cartCount = getCartCount();
+  const isAdmin = user?.role === 'admin';
 
   const navItems = [
     { path: '/', icon: Home, label: 'الرئيسية' },
     { path: '/search', icon: Search, label: 'بحث' },
     { path: '/cart', icon: ShoppingCart, label: 'العربة', badge: cartCount },
-    { path: isAuthenticated ? '/admin' : '/login', icon: User, label: isAuthenticated ? 'لوحتي' : 'تسجيل' },
     { path: '/menu', icon: Menu, label: 'المزيد' },
   ];
+
+  if (isAdmin) {
+    navItems.splice(3, 0, { path: '/admin', icon: User, label: 'لوحتي' });
+  }
 
   return (
     <nav className="bottom-nav md:hidden">

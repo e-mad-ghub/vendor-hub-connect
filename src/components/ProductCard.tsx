@@ -38,7 +38,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   return (
-    <div className="product-card block group">
+    <div className="product-card block group h-full flex flex-col">
       <Link to={`/product/${product.id}`} className="block">
         <div className="relative aspect-square overflow-hidden bg-muted flex items-center justify-center text-xs text-muted-foreground">
           {product.imageDataUrl ? (
@@ -67,40 +67,34 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             الفئة: {product.category}
           </p>
 
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-muted-foreground mt-1 truncate">
             الماركات: {formatCarBrands(product.carBrands)}
           </p>
         </div>
       </Link>
 
-      <div className="px-3 pb-3 space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">جديد</span>
-          <div className="flex items-center gap-2">
-            <span className={`text-sm font-bold ${hasNew ? 'text-primary' : 'text-muted-foreground'}`}>
-              {hasNew ? `ج.م ${newPrice.toFixed(2)}` : 'غير متاح'}
-            </span>
-            <Button type="button" size="sm" variant="outline" onClick={handleQuickAddNew} disabled={!hasNew}>
-              <ShoppingCart className="h-4 w-4 ml-1" />
-              أضف
-            </Button>
-          </div>
-        </div>
+      <div className="mt-auto px-2 md:px-3 pb-3 grid grid-cols-[1.85rem_minmax(0,1fr)_3.75rem] md:grid-cols-[2.25rem_minmax(0,1fr)_4rem] items-center gap-x-0.5 md:gap-x-1 gap-y-2">
+        <span className="text-[10px] md:text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">جديد</span>
+        <span className={`text-[11px] md:text-xs font-bold min-w-0 whitespace-nowrap text-center ${hasNew ? 'text-primary' : 'text-muted-foreground'}`}>
+          {hasNew ? `ج.م ${newPrice.toLocaleString('en-US', { maximumFractionDigits: 0 })}` : 'غير متاح'}
+        </span>
+        <Button type="button" size="sm" variant="outline" className="h-7 md:h-8 w-[3.75rem] md:w-16 px-1 shrink-0 whitespace-nowrap text-[10px] md:text-xs gap-1" onClick={handleQuickAddNew} disabled={!hasNew}>
+          <ShoppingCart className="h-3 w-3 md:h-3.5 md:w-3.5" />
+          أضف
+        </Button>
 
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">استيراد</span>
-          <div className="flex items-center gap-2">
-            <span className={`text-xs font-semibold ${hasImported ? 'text-foreground' : 'text-muted-foreground'}`}>
-              {hasImported ? 'متاح' : 'غير متاح'}
-            </span>
-            {hasImported && (
-              <Button type="button" size="sm" variant="outline" onClick={handleQuickAddImported}>
-                <ShoppingCart className="h-4 w-4 ml-1" />
-                أضف
-              </Button>
-            )}
-          </div>
-        </div>
+        <span className="text-[10px] md:text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">استيراد</span>
+        <span className={`text-[10px] md:text-xs font-semibold min-w-0 truncate text-center ${hasImported ? 'text-foreground' : 'text-muted-foreground'}`}>
+          {hasImported ? 'متاح' : 'غير متاح'}
+        </span>
+        {hasImported ? (
+          <Button type="button" size="sm" variant="outline" className="h-7 md:h-8 w-[3.75rem] md:w-16 px-1 shrink-0 whitespace-nowrap text-[10px] md:text-xs gap-1" onClick={handleQuickAddImported}>
+            <ShoppingCart className="h-3 w-3 md:h-3.5 md:w-3.5" />
+            أضف
+          </Button>
+        ) : (
+          <span aria-hidden="true" className="w-[3.75rem] md:w-16" />
+        )}
       </div>
     </div>
   );
