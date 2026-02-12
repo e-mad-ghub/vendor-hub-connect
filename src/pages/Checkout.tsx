@@ -21,9 +21,10 @@ const DEFAULT_TEMPLATE =
   'أهلًا، أنا اسمي [Customer Name]. عايز عرض سعر للقطع التالية:\n[Items]\nمن فضلك أكد السعر والتوفر. شكرًا.';
 
 const Checkout = () => {
-  const { items, getCartTotal, getDetailedItems, clearCart } = useCart();
+  const { items, getCartTotal, getCartCount, getDetailedItems, clearCart } = useCart();
   const detailedItems = getDetailedItems();
   const subtotal = getCartTotal();
+  const cartCount = getCartCount();
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -236,10 +237,12 @@ const Checkout = () => {
 
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">عدد المنتجات</span>
-                  <span className="font-medium">
-                    {new Set(detailedItems.map((item) => item.productId)).size}
-                  </span>
+                  <span className="text-muted-foreground">عدد القطع</span>
+                  <span className="font-medium">{cartCount}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">عدد البنود (منتج + جودة)</span>
+                  <span className="font-medium">{detailedItems.length}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">الإجمالي الفرعي</span>

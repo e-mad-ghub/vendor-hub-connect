@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
@@ -9,20 +9,9 @@ import { trackEvent } from '@/lib/analytics';
 
 const Cart = () => {
   const navigate = useNavigate();
-  const { items, removeFromCart, updateQuantity, getCartTotal, getDetailedItems } = useCart();
+  const { items, removeFromCart, updateQuantity, getCartTotal, getCartCount, getDetailedItems } = useCart();
   const detailedItems = getDetailedItems();
-  const groupedItems = useMemo(() => {
-    const map = new Map<string, { productId: string; product: typeof detailedItems[number]['product']; items: typeof detailedItems }>();
-    detailedItems.forEach((item) => {
-      const existing = map.get(item.productId);
-      if (existing) {
-        existing.items.push(item);
-      } else {
-        map.set(item.productId, { productId: item.productId, product: item.product, items: [item] });
-      }
-    });
-    return Array.from(map.values());
-  }, [detailedItems]);
+  const cartCount = getCartCount();
   const subtotal = getCartTotal();
 
   if (items.length === 0) {
@@ -48,20 +37,15 @@ const Cart = () => {
     <Layout>
       <Seo title="عربة التسوق" description="راجع منتجاتك واطلب عرض سعر عبر واتساب." />
       <div className="container py-3 md:py-8">
-        <h1 className="text-xl md:text-3xl font-bold mb-4 md:mb-6">عربة التسوق ({groupedItems.length} منتج)</h1>
+        <h1 className="text-xl md:text-3xl font-bold mb-4 md:mb-6">عربة التسوق ({cartCount} قطعة)</h1>
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
             <div className="bg-card rounded-lg md:rounded-xl shadow-card overflow-hidden">
               <div className="divide-y divide-border">
-                {groupedItems.map(({ productId, product, items: productItems }) => {
-                  const hasNew = productItems.some(item => item.quality === 'new');
-                  const hasImported = productItems.some(item => item.quality === 'imported');
-                  const primaryItem = productItems.find(item => item.quality === 'new') || productItems[0];
-                  const displayQuantity = primaryItem?.quantity || 1;
-                  return (
-                  <div key={productId} className="p-3 md:p-4 flex gap-3 md:gap-4">
+                {detailedItems.map(({ productId, product, quality, quantity, unitPrice }) => (
+                  <div key={`${productId}-${quality}`} className="p-3 md:p-4 flex gap-3 md:gap-4">
                     <Link to={`/product/${productId}`} className="w-20 h-20 md:w-24 md:h-24">
                       <div className="w-full h-full rounded-lg bg-muted flex items-center justify-center text-[10px] text-muted-foreground overflow-hidden">
                         {product.imageDataUrl ? (
@@ -80,36 +64,40 @@ const Cart = () => {
 
                     <div className="flex-1 min-w-0">
                       <Link to={`/product/${productId}`}>
-                        <h3 className="font-medium text-foreground hover:text-primary transition-colors line-clamp-2">
-                          {product.title}
-                        </h3>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <h3 className="font-medium text-foreground hover:text-primary transition-colors line-clamp-2">
+                            {product.title}
+                          </h3>
+                          <span
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                              quality === 'new'
+                                ? 'bg-primary/10 text-primary'
+                                : 'bg-amber-100 text-amber-800'
+                            }`}
+                          >
+                            {quality === 'new' ? 'جديد' : 'استيراد'}
+                          </span>
+                        </div>
                       </Link>
                       <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-                        {hasNew && (
-                          <p>جديد: ج.م {(productItems.find(item => item.quality === 'new')?.unitPrice || 0).toFixed(2)}</p>
-                        )}
-                        {hasImported && (
-                          <p>استيراد: السعر بيتحدد بعد الطلب</p>
-                        )}
+                        <p>
+                          {quality === 'new'
+                            ? `سعر الجديد: ج.م ${unitPrice.toFixed(2)}`
+                            : 'سعر الاستيراد: السعر بيتحدد بعد الطلب'}
+                        </p>
                       </div>
 
                       <div className="flex items-center justify-between mt-3">
                         <div className="flex items-center border border-border rounded-lg">
                           <button
-                            onClick={() => {
-                              if (hasNew) updateQuantity(productId, 'new', displayQuantity - 1);
-                              if (hasImported) updateQuantity(productId, 'imported', displayQuantity - 1);
-                            }}
+                            onClick={() => updateQuantity(productId, quality, quantity - 1)}
                             className="p-1.5 hover:bg-muted transition-colors"
                           >
                             <Minus className="h-3 w-3" />
                           </button>
-                          <span className="w-8 text-center text-sm font-medium">{displayQuantity}</span>
+                          <span className="w-8 text-center text-sm font-medium">{quantity}</span>
                           <button
-                            onClick={() => {
-                              if (hasNew) updateQuantity(productId, 'new', displayQuantity + 1);
-                              if (hasImported) updateQuantity(productId, 'imported', displayQuantity + 1);
-                            }}
+                            onClick={() => updateQuantity(productId, quality, quantity + 1)}
                             className="p-1.5 hover:bg-muted transition-colors"
                           >
                             <Plus className="h-3 w-3" />
@@ -117,10 +105,7 @@ const Cart = () => {
                         </div>
 
                         <button
-                          onClick={() => {
-                            if (hasNew) removeFromCart(productId, 'new');
-                            if (hasImported) removeFromCart(productId, 'imported');
-                          }}
+                          onClick={() => removeFromCart(productId, quality)}
                           className="text-muted-foreground hover:text-destructive transition-colors p-2"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -128,7 +113,7 @@ const Cart = () => {
                       </div>
                     </div>
                   </div>
-                )})}
+                ))}
               </div>
             </div>
           </div>

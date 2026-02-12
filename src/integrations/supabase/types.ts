@@ -14,6 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value_json: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value_json?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value_json?: Json
+        }
+        Relationships: []
+      }
+      app_products: {
+        Row: {
+          car_brands: Json
+          category: string
+          created_at: string
+          description: string
+          id: string
+          image_data_url: string
+          imported_available: boolean
+          new_available: boolean
+          new_price: number | null
+          owner_id: string | null
+          owner_name: string | null
+          title: string
+        }
+        Insert: {
+          car_brands?: Json
+          category?: string
+          created_at?: string
+          description?: string
+          id: string
+          image_data_url?: string
+          imported_available?: boolean
+          new_available?: boolean
+          new_price?: number | null
+          owner_id?: string | null
+          owner_name?: string | null
+          title: string
+        }
+        Update: {
+          car_brands?: Json
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          image_data_url?: string
+          imported_available?: boolean
+          new_available?: boolean
+          new_price?: number | null
+          owner_id?: string | null
+          owner_name?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      quote_requests: {
+        Row: {
+          created_at: string
+          customer_name: string
+          customer_phone: string
+          id: string
+          items_json: Json
+          message: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          customer_name: string
+          customer_phone: string
+          id: string
+          items_json?: Json
+          message: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string
+          customer_phone?: string
+          id?: string
+          items_json?: Json
+          message?: string
+          status?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

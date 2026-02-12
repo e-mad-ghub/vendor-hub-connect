@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import { defaultBrandOptions, type BrandOption, BRAND_OPTIONS_KEY, translateBrandOptions } from '@/data/brandOptions';
+import { defaultBrandOptions, type BrandOption } from '@/data/brandOptions';
 import { LoadingState } from '@/components/LoadingState';
 import { Seo } from '@/components/Seo';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/error';
+import { api } from '@/lib/api';
 
 const AdminBrands = () => {
   const { user, isLoading: authLoading } = useAuth();
@@ -19,21 +20,9 @@ const AdminBrands = () => {
   const [newModelInputs, setNewModelInputs] = React.useState<Record<string, string>>({});
 
   React.useEffect(() => {
-    try {
-      const raw = localStorage.getItem(BRAND_OPTIONS_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as BrandOption[];
-        const translated = translateBrandOptions(parsed);
-        if (JSON.stringify(parsed) !== JSON.stringify(translated)) {
-          localStorage.setItem(BRAND_OPTIONS_KEY, JSON.stringify(translated));
-        }
-        setBrandOptions(translated);
-        return;
-      }
-      setBrandOptions(defaultBrandOptions);
-    } catch {
-      setBrandOptions(defaultBrandOptions);
-    }
+    api.getBrandOptions()
+      .then((data) => setBrandOptions(data))
+      .catch(() => setBrandOptions(defaultBrandOptions));
   }, []);
 
   if (authLoading) {
@@ -118,9 +107,9 @@ const AdminBrands = () => {
     setBrandOptionsDirty(true);
   };
 
-  const saveBrandOptions = () => {
+  const saveBrandOptions = async () => {
     try {
-      localStorage.setItem(BRAND_OPTIONS_KEY, JSON.stringify(brandOptions));
+      await api.updateBrandOptions(brandOptions);
       setBrandOptionsDirty(false);
       toast.success('تم حفظ الماركات والموديلات');
     } catch (e: unknown) {
