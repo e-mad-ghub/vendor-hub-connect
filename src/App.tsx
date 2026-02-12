@@ -13,6 +13,7 @@ import { AppSpeedInsights } from "@/components/AppSpeedInsights";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import Search from "./pages/Search";
+import TemporaryNotice from "./pages/TemporaryNotice";
 
 const Category = React.lazy(() => import("./pages/Category"));
 const ProductDetail = React.lazy(() => import("./pages/ProductDetail"));
@@ -30,6 +31,7 @@ const NotFound = React.lazy(() => import("./pages/NotFound"));
 const NotAuthorized = React.lazy(() => import("./pages/NotAuthorized"));
 
 const queryClient = new QueryClient();
+const isMaintenanceMode = import.meta.env.VITE_MAINTENANCE_MODE === "true";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -48,36 +50,61 @@ const App = () => (
               )}
             >
               <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/search" element={<Search />} />
-                <Route path="/category/:name" element={<Category />} />
-                <Route path="/product/:id" element={<ProductDetail />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/login" element={<Login />} />
-                <Route
-                  path="/admin"
-                  element={(
-                    <ProtectedRoute requireRole="admin">
-                      <AdminPanel />
-                    </ProtectedRoute>
-                  )}
-                />
-                <Route
-                  path="/admin/brands"
-                  element={(
-                    <ProtectedRoute requireRole="admin">
-                      <AdminBrands />
-                    </ProtectedRoute>
-                  )}
-                />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/terms" element={<Terms />} />
-                <Route path="/privacy" element={<Privacy />} />
-                <Route path="/refund-policy" element={<RefundPolicy />} />
-                <Route path="/menu" element={<Menu />} />
-                <Route path="/not-authorized" element={<NotAuthorized />} />
-                <Route path="*" element={<NotFound />} />
+                {isMaintenanceMode ? (
+                  <>
+                    <Route path="/login" element={<Login />} />
+                    <Route
+                      path="/admin"
+                      element={(
+                        <ProtectedRoute requireRole="admin">
+                          <AdminPanel />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="/admin/brands"
+                      element={(
+                        <ProtectedRoute requireRole="admin">
+                          <AdminBrands />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route path="*" element={<TemporaryNotice />} />
+                  </>
+                ) : (
+                  <>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/search" element={<Search />} />
+                    <Route path="/category/:name" element={<Category />} />
+                    <Route path="/product/:id" element={<ProductDetail />} />
+                    <Route path="/cart" element={<Cart />} />
+                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route
+                      path="/admin"
+                      element={(
+                        <ProtectedRoute requireRole="admin">
+                          <AdminPanel />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route
+                      path="/admin/brands"
+                      element={(
+                        <ProtectedRoute requireRole="admin">
+                          <AdminBrands />
+                        </ProtectedRoute>
+                      )}
+                    />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/terms" element={<Terms />} />
+                    <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/refund-policy" element={<RefundPolicy />} />
+                    <Route path="/menu" element={<Menu />} />
+                    <Route path="/not-authorized" element={<NotAuthorized />} />
+                    <Route path="*" element={<NotFound />} />
+                  </>
+                )}
               </Routes>
             </Suspense>
             <AppAnalytics />
