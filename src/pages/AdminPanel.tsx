@@ -417,7 +417,7 @@ const AdminPanel = () => {
     ctx.drawImage(image, 0, 0, width, height);
 
     const optimized = canvas.toDataURL('image/jpeg', 0.82);
-    const maxOutputLength = 650_000;
+    const maxOutputLength = 1_800_000;
     if (optimized.length > maxOutputLength) {
       throw new Error('الصورة ما زالت كبيرة بعد الضغط. اختر صورة أصغر.');
     }
@@ -439,7 +439,29 @@ const AdminPanel = () => {
         setNewProduct((prev) => ({ ...prev, imageDataUrl: result }));
       }
     } catch (e: unknown) {
-      toast.error(getErrorMessage(e, 'تعذر معالجة الصورة'));
+      try {
+        const fallback = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = typeof reader.result === 'string' ? reader.result : '';
+            if (!result) {
+              reject(new Error('تعذر قراءة الصورة'));
+              return;
+            }
+            resolve(result);
+          };
+          reader.onerror = () => reject(new Error('تعذر قراءة الصورة'));
+          reader.readAsDataURL(file);
+        });
+        if (isEditing) {
+          setEditingProduct((prev) => ({ ...prev, imageDataUrl: fallback }));
+        } else {
+          setNewProduct((prev) => ({ ...prev, imageDataUrl: fallback }));
+        }
+        toast.error('تم استخدام الصورة الأصلية بدون ضغط. قد تكون أبطأ في التحميل.');
+      } catch {
+        toast.error(getErrorMessage(e, 'تعذر معالجة الصورة'));
+      }
     }
   };
 
@@ -451,7 +473,7 @@ const AdminPanel = () => {
           <div className="flex items-center gap-2">
             <h1 className="text-xl md:text-2xl font-bold">لوحة الإدارة</h1>
             <span className="text-xs md:text-sm px-2 py-1 rounded bg-muted text-muted-foreground">
-              v1.0
+              v1.3
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
