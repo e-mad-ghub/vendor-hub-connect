@@ -448,7 +448,12 @@ const AdminPanel = () => {
       <Seo title="لوحة الإدارة" description="إدارة الطلبات والمنتجات وإعدادات واتساب." />
       <div className="container py-3 md:py-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5 md:mb-6">
-          <h1 className="text-xl md:text-2xl font-bold">لوحة الإدارة</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl md:text-2xl font-bold">لوحة الإدارة</h1>
+            <span className="text-xs md:text-sm px-2 py-1 rounded bg-muted text-muted-foreground">
+              v1.0
+            </span>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <Link to="/admin/brands">
               <Button variant="outline" size="sm">إدارة الماركات</Button>
