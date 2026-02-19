@@ -1,13 +1,16 @@
 import React from 'react';
 import type { Product } from '@/types/marketplace';
-import { adminSeedProducts } from '@/data/adminCatalog';
-import { translateBrandLabel, expandBrandsWithModels, BRAND_OPTIONS_KEY, defaultBrandOptions, translateBrandOptions, type BrandOption } from '@/data/brandOptions';
+import {
+  expandBrandsWithModels,
+  defaultBrandOptions,
+  type BrandOption,
+} from '@/data/brandOptions';
 import { supabase } from '@/integrations/supabase/client';
 import { api } from '@/lib/api';
 
-const STORAGE_KEY = 'vhc_products';
 const ADMIN_ID = 'admin_local';
 const ADMIN_NAME = 'الأدمن';
+const MAX_IMAGE_DATA_URL_LENGTH = 650_000;
 
 export type NewProductInput = {
   title: string;
@@ -20,47 +23,13 @@ export type NewProductInput = {
   imageDataUrl?: string;
 };
 
-const normalizeProducts = (items: Product[]): Product[] =>
-  items.map((product) => {
-    const legacyPrice = (product as Product & { price?: number }).price;
-    const derivedNewPrice = product.newPrice ?? (typeof legacyPrice === 'number' ? legacyPrice : 1000);
-    const derivedNewAvailable = true;
-    const derivedImportedAvailable = true;
-
-    return {
-      ...product,
-      newAvailable: derivedNewAvailable,
-      newPrice: derivedNewPrice,
-      importedAvailable: derivedImportedAvailable,
-      ownerId: product.ownerId || ADMIN_ID,
-      ownerName: product.ownerName || ADMIN_NAME,
-      carBrands: product.carBrands || [],
-      imageDataUrl: product.imageDataUrl || '',
-    };
-  });
-
-const filterAdminProducts = (items: Product[]): Product[] =>
-  items.filter((product) => (product.ownerId || ADMIN_ID) === ADMIN_ID);
-
-const cleanupLegacyProductFields = (items: Product[]): Product[] =>
-  items.map(({ imageDataUrl, ...rest }) => ({
-    ...rest,
-    imageDataUrl: imageDataUrl || '',
-  }));
-
-const translateProductBrands = (items: Product[]): { items: Product[]; changed: boolean } => {
-  let changed = false;
-  const next = items.map((product) => {
-    if (!product.carBrands || product.carBrands.length === 0) return product;
-    const translated = product.carBrands.map((value) => translateBrandLabel(value));
-    const same = translated.every((value, index) => value === product.carBrands?.[index]);
-    if (!same) {
-      changed = true;
-      return { ...product, carBrands: translated };
-    }
-    return product;
-  });
-  return { items: next, changed };
+const normalizeImageDataUrl = (value: string | undefined): string => {
+  if (!value) return '';
+  if (!value.startsWith('data:image/')) return value;
+  if (value.length > MAX_IMAGE_DATA_URL_LENGTH) {
+    throw new Error('الصورة كبيرة جدًا. اختر صورة أصغر.');
+  }
+  return value;
 };
 
 const emitProductsUpdated = () => {
@@ -69,61 +38,52 @@ const emitProductsUpdated = () => {
   }
 };
 
-const readLocalProducts = (): Product[] => {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as Product[];
-  } catch {
-    return [];
-  }
-};
-
-const writeLocalProducts = (items: Product[]) => {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-};
-
 let cachedProducts: Product[] = [];
 
-const ensureInitialProducts = () => {
-  if (cachedProducts.length > 0) return;
-  const local = readLocalProducts();
-  if (local.length > 0) {
-    cachedProducts = filterAdminProducts(normalizeProducts(cleanupLegacyProductFields(local)));
-    return;
-  }
-  const seeded = filterAdminProducts(normalizeProducts(adminSeedProducts));
-  cachedProducts = seeded;
-  writeLocalProducts(seeded);
-};
+const normalizeProduct = (product: Product): Product => {
+  const legacyPrice = (product as Product & { price?: number }).price;
+  const newAvailable = typeof product.newAvailable === 'boolean' ? product.newAvailable : true;
+  const importedAvailable =
+    typeof product.importedAvailable === 'boolean' ? product.importedAvailable : false;
 
-const loadBrandOptions = (): BrandOption[] => {
-  try {
-    const raw = localStorage.getItem(BRAND_OPTIONS_KEY);
-    if (!raw) return defaultBrandOptions;
-    const parsed = JSON.parse(raw) as BrandOption[];
-    return translateBrandOptions(parsed);
-  } catch {
-    return defaultBrandOptions;
-  }
-};
-
-const prepareProducts = (items: Product[], brandOptions: BrandOption[]): Product[] => {
-  const normalized = filterAdminProducts(normalizeProducts(cleanupLegacyProductFields(items)));
-  const translated = translateProductBrands(normalized);
-  const expanded = translated.items.map((product) => ({
+  return {
     ...product,
-    carBrands: expandBrandsWithModels(product.carBrands, brandOptions),
-  }));
-  return expanded;
+    description: product.description || '',
+    newAvailable,
+    importedAvailable,
+    newPrice:
+      newAvailable
+        ? (typeof product.newPrice === 'number' ? product.newPrice : legacyPrice)
+        : undefined,
+    category: product.category || 'غير محدد',
+    ownerId: product.ownerId || ADMIN_ID,
+    ownerName: product.ownerName || ADMIN_NAME,
+    carBrands: product.carBrands || [],
+    imageDataUrl: product.imageDataUrl || '',
+  };
 };
+
+const prepareProducts = (items: Product[], brandOptions: BrandOption[]): Product[] =>
+  items.map((product) => {
+    const normalized = normalizeProduct(product);
+    return {
+      ...normalized,
+      carBrands: expandBrandsWithModels(normalized.carBrands, brandOptions),
+    };
+  });
 
 const setCachedProducts = (items: Product[]) => {
-  cachedProducts = filterAdminProducts(items);
-  writeLocalProducts(cachedProducts);
+  cachedProducts = items;
   emitProductsUpdated();
+};
+
+const parseNullableNumber = (value: unknown): number | undefined => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined;
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
 };
 
 const fetchProductsFromDb = async (): Promise<Product[]> => {
@@ -135,13 +95,13 @@ const fetchProductsFromDb = async (): Promise<Product[]> => {
   if (error) throw error;
 
   const rows = data || [];
-  const mapped: Product[] = rows.map((row) => ({
+  return rows.map((row) => ({
     id: row.id,
     title: row.title,
     description: row.description || '',
-    newAvailable: row.new_available,
-    newPrice: typeof row.new_price === 'number' ? row.new_price : undefined,
-    importedAvailable: row.imported_available,
+    newAvailable: !!row.new_available,
+    newPrice: parseNullableNumber(row.new_price),
+    importedAvailable: !!row.imported_available,
     category: row.category || 'غير محدد',
     carBrands: Array.isArray(row.car_brands) ? (row.car_brands as string[]) : [],
     imageDataUrl: row.image_data_url || '',
@@ -149,53 +109,62 @@ const fetchProductsFromDb = async (): Promise<Product[]> => {
     ownerName: row.owner_name || ADMIN_NAME,
     createdAt: row.created_at,
   }));
-
-  return mapped;
 };
 
-export const getProducts = (): Product[] => {
-  ensureInitialProducts();
-  return cachedProducts;
+const loadDbBackedProducts = async (): Promise<Product[]> => {
+  const [dbProducts, dbBrandOptions] = await Promise.all([
+    fetchProductsFromDb(),
+    api.getBrandOptions().catch(() => defaultBrandOptions),
+  ]);
+  const prepared = prepareProducts(dbProducts, dbBrandOptions || defaultBrandOptions);
+  setCachedProducts(prepared);
+  return prepared;
 };
+
+export const getProducts = (): Product[] => cachedProducts;
 
 export const addProduct = async (input: NewProductInput): Promise<Product> => {
-  const newProduct: Product = {
-    id: `p_${Date.now()}`,
+  const normalizedImageDataUrl = normalizeImageDataUrl(input.imageDataUrl);
+  const id =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `p_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+  const nowIso = new Date().toISOString();
+  const { error } = await supabase
+    .from('app_products')
+    .insert({
+      id,
+      title: input.title,
+      description: input.description,
+      new_available: !!input.newAvailable,
+      new_price: input.newAvailable ? (input.newPrice || 0) : null,
+      imported_available: !!input.importedAvailable,
+      category: input.category || 'غير محدد',
+      car_brands: input.carBrands || [],
+      image_data_url: normalizedImageDataUrl,
+      owner_id: ADMIN_ID,
+      owner_name: ADMIN_NAME,
+      created_at: nowIso,
+    });
+
+  if (error) throw error;
+
+  const latest = await loadDbBackedProducts();
+  return latest.find((product) => product.id === id) || normalizeProduct({
+    id,
     title: input.title,
     description: input.description,
     newAvailable: input.newAvailable,
     newPrice: input.newAvailable ? input.newPrice : undefined,
     importedAvailable: input.importedAvailable,
-    category: input.category,
+    category: input.category || 'غير محدد',
+    carBrands: input.carBrands || [],
+    imageDataUrl: normalizedImageDataUrl,
     ownerId: ADMIN_ID,
     ownerName: ADMIN_NAME,
-    createdAt: new Date().toISOString(),
-    carBrands: input.carBrands,
-    imageDataUrl: input.imageDataUrl || '',
-  };
-
-  const { error } = await supabase
-    .from('app_products')
-    .insert({
-      id: newProduct.id,
-      title: newProduct.title,
-      description: newProduct.description,
-      new_available: !!newProduct.newAvailable,
-      new_price: newProduct.newAvailable ? (newProduct.newPrice || 0) : null,
-      imported_available: !!newProduct.importedAvailable,
-      category: newProduct.category,
-      car_brands: newProduct.carBrands || [],
-      image_data_url: newProduct.imageDataUrl || '',
-      owner_id: newProduct.ownerId || ADMIN_ID,
-      owner_name: newProduct.ownerName || ADMIN_NAME,
-      created_at: newProduct.createdAt,
-    });
-
-  if (error) throw error;
-
-  const next = [newProduct, ...getProducts()];
-  setCachedProducts(next);
-  return newProduct;
+    createdAt: nowIso,
+  });
 };
 
 export const removeProduct = async (id: string) => {
@@ -204,65 +173,45 @@ export const removeProduct = async (id: string) => {
     .delete()
     .eq('id', id);
   if (error) throw error;
-
-  const current = getProducts();
-  const next = current.filter((product) => product.id !== id);
-  setCachedProducts(next);
+  await loadDbBackedProducts();
 };
 
 export const updateProduct = async (id: string, updates: Partial<Product>): Promise<Product | null> => {
-  const current = getProducts();
-  const currentProduct = current.find((product) => product.id === id);
-  if (!currentProduct) return null;
-
+  const normalizedImageDataUrl = normalizeImageDataUrl(updates.imageDataUrl);
+  const current = cachedProducts.find((product) => product.id === id);
+  const currentNewAvailable = current?.newAvailable ?? false;
   const nextNewAvailable =
-    typeof updates.newAvailable === 'boolean' ? updates.newAvailable : currentProduct.newAvailable;
-  const nextNewPrice =
-    typeof updates.newPrice === 'number' ? updates.newPrice : currentProduct.newPrice;
+    typeof updates.newAvailable === 'boolean' ? updates.newAvailable : currentNewAvailable;
+
+  const updatePayload = {
+    title: updates.title ?? current?.title,
+    description: updates.description ?? current?.description ?? '',
+    new_available: nextNewAvailable,
+    new_price: nextNewAvailable ? (updates.newPrice ?? current?.newPrice ?? 0) : null,
+    imported_available: updates.importedAvailable ?? current?.importedAvailable ?? false,
+    category: updates.category ?? current?.category ?? 'غير محدد',
+    car_brands: updates.carBrands ?? current?.carBrands ?? [],
+    image_data_url: normalizedImageDataUrl || current?.imageDataUrl || '',
+    owner_id: updates.ownerId ?? current?.ownerId ?? ADMIN_ID,
+    owner_name: updates.ownerName ?? current?.ownerName ?? ADMIN_NAME,
+  };
 
   const { error } = await supabase
     .from('app_products')
-    .update({
-      title: updates.title ?? currentProduct.title,
-      description: updates.description ?? currentProduct.description,
-      new_available: !!nextNewAvailable,
-      new_price: nextNewAvailable ? (nextNewPrice || 0) : null,
-      imported_available:
-        typeof updates.importedAvailable === 'boolean'
-          ? updates.importedAvailable
-          : currentProduct.importedAvailable,
-      category: updates.category ?? currentProduct.category,
-      car_brands: updates.carBrands ?? currentProduct.carBrands ?? [],
-      image_data_url: updates.imageDataUrl ?? currentProduct.imageDataUrl ?? '',
-      owner_id: updates.ownerId ?? currentProduct.ownerId ?? ADMIN_ID,
-      owner_name: updates.ownerName ?? currentProduct.ownerName ?? ADMIN_NAME,
-    })
+    .update(updatePayload)
     .eq('id', id);
 
   if (error) throw error;
 
-  const next = current.map((product) => {
-    if (product.id !== id) return product;
-    return {
-      ...product,
-      ...updates,
-      newAvailable: nextNewAvailable,
-      newPrice: nextNewAvailable ? nextNewPrice : undefined,
-      ownerId: ADMIN_ID,
-      ownerName: ADMIN_NAME,
-      carBrands: updates.carBrands ?? product.carBrands ?? [],
-      imageDataUrl: updates.imageDataUrl ?? product.imageDataUrl ?? '',
-    };
-  });
-  setCachedProducts(next);
-  return next.find((product) => product.id === id) || null;
+  const latest = await loadDbBackedProducts();
+  return latest.find((product) => product.id === id) || null;
 };
 
 export const getProductById = (id: string): Product | undefined =>
-  getProducts().find((product) => product.id === id);
+  cachedProducts.find((product) => product.id === id);
 
 export const getProductsByCategory = (category: string): Product[] =>
-  getProducts().filter((product) => product.category === category);
+  cachedProducts.filter((product) => product.category === category);
 
 export const useProducts = () => {
   const [products, setProducts] = React.useState<Product[]>(() => getProducts());
@@ -270,16 +219,7 @@ export const useProducts = () => {
 
   const refresh = React.useCallback(async () => {
     try {
-      const [dbProducts, dbBrandOptions] = await Promise.all([
-        fetchProductsFromDb(),
-        api.getBrandOptions().catch(() => loadBrandOptions()),
-      ]);
-      if (dbProducts.length > 0) {
-        const prepared = prepareProducts(dbProducts, dbBrandOptions || loadBrandOptions());
-        setCachedProducts(prepared);
-      }
-    } catch {
-      // Keep local cache if remote fails.
+      await loadDbBackedProducts();
     } finally {
       setProducts(getProducts());
       setIsLoading(false);
@@ -288,15 +228,10 @@ export const useProducts = () => {
 
   React.useEffect(() => {
     const handleUpdate = () => setProducts(getProducts());
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === STORAGE_KEY) handleUpdate();
-    };
     refresh();
     window.addEventListener('vhc-products-updated', handleUpdate);
-    window.addEventListener('storage', handleStorage);
     return () => {
       window.removeEventListener('vhc-products-updated', handleUpdate);
-      window.removeEventListener('storage', handleStorage);
     };
   }, [refresh]);
 

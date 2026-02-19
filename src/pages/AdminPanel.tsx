@@ -43,6 +43,7 @@ const AdminPanel = () => {
     lastUpdated: '',
   });
   const [customerServiceSaving, setCustomerServiceSaving] = React.useState(false);
+  const [creatingProduct, setCreatingProduct] = React.useState(false);
   const { products, createProduct, deleteProduct, editProduct } = useProducts();
   const [newProduct, setNewProduct] = React.useState({
     title: '',
@@ -256,7 +257,7 @@ const AdminPanel = () => {
   };
 
   const handleCreateProduct = async () => {
-    if (isLoading) return;
+    if (isLoading || creatingProduct) return;
     if (!newProduct.title.trim()) {
       toast.error('من فضلك اكتب اسم المنتج');
       return;
@@ -271,6 +272,7 @@ const AdminPanel = () => {
       return;
     }
     try {
+      setCreatingProduct(true);
       await createProduct({
         title: newProduct.title.trim(),
         description: newProduct.description.trim(),
@@ -294,6 +296,8 @@ const AdminPanel = () => {
       toast.success('تمت إضافة المنتج');
     } catch (e: unknown) {
       toast.error(getErrorMessage(e, 'تعذر إضافة المنتج'));
+    } finally {
+      setCreatingProduct(false);
     }
   };
 
@@ -373,18 +377,70 @@ const AdminPanel = () => {
   };
 
 
-  const handleImageChange = (file: File | null, isEditing: boolean) => {
+  const optimizeImageFile = async (file: File): Promise<string> => {
+    const maxInputSizeBytes = 8 * 1024 * 1024;
+    if (file.size > maxInputSizeBytes) {
+      throw new Error('حجم الصورة كبير جدًا. الحد الأقصى 8 ميجابايت.');
+    }
+
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = typeof reader.result === 'string' ? reader.result : '';
+        if (!result) {
+          reject(new Error('تعذر قراءة الصورة'));
+          return;
+        }
+        resolve(result);
+      };
+      reader.onerror = () => reject(new Error('تعذر قراءة الصورة'));
+      reader.readAsDataURL(file);
+    });
+
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('تعذر تجهيز الصورة'));
+      img.src = dataUrl;
+    });
+
+    const maxSide = 1200;
+    const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+    const width = Math.max(1, Math.round(image.width * scale));
+    const height = Math.max(1, Math.round(image.height * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('تعذر معالجة الصورة');
+    ctx.drawImage(image, 0, 0, width, height);
+
+    const optimized = canvas.toDataURL('image/jpeg', 0.82);
+    const maxOutputLength = 650_000;
+    if (optimized.length > maxOutputLength) {
+      throw new Error('الصورة ما زالت كبيرة بعد الضغط. اختر صورة أصغر.');
+    }
+
+    return optimized;
+  };
+
+  const handleImageChange = async (file: File | null, isEditing: boolean) => {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === 'string' ? reader.result : '';
+    if (!file.type.startsWith('image/')) {
+      toast.error('الملف المختار ليس صورة.');
+      return;
+    }
+    try {
+      const result = await optimizeImageFile(file);
       if (isEditing) {
         setEditingProduct((prev) => ({ ...prev, imageDataUrl: result }));
       } else {
         setNewProduct((prev) => ({ ...prev, imageDataUrl: result }));
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e, 'تعذر معالجة الصورة'));
+    }
   };
 
   return (
@@ -392,7 +448,12 @@ const AdminPanel = () => {
       <Seo title="لوحة الإدارة" description="إدارة الطلبات والمنتجات وإعدادات واتساب." />
       <div className="container py-3 md:py-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5 md:mb-6">
-          <h1 className="text-xl md:text-2xl font-bold">لوحة الإدارة</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl md:text-2xl font-bold">لوحة الإدارة</h1>
+            <span className="text-xs md:text-sm px-2 py-1 rounded bg-muted text-muted-foreground">
+              v1.0
+            </span>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
             <Link to="/admin/brands">
               <Button variant="outline" size="sm">إدارة الماركات</Button>
@@ -637,7 +698,9 @@ const AdminPanel = () => {
                   </div>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Button onClick={handleCreateProduct}>إضافة المنتج</Button>
+                  <Button onClick={handleCreateProduct} disabled={creatingProduct}>
+                    {creatingProduct ? 'جاري الإضافة...' : 'إضافة المنتج'}
+                  </Button>
                 </div>
               </div>
 
