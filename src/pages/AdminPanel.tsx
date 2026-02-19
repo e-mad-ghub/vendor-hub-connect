@@ -23,6 +23,9 @@ import { Seo } from '@/components/Seo';
 import { sanitizePhoneInput, validatePhone } from '@/lib/validation';
 import { formatCarBrands } from '@/lib/brands';
 import { getErrorMessage } from '@/lib/error';
+import { supabase } from '@/integrations/supabase/client';
+
+const PRODUCT_IMAGES_BUCKET = import.meta.env.VITE_PRODUCT_IMAGES_BUCKET || 'product-images';
 
 const AdminPanel = () => {
   const { user, logout, isLoading: authLoading } = useAuth();
@@ -44,6 +47,7 @@ const AdminPanel = () => {
   });
   const [customerServiceSaving, setCustomerServiceSaving] = React.useState(false);
   const [creatingProduct, setCreatingProduct] = React.useState(false);
+  const [uploadingImage, setUploadingImage] = React.useState(false);
   const { products, createProduct, deleteProduct, editProduct } = useProducts();
   const [newProduct, setNewProduct] = React.useState({
     title: '',
@@ -377,10 +381,10 @@ const AdminPanel = () => {
   };
 
 
-  const optimizeImageFile = async (file: File): Promise<string> => {
-    const maxInputSizeBytes = 8 * 1024 * 1024;
-    if (file.size > maxInputSizeBytes) {
-      throw new Error('حجم الصورة كبير جدًا. الحد الأقصى 8 ميجابايت.');
+  const optimizeImageFile = async (file: File): Promise<Blob> => {
+    const hardInputLimitBytes = 25 * 1024 * 1024;
+    if (file.size > hardInputLimitBytes) {
+      throw new Error('حجم الصورة كبير جدًا. الحد الأقصى 25 ميجابايت.');
     }
 
     const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -404,25 +408,79 @@ const AdminPanel = () => {
       img.src = dataUrl;
     });
 
-    const maxSide = 1200;
-    const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
-    const width = Math.max(1, Math.round(image.width * scale));
-    const height = Math.max(1, Math.round(image.height * scale));
-
     const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('تعذر معالجة الصورة');
-    ctx.drawImage(image, 0, 0, width, height);
 
-    const optimized = canvas.toDataURL('image/jpeg', 0.82);
-    const maxOutputLength = 1_800_000;
-    if (optimized.length > maxOutputLength) {
-      throw new Error('الصورة ما زالت كبيرة بعد الضغط. اختر صورة أصغر.');
+    const maxOutputSizeBytes = 2 * 1024 * 1024;
+    let maxSide = 1600;
+    let quality = 0.86;
+    let best: Blob | null = null;
+
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+      const width = Math.max(1, Math.round(image.width * scale));
+      const height = Math.max(1, Math.round(image.height * scale));
+      canvas.width = width;
+      canvas.height = height;
+      ctx.clearRect(0, 0, width, height);
+      ctx.drawImage(image, 0, 0, width, height);
+
+      const candidate = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('تعذر ضغط الصورة'));
+              return;
+            }
+            resolve(blob);
+          },
+          'image/jpeg',
+          quality
+        );
+      });
+
+      best = candidate;
+      if (candidate.size <= maxOutputSizeBytes) {
+        return candidate;
+      }
+
+      quality = Math.max(0.45, quality - 0.08);
+      maxSide = Math.max(700, Math.round(maxSide * 0.85));
     }
 
-    return optimized;
+    if (best && best.size <= 4 * 1024 * 1024) {
+      return best;
+    }
+
+    throw new Error('تعذر تقليل حجم الصورة تلقائيًا. جرّب صورة أصغر.');
+  };
+
+  const uploadProductImage = async (file: File): Promise<string> => {
+    const optimizedBlob = await optimizeImageFile(file);
+    const objectName = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.jpg`;
+    const objectPath = `products/${objectName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(PRODUCT_IMAGES_BUCKET)
+      .upload(objectPath, optimizedBlob, {
+        contentType: 'image/jpeg',
+        upsert: false,
+      });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data } = supabase.storage
+      .from(PRODUCT_IMAGES_BUCKET)
+      .getPublicUrl(objectPath);
+
+    if (!data.publicUrl) {
+      throw new Error('تعذر إنشاء رابط الصورة');
+    }
+
+    return data.publicUrl;
   };
 
   const handleImageChange = async (file: File | null, isEditing: boolean) => {
@@ -431,37 +489,20 @@ const AdminPanel = () => {
       toast.error('الملف المختار ليس صورة.');
       return;
     }
+    if (uploadingImage) return;
+    setUploadingImage(true);
     try {
-      const result = await optimizeImageFile(file);
+      const result = await uploadProductImage(file);
       if (isEditing) {
         setEditingProduct((prev) => ({ ...prev, imageDataUrl: result }));
       } else {
         setNewProduct((prev) => ({ ...prev, imageDataUrl: result }));
       }
+      toast.success('تم رفع الصورة بنجاح');
     } catch (e: unknown) {
-      try {
-        const fallback = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const result = typeof reader.result === 'string' ? reader.result : '';
-            if (!result) {
-              reject(new Error('تعذر قراءة الصورة'));
-              return;
-            }
-            resolve(result);
-          };
-          reader.onerror = () => reject(new Error('تعذر قراءة الصورة'));
-          reader.readAsDataURL(file);
-        });
-        if (isEditing) {
-          setEditingProduct((prev) => ({ ...prev, imageDataUrl: fallback }));
-        } else {
-          setNewProduct((prev) => ({ ...prev, imageDataUrl: fallback }));
-        }
-        toast.error('تم استخدام الصورة الأصلية بدون ضغط. قد تكون أبطأ في التحميل.');
-      } catch {
-        toast.error(getErrorMessage(e, 'تعذر معالجة الصورة'));
-      }
+      toast.error(getErrorMessage(e, 'تعذر رفع الصورة'));
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -473,7 +514,7 @@ const AdminPanel = () => {
           <div className="flex items-center gap-2">
             <h1 className="text-xl md:text-2xl font-bold">لوحة الإدارة</h1>
             <span className="text-xs md:text-sm px-2 py-1 rounded bg-muted text-muted-foreground">
-              v1.3
+              v1.5
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -706,8 +747,12 @@ const AdminPanel = () => {
                       type="file"
                       accept="image/*"
                       capture="environment"
+                      disabled={uploadingImage}
                       onChange={(e) => handleImageChange(e.target.files?.[0] || null, false)}
                     />
+                    {uploadingImage && (
+                      <p className="text-xs text-muted-foreground mt-2">جاري رفع الصورة...</p>
+                    )}
                     {newProduct.imageDataUrl && (
                       <div className="mt-3">
                         <img
@@ -915,6 +960,7 @@ const AdminPanel = () => {
                                     type="file"
                                     accept="image/*"
                                     capture="environment"
+                                    disabled={uploadingImage}
                                     onChange={(e) => handleImageChange(e.target.files?.[0] || null, true)}
                                   />
                                   {editingProduct.imageDataUrl && (
