@@ -37,51 +37,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [sessionExpired, setSessionExpired] = useState(false);
   const hasUserRef = useRef(false);
+  const currentUserRef = useRef<AuthUser | null>(null);
+  const roleCacheRef = useRef<Map<string, AuthUser['role']>>(new Map());
 
   useEffect(() => {
     hasUserRef.current = !!user;
+    currentUserRef.current = user;
   }, [user]);
 
   const clearSessionExpired = useCallback(() => {
     setSessionExpired(false);
   }, []);
 
+  const resolveFallbackRole = useCallback((supabaseUser: SupabaseUser): AuthUser['role'] => {
+    if (currentUserRef.current?.id === supabaseUser.id) {
+      return currentUserRef.current.role;
+    }
+    return roleCacheRef.current.get(supabaseUser.id) || 'user';
+  }, []);
+
   const checkUserRole = useCallback(async (supabaseUser: SupabaseUser): Promise<AuthUser> => {
     try {
-      // Add timeout to the role check query
       const { data: roles, error } = await withTimeout(
         supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', supabaseUser.id),
-        5000
+        12000
       );
 
       if (error) {
         console.error('Error checking user role:', error);
+        const fallbackRole = resolveFallbackRole(supabaseUser);
         return {
           id: supabaseUser.id,
           email: supabaseUser.email || '',
-          role: 'user',
+          role: fallbackRole,
         };
       }
 
       const isAdmin = roles?.some(r => r.role === 'admin');
+      const role: AuthUser['role'] = isAdmin ? 'admin' : 'user';
+      roleCacheRef.current.set(supabaseUser.id, role);
 
       return {
         id: supabaseUser.id,
         email: supabaseUser.email || '',
-        role: isAdmin ? 'admin' : 'user',
+        role,
       };
     } catch (err) {
       console.error('Exception checking user role:', err);
+      const fallbackRole = resolveFallbackRole(supabaseUser);
       return {
         id: supabaseUser.id,
         email: supabaseUser.email || '',
-        role: 'user',
+        role: fallbackRole,
       };
     }
-  }, []);
+  }, [resolveFallbackRole]);
 
   useEffect(() => {
     let mounted = true;
@@ -135,6 +148,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       subscription.unsubscribe();
     };
   }, [checkUserRole]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const keepSessionAlive = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error || !data.session) return;
+        const expiresAtMs = (data.session.expires_at || 0) * 1000;
+        const remainingMs = expiresAtMs - Date.now();
+        if (remainingMs < 10 * 60 * 1000) {
+          await supabase.auth.refreshSession();
+        }
+      } catch (err) {
+        console.error('Session keepalive failed:', err);
+      }
+    };
+
+    const interval = window.setInterval(keepSessionAlive, 2 * 60 * 1000);
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [user]);
 
   const login = useCallback(async (email: string, password: string) => {
     try {

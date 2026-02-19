@@ -10,6 +10,7 @@ import { api } from '@/lib/api';
 
 const ADMIN_ID = 'admin_local';
 const ADMIN_NAME = 'الأدمن';
+const MAX_IMAGE_DATA_URL_LENGTH = 650_000;
 
 export type NewProductInput = {
   title: string;
@@ -20,6 +21,15 @@ export type NewProductInput = {
   category: string;
   carBrands?: string[];
   imageDataUrl?: string;
+};
+
+const normalizeImageDataUrl = (value: string | undefined): string => {
+  if (!value) return '';
+  if (!value.startsWith('data:image/')) return value;
+  if (value.length > MAX_IMAGE_DATA_URL_LENGTH) {
+    throw new Error('الصورة كبيرة جدًا. اختر صورة أصغر.');
+  }
+  return value;
 };
 
 const emitProductsUpdated = () => {
@@ -114,6 +124,7 @@ const loadDbBackedProducts = async (): Promise<Product[]> => {
 export const getProducts = (): Product[] => cachedProducts;
 
 export const addProduct = async (input: NewProductInput): Promise<Product> => {
+  const normalizedImageDataUrl = normalizeImageDataUrl(input.imageDataUrl);
   const id =
     typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
       ? crypto.randomUUID()
@@ -131,7 +142,7 @@ export const addProduct = async (input: NewProductInput): Promise<Product> => {
       imported_available: !!input.importedAvailable,
       category: input.category || 'غير محدد',
       car_brands: input.carBrands || [],
-      image_data_url: input.imageDataUrl || '',
+      image_data_url: normalizedImageDataUrl,
       owner_id: ADMIN_ID,
       owner_name: ADMIN_NAME,
       created_at: nowIso,
@@ -149,7 +160,7 @@ export const addProduct = async (input: NewProductInput): Promise<Product> => {
     importedAvailable: input.importedAvailable,
     category: input.category || 'غير محدد',
     carBrands: input.carBrands || [],
-    imageDataUrl: input.imageDataUrl || '',
+    imageDataUrl: normalizedImageDataUrl,
     ownerId: ADMIN_ID,
     ownerName: ADMIN_NAME,
     createdAt: nowIso,
@@ -166,6 +177,7 @@ export const removeProduct = async (id: string) => {
 };
 
 export const updateProduct = async (id: string, updates: Partial<Product>): Promise<Product | null> => {
+  const normalizedImageDataUrl = normalizeImageDataUrl(updates.imageDataUrl);
   const current = cachedProducts.find((product) => product.id === id);
   const currentNewAvailable = current?.newAvailable ?? false;
   const nextNewAvailable =
@@ -179,7 +191,7 @@ export const updateProduct = async (id: string, updates: Partial<Product>): Prom
     imported_available: updates.importedAvailable ?? current?.importedAvailable ?? false,
     category: updates.category ?? current?.category ?? 'غير محدد',
     car_brands: updates.carBrands ?? current?.carBrands ?? [],
-    image_data_url: updates.imageDataUrl ?? current?.imageDataUrl ?? '',
+    image_data_url: normalizedImageDataUrl || current?.imageDataUrl || '',
     owner_id: updates.ownerId ?? current?.ownerId ?? ADMIN_ID,
     owner_name: updates.ownerName ?? current?.ownerName ?? ADMIN_NAME,
   };
