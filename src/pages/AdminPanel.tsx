@@ -262,6 +262,10 @@ const AdminPanel = () => {
 
   const handleCreateProduct = async () => {
     if (isLoading || creatingProduct) return;
+    if (uploadingImage) {
+      toast.error('برجاء انتظار اكتمال رفع الصورة أولًا');
+      return;
+    }
     if (!newProduct.title.trim()) {
       toast.error('من فضلك اكتب اسم المنتج');
       return;
@@ -338,6 +342,10 @@ const AdminPanel = () => {
   const handleSaveEdit = async () => {
     if (isLoading) return;
     if (!editingId) return;
+    if (uploadingImage) {
+      toast.error('برجاء انتظار اكتمال رفع الصورة أولًا');
+      return;
+    }
     if (!editingProduct.title.trim()) {
       toast.error('من فضلك اكتب اسم المنتج');
       return;
@@ -514,7 +522,7 @@ const AdminPanel = () => {
           <div className="flex items-center gap-2">
             <h1 className="text-xl md:text-2xl font-bold">لوحة الإدارة</h1>
             <span className="text-xs md:text-sm px-2 py-1 rounded bg-muted text-muted-foreground">
-              v1.6
+              v1.7
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -746,7 +754,6 @@ const AdminPanel = () => {
                       id="prod-image"
                       type="file"
                       accept="image/*"
-                      capture="environment"
                       disabled={uploadingImage}
                       onChange={(e) => handleImageChange(e.target.files?.[0] || null, false)}
                     />
@@ -765,7 +772,7 @@ const AdminPanel = () => {
                   </div>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Button onClick={handleCreateProduct} disabled={creatingProduct}>
+                  <Button onClick={handleCreateProduct} disabled={creatingProduct || uploadingImage}>
                     {creatingProduct ? 'جاري الإضافة...' : 'إضافة المنتج'}
                   </Button>
                 </div>
@@ -846,7 +853,7 @@ const AdminPanel = () => {
                               <div className="flex items-center justify-between gap-2">
                                 <h4 className="font-semibold text-primary">تعديل المنتج: {product.title}</h4>
                                 <div className="flex items-center gap-2">
-                                  <Button size="sm" onClick={handleSaveEdit}>حفظ التعديل</Button>
+                                  <Button size="sm" onClick={handleSaveEdit} disabled={uploadingImage}>حفظ التعديل</Button>
                                   <Button size="sm" variant="outline" onClick={cancelEdit}>إلغاء</Button>
                                 </div>
                               </div>
@@ -959,7 +966,6 @@ const AdminPanel = () => {
                                     id={`edit-image-${product.id}`}
                                     type="file"
                                     accept="image/*"
-                                    capture="environment"
                                     disabled={uploadingImage}
                                     onChange={(e) => handleImageChange(e.target.files?.[0] || null, true)}
                                   />
