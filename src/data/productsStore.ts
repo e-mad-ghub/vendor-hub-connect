@@ -286,8 +286,11 @@ export const useProducts = () => {
   const [products, setProducts] = React.useState<Product[]>(() => getProducts());
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const refreshInFlightRef = React.useRef(false);
 
   const refresh = React.useCallback(async () => {
+    if (refreshInFlightRef.current) return;
+    refreshInFlightRef.current = true;
     try {
       setError(null);
       await loadDbBackedProducts();
@@ -295,6 +298,7 @@ export const useProducts = () => {
       const message = e instanceof Error ? e.message : 'تعذر تحميل المنتجات.';
       setError(message);
     } finally {
+      refreshInFlightRef.current = false;
       setProducts(getProducts());
       setIsLoading(false);
     }
@@ -308,6 +312,26 @@ export const useProducts = () => {
       window.removeEventListener('vhc-products-updated', handleUpdate);
     };
   }, [refresh]);
+
+  React.useEffect(() => {
+    // Keep trying continuously; retry faster while there is an error.
+    const intervalMs = error ? 5000 : 30000;
+    const interval = window.setInterval(() => {
+      refresh();
+    }, intervalMs);
+
+    const onFocus = () => refresh();
+    const onOnline = () => refresh();
+
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('online', onOnline);
+
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('online', onOnline);
+    };
+  }, [error, refresh]);
 
   const createProduct = React.useCallback(async (input: NewProductInput) => {
     const created = await addProduct(input);

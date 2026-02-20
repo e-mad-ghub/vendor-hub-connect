@@ -18,6 +18,8 @@ import { trackEvent } from '@/lib/analytics';
 import { CarFitmentFilter } from '@/components/CarFitmentFilter';
 import { extractFitmentOptions, filterHomeProducts } from '@/lib/fitment';
 import { getErrorMessage } from '@/lib/error';
+import { LoadingState } from '@/components/LoadingState';
+import { InlineError } from '@/components/InlineError';
 import {
   getRecentPartQueries,
   getRecentViewedProductIds,
@@ -28,7 +30,12 @@ import {
 } from '@/lib/customerContext';
 
 const Index = () => {
-  const { products } = useProducts();
+  const {
+    products,
+    isLoading: productsLoading,
+    error: productsError,
+    refresh: refreshProducts,
+  } = useProducts();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [customerName, setCustomerName] = useState('');
@@ -153,7 +160,7 @@ const Index = () => {
         .slice(0, 2),
     [recentViewedIds, productsById]
   );
-  const hasNoResults = filteredProducts.length === 0;
+  const hasNoResults = !productsLoading && filteredProducts.length === 0;
 
   const fallbackSuggestions = useMemo(() => {
     if (!hasNoResults) return [];
@@ -545,7 +552,19 @@ const Index = () => {
         </section>
       )}
 
-      {hasNoResults ? (
+      {productsLoading ? (
+        <section className="container my-10">
+          <LoadingState title="جاري تحميل المنتجات" message="برجاء الانتظار..." />
+        </section>
+      ) : productsError ? (
+        <section className="container my-10">
+          <InlineError
+            title="تعذر تحميل المنتجات"
+            message={productsError}
+            onRetry={refreshProducts}
+          />
+        </section>
+      ) : hasNoResults ? (
         <section className="container my-10">
           <div className="bg-card rounded-xl shadow-card p-6 text-center space-y-5">
             <h3 className="text-xl font-semibold">لا توجد نتائج مطابقة. جرّب تغيير الماركة/الموديل أو مسح الفلاتر.</h3>
