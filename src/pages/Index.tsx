@@ -27,8 +27,6 @@ import {
   type SavedSearch,
 } from '@/lib/customerContext';
 
-const HOME_FILTERS_STORAGE_KEY = 'vhc_home_fitment_filters';
-
 const Index = () => {
   const { products } = useProducts();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -73,58 +71,16 @@ const Index = () => {
     const urlModel = searchParams.get('model') || '';
     const urlQuery = searchParams.get('q') || '';
 
-    let localBrand = '';
-    let localModel = '';
-    let localQuery = '';
-
-    try {
-      const raw = localStorage.getItem(HOME_FILTERS_STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as {
-          brand?: string;
-          model?: string;
-          q?: string;
-          includeUncertain?: boolean;
-        };
-        localBrand = parsed.brand || '';
-        localModel = parsed.model || '';
-        localQuery = parsed.q || '';
-      }
-    } catch {
-      // Ignore malformed storage and continue with defaults.
-    }
-
-    const nextBrand = urlBrand || localBrand;
-    const nextModel = urlModel || localModel;
-    const nextQuery = urlQuery || localQuery;
-
-    setSelectedBrand(nextBrand);
-    setSelectedModel(nextBrand ? nextModel : '');
-    setNameQueryInput(nextQuery);
-    setDebouncedNameQuery(nextQuery);
+    setSelectedBrand(urlBrand);
+    setSelectedModel(urlBrand ? urlModel : '');
+    setNameQueryInput(urlQuery);
+    setDebouncedNameQuery(urlQuery);
     setRecentQueries(getRecentPartQueries());
     setSavedSearches(getSavedSearches());
     setRecentViewedIds(getRecentViewedProductIds());
 
     didInitRef.current = true;
   }, [searchParams]);
-
-  useEffect(() => {
-    if (!didInitRef.current) return;
-
-    try {
-      localStorage.setItem(
-        HOME_FILTERS_STORAGE_KEY,
-        JSON.stringify({
-          brand: selectedBrand,
-          model: selectedModel,
-          q: nameQueryInput,
-        })
-      );
-    } catch {
-      // Ignore storage write failures.
-    }
-  }, [selectedBrand, selectedModel, nameQueryInput]);
 
   useEffect(() => {
     if (!didInitRef.current) return;
@@ -622,8 +578,8 @@ const Index = () => {
           <section className="container my-10">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-xl md:text-2xl font-bold text-foreground">منتجات مختارة</h3>
-                <p className="text-sm text-muted-foreground">متختارة مخصوص ليك</p>
+                <h3 className="text-xl md:text-2xl font-bold text-foreground">نتايج البحث</h3>
+                <p className="text-sm text-muted-foreground">المنتجات اللي طالعة حسب الفلاتر اللي اخترتها</p>
               </div>
               <Link to="/search">
                 <Button variant="ghost" size="sm" className="text-primary">

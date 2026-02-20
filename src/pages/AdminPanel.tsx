@@ -48,7 +48,9 @@ const AdminPanel = () => {
   const [customerServiceSaving, setCustomerServiceSaving] = React.useState(false);
   const [creatingProduct, setCreatingProduct] = React.useState(false);
   const [uploadingImage, setUploadingImage] = React.useState(false);
-  const { products, createProduct, deleteProduct, editProduct } = useProducts();
+  const [savingEdit, setSavingEdit] = React.useState(false);
+  const [pendingDeleteIds, setPendingDeleteIds] = React.useState<Set<string>>(new Set());
+  const { products, createProduct, deleteProduct, editProduct, refresh: refreshProducts, error: productsError } = useProducts();
   const [newProduct, setNewProduct] = React.useState({
     title: '',
     description: '',
@@ -340,7 +342,7 @@ const AdminPanel = () => {
   };
 
   const handleSaveEdit = async () => {
-    if (isLoading) return;
+    if (isLoading || savingEdit) return;
     if (!editingId) return;
     if (uploadingImage) {
       toast.error('برجاء انتظار اكتمال رفع الصورة أولًا');
@@ -360,6 +362,7 @@ const AdminPanel = () => {
       return;
     }
     try {
+      setSavingEdit(true);
       await editProduct(editingId, {
         title: editingProduct.title.trim(),
         description: editingProduct.description.trim(),
@@ -374,6 +377,8 @@ const AdminPanel = () => {
       cancelEdit();
     } catch (e: unknown) {
       toast.error(getErrorMessage(e, 'تعذر تحديث المنتج'));
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -522,7 +527,7 @@ const AdminPanel = () => {
           <div className="flex items-center gap-2">
             <h1 className="text-xl md:text-2xl font-bold">لوحة الإدارة</h1>
             <span className="text-xs md:text-sm px-2 py-1 rounded bg-muted text-muted-foreground">
-              v1.7
+              v1.8
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -780,6 +785,15 @@ const AdminPanel = () => {
 
               <div>
                 <h3 className="font-semibold mb-4">كل المنتجات</h3>
+                {productsError && (
+                  <div className="mb-4">
+                    <InlineError
+                      title="تعذر تحميل المنتجات"
+                      message={productsError}
+                      onRetry={refreshProducts}
+                    />
+                  </div>
+                )}
                 {products.length === 0 ? (
                   <p className="text-sm text-muted-foreground">مافيش منتجات لسه.</p>
                 ) : (
@@ -835,12 +849,25 @@ const AdminPanel = () => {
                                 <Button
                                   size="sm"
                                   variant="outline"
+                                  disabled={pendingDeleteIds.has(product.id)}
                                   onClick={async () => {
+                                    if (pendingDeleteIds.has(product.id)) return;
+                                    setPendingDeleteIds((prev) => {
+                                      const next = new Set(prev);
+                                      next.add(product.id);
+                                      return next;
+                                    });
                                     try {
                                       await deleteProduct(product.id);
                                       toast.success('تم حذف المنتج');
                                     } catch (e: unknown) {
                                       toast.error(getErrorMessage(e, 'تعذر حذف المنتج'));
+                                    } finally {
+                                      setPendingDeleteIds((prev) => {
+                                        const next = new Set(prev);
+                                        next.delete(product.id);
+                                        return next;
+                                      });
                                     }
                                   }}
                                 >
@@ -853,7 +880,7 @@ const AdminPanel = () => {
                               <div className="flex items-center justify-between gap-2">
                                 <h4 className="font-semibold text-primary">تعديل المنتج: {product.title}</h4>
                                 <div className="flex items-center gap-2">
-                                  <Button size="sm" onClick={handleSaveEdit} disabled={uploadingImage}>حفظ التعديل</Button>
+                                  <Button size="sm" onClick={handleSaveEdit} disabled={uploadingImage || savingEdit}>حفظ التعديل</Button>
                                   <Button size="sm" variant="outline" onClick={cancelEdit}>إلغاء</Button>
                                 </div>
                               </div>

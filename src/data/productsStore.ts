@@ -203,7 +203,10 @@ export const removeProduct = async (id: string) => {
 };
 
 export const updateProduct = async (id: string, updates: Partial<Product>): Promise<Product | null> => {
-  const normalizedImageDataUrl = normalizeImageDataUrl(updates.imageDataUrl);
+  const hasImageUpdate = Object.prototype.hasOwnProperty.call(updates, 'imageDataUrl');
+  const normalizedImageDataUrl = hasImageUpdate
+    ? normalizeImageDataUrl(updates.imageDataUrl)
+    : undefined;
   const current = cachedProducts.find((product) => product.id === id);
   const currentNewAvailable = current?.newAvailable ?? false;
   const nextNewAvailable =
@@ -217,7 +220,7 @@ export const updateProduct = async (id: string, updates: Partial<Product>): Prom
     imported_available: updates.importedAvailable ?? current?.importedAvailable ?? false,
     category: updates.category ?? current?.category ?? 'غير محدد',
     car_brands: updates.carBrands ?? current?.carBrands ?? [],
-    image_data_url: normalizedImageDataUrl || current?.imageDataUrl || '',
+    image_data_url: hasImageUpdate ? (normalizedImageDataUrl || '') : (current?.imageDataUrl || ''),
     owner_id: updates.ownerId ?? current?.ownerId ?? ADMIN_ID,
     owner_name: updates.ownerName ?? current?.ownerName ?? ADMIN_NAME,
   };
@@ -242,10 +245,15 @@ export const getProductsByCategory = (category: string): Product[] =>
 export const useProducts = () => {
   const [products, setProducts] = React.useState<Product[]>(() => getProducts());
   const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
   const refresh = React.useCallback(async () => {
     try {
+      setError(null);
       await loadDbBackedProducts();
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'تعذر تحميل المنتجات.';
+      setError(message);
     } finally {
       setProducts(getProducts());
       setIsLoading(false);
@@ -279,5 +287,5 @@ export const useProducts = () => {
     return updated;
   }, []);
 
-  return { products, createProduct, deleteProduct, editProduct, refresh, isLoading };
+  return { products, createProduct, deleteProduct, editProduct, refresh, isLoading, error };
 };
