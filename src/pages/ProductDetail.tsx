@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
-import { getProductById, getProductsByCategory } from '@/data/productsStore';
+import { useProducts } from '@/data/productsStore';
 import { ShoppingCart, Heart, Share2, Truck, Shield, RefreshCw, Minus, Plus, ChevronRight } from 'lucide-react';
 import { ProductCard } from '@/components/ProductCard';
 import { toast } from 'sonner';
@@ -11,19 +11,29 @@ import { Seo } from '@/components/Seo';
 import { trackEvent } from '@/lib/analytics';
 import { formatCarBrands } from '@/lib/brands';
 import { pushRecentViewedProduct } from '@/lib/customerContext';
+import { LoadingState } from '@/components/LoadingState';
+import { InlineError } from '@/components/InlineError';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { products, isLoading: productsLoading, error: productsError, refresh: refreshProducts } = useProducts();
   const [quantity, setQuantity] = useState(1);
   const [selectedQualities, setSelectedQualities] = useState<{ new: boolean; imported: boolean }>({ new: false, imported: false });
   const previousProductIdRef = useRef<string | null>(null);
-  const product = getProductById(id || '');
+  const product = useMemo(
+    () => products.find((item) => item.id === (id || '')),
+    [products, id]
+  );
   const productId = product?.id ?? null;
-  const relatedProducts = product
-    ? getProductsByCategory(product.category).filter(p => p.id !== product?.id).slice(0, 4)
-    : [];
+  const relatedProducts = useMemo(
+    () =>
+      product
+        ? products.filter((item) => item.category === product.category && item.id !== product.id).slice(0, 4)
+        : [],
+    [products, product]
+  );
 
   const availability = useMemo(() => {
     return {
@@ -62,6 +72,32 @@ const ProductDetail = () => {
     if (!product?.id) return;
     pushRecentViewedProduct(product.id);
   }, [product?.id]);
+
+  if (productsLoading) {
+    return (
+      <Layout>
+        <Seo title="تفاصيل المنتج" description="جاري تحميل تفاصيل المنتج." />
+        <div className="container py-12">
+          <LoadingState title="جاري تحميل المنتج" message="برجاء الانتظار..." />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (productsError && !product) {
+    return (
+      <Layout>
+        <Seo title="تعذر تحميل المنتج" description="حدث خطأ أثناء تحميل المنتج." />
+        <div className="container py-12">
+          <InlineError
+            title="تعذر تحميل المنتج"
+            message={productsError}
+            onRetry={refreshProducts}
+          />
+        </div>
+      </Layout>
+    );
+  }
 
   if (!product) {
     return (

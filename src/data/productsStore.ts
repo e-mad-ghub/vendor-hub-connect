@@ -292,8 +292,8 @@ export const useProducts = () => {
     if (refreshInFlightRef.current) return;
     refreshInFlightRef.current = true;
     try {
-      setError(null);
       await loadDbBackedProducts();
+      setError(null);
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'تعذر تحميل المنتجات.';
       setError(message);

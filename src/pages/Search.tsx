@@ -12,19 +12,50 @@ import { SlidersHorizontal, X } from 'lucide-react';
 import { categories } from '@/data/mockData';
 import { useProducts } from '@/data/productsStore';
 import { Seo } from '@/components/Seo';
+import { LoadingState } from '@/components/LoadingState';
+import { InlineError } from '@/components/InlineError';
+
+const SORT_VALUES = ['relevance', 'newest', 'price-low', 'price-high'] as const;
+type SortValue = (typeof SORT_VALUES)[number];
+
+const isSortValue = (value: string | null): value is SortValue =>
+  !!value && SORT_VALUES.includes(value as SortValue);
 
 const Search = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
+  const sortParam = searchParams.get('sort');
+  const initialSort: SortValue = isSortValue(sortParam) ? sortParam : 'relevance';
   
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState('relevance');
+  const [sortBy, setSortBy] = useState<SortValue>(initialSort);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isPriceRangeDirty, setIsPriceRangeDirty] = useState(false);
 
-  const { products } = useProducts();
+  const { products, isLoading: productsLoading, error: productsError, refresh: refreshProducts } = useProducts();
+
+  useEffect(() => {
+    const nextSort = isSortValue(searchParams.get('sort')) ? (searchParams.get('sort') as SortValue) : 'relevance';
+    setSortBy((prev) => (prev === nextSort ? prev : nextSort));
+  }, [searchParams]);
+
+  useEffect(() => {
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (sortBy === 'relevance') {
+      nextParams.delete('sort');
+    } else {
+      nextParams.set('sort', sortBy);
+    }
+
+    const currentString = searchParams.toString();
+    const nextString = nextParams.toString();
+    if (currentString !== nextString) {
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [sortBy, searchParams, setSearchParams]);
 
   const maxPrice = useMemo(() => {
     const highest = products.reduce((acc, product) => {
@@ -277,7 +308,15 @@ const Search = () => {
 
           {/* Products Grid */}
           <div className="flex-1">
-            {filteredProducts.length > 0 ? (
+            {productsLoading ? (
+              <LoadingState title="جاري تحميل المنتجات" message="برجاء الانتظار..." />
+            ) : productsError ? (
+              <InlineError
+                title="تعذر تحميل المنتجات"
+                message={productsError}
+                onRetry={refreshProducts}
+              />
+            ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />

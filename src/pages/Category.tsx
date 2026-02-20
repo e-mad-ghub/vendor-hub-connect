@@ -7,11 +7,13 @@ import { categories } from '@/data/mockData';
 import { useProducts } from '@/data/productsStore';
 import { ChevronRight } from 'lucide-react';
 import { Seo } from '@/components/Seo';
+import { LoadingState } from '@/components/LoadingState';
+import { InlineError } from '@/components/InlineError';
 
 const Category = () => {
   const { name } = useParams<{ name: string }>();
   const categoryName = decodeURIComponent(name || '');
-  const { products } = useProducts();
+  const { products, isLoading: productsLoading, error: productsError, refresh: refreshProducts } = useProducts();
   const categoryProducts = products.filter(product => product.category === categoryName);
   const category = categories.find(c => c.name === categoryName);
 
@@ -42,7 +44,15 @@ const Category = () => {
 
         {/* Products Grid */}
         <div className="mt-6">
-          {categoryProducts.length > 0 ? (
+          {productsLoading ? (
+            <LoadingState title="جاري تحميل المنتجات" message="برجاء الانتظار..." />
+          ) : productsError ? (
+            <InlineError
+              title="تعذر تحميل المنتجات"
+              message={productsError}
+              onRetry={refreshProducts}
+            />
+          ) : categoryProducts.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {categoryProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
