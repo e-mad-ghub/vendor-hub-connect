@@ -5,15 +5,12 @@ import {
   defaultBrandOptions,
   type BrandOption,
 } from '@/data/brandOptions';
-import { adminSeedProducts } from '@/data/adminCatalog';
 import { supabase } from '@/integrations/supabase/client';
 import { api } from '@/lib/api';
 
 const ADMIN_ID = 'admin_local';
 const ADMIN_NAME = 'الأدمن';
 const MAX_IMAGE_DATA_URL_LENGTH = 2_000_000;
-const LEGACY_PRODUCTS_STORAGE_KEY = 'vhc_products';
-let hasSyncedBootstrapProducts = false;
 
 export type NewProductInput = {
   title: string;
@@ -114,28 +111,6 @@ const parseNullableNumber = (value: unknown): number | undefined => {
   return undefined;
 };
 
-const readLegacyLocalProducts = (): Product[] => {
-  if (typeof window === 'undefined') return [];
-  try {
-    const raw = localStorage.getItem(LEGACY_PRODUCTS_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed as Product[];
-  } catch {
-    return [];
-  }
-};
-
-const clearLegacyLocalProducts = () => {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.removeItem(LEGACY_PRODUCTS_STORAGE_KEY);
-  } catch {
-    // Ignore storage cleanup failures.
-  }
-};
-
 const fetchProductsFromDb = async (): Promise<Product[]> => {
   const { data, error } = await supabase
     .from('app_products')
@@ -161,110 +136,13 @@ const fetchProductsFromDb = async (): Promise<Product[]> => {
   }));
 };
 
-const migrateLegacyLocalProductsToDb = async (): Promise<boolean> => {
-  const legacy = readLegacyLocalProducts();
-  if (legacy.length === 0) return false;
-
-  const rows = legacy.map((item) => {
-    const normalized = normalizeProduct(item);
-    return {
-      id: normalized.id || (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-        ? crypto.randomUUID()
-        : `p_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`),
-      title: normalized.title || 'منتج',
-      description: normalized.description || '',
-      new_available: !!normalized.newAvailable,
-      new_price: normalized.newAvailable ? (normalized.newPrice || 0) : null,
-      imported_available: !!normalized.importedAvailable,
-      category: normalized.category || 'غير محدد',
-      car_brands: normalized.carBrands || [],
-      image_data_url: normalizeFetchedImageUrl(normalized.imageDataUrl),
-      owner_id: normalized.ownerId || ADMIN_ID,
-      owner_name: normalized.ownerName || ADMIN_NAME,
-      created_at: normalized.createdAt || new Date().toISOString(),
-    };
-  });
-
-  const { error } = await supabase
-    .from('app_products')
-    .upsert(rows, { onConflict: 'id' });
-
-  if (error) return false;
-  clearLegacyLocalProducts();
-  return true;
-};
-
-const toDbRow = (item: Product) => {
-  const normalized = normalizeProduct(item);
-  return {
-    id: normalized.id || (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-      ? crypto.randomUUID()
-      : `p_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`),
-    title: normalized.title || 'منتج',
-    description: normalized.description || '',
-    new_available: !!normalized.newAvailable,
-    new_price: normalized.newAvailable ? (normalized.newPrice || 0) : null,
-    imported_available: !!normalized.importedAvailable,
-    category: normalized.category || 'غير محدد',
-    car_brands: normalized.carBrands || [],
-    image_data_url: normalizeFetchedImageUrl(normalized.imageDataUrl),
-    owner_id: normalized.ownerId || ADMIN_ID,
-    owner_name: normalized.ownerName || ADMIN_NAME,
-    created_at: normalized.createdAt || new Date().toISOString(),
-  };
-};
-
-const syncBootstrapProductsToDb = async (): Promise<void> => {
-  if (hasSyncedBootstrapProducts) return;
-
-  const legacy = readLegacyLocalProducts();
-  const bootstrapProducts = [...adminSeedProducts, ...legacy];
-  if (bootstrapProducts.length === 0) {
-    hasSyncedBootstrapProducts = true;
-    return;
-  }
-
-  const rows = bootstrapProducts.map(toDbRow);
-  const { error } = await supabase
-    .from('app_products')
-    .upsert(rows, { onConflict: 'id' });
-
-  if (!error) {
-    clearLegacyLocalProducts();
-    hasSyncedBootstrapProducts = true;
-  }
-};
-
 const loadDbBackedProducts = async (): Promise<Product[]> => {
-  await syncBootstrapProductsToDb();
-
-  let [dbProducts, dbBrandOptions] = await Promise.all([
+  const [dbProducts, dbBrandOptions] = await Promise.all([
     fetchProductsFromDb(),
     api.getBrandOptions().catch(() => defaultBrandOptions),
   ]);
 
-  if (dbProducts.length === 0 && !hasSyncedBootstrapProducts) {
-    const migrated = await migrateLegacyLocalProductsToDb();
-    if (migrated) {
-      dbProducts = await fetchProductsFromDb();
-    }
-  }
-
-  const legacy = readLegacyLocalProducts();
-  const mergedById = new Map<string, Product>();
-
-  [...adminSeedProducts, ...legacy].forEach((item) => {
-    if (!item?.id) return;
-    mergedById.set(item.id, normalizeProduct(item));
-  });
-
-  dbProducts.forEach((item) => {
-    if (!item?.id) return;
-    mergedById.set(item.id, normalizeProduct(item));
-  });
-
-  const mergedProducts = Array.from(mergedById.values());
-  const prepared = prepareProducts(mergedProducts, dbBrandOptions || defaultBrandOptions);
+  const prepared = prepareProducts(dbProducts, dbBrandOptions || defaultBrandOptions);
   setCachedProducts(prepared);
   return prepared;
 };
