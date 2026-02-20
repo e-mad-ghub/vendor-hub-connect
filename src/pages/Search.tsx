@@ -150,6 +150,31 @@ const Search = () => {
     setSelectedBrands([]);
   };
 
+  const formatEgp = (value: number) => `ج.م ${Math.round(value).toLocaleString('en-US')}`;
+
+  const applyPriceRange = (nextRange: [number, number]) => {
+    setPriceRange(nextRange);
+    setIsPriceRangeDirty(!(nextRange[0] === 0 && nextRange[1] === maxPrice));
+  };
+
+  const quickPriceRanges: Array<{ key: string; label: string; range: [number, number] }> = [
+    { key: 'all', label: 'الكل', range: [0, maxPrice] },
+    { key: 'budget', label: 'اقتصادي', range: [0, Math.max(100, Math.round((maxPrice * 0.3) / 10) * 10)] },
+    {
+      key: 'mid',
+      label: 'متوسط',
+      range: [
+        Math.round((maxPrice * 0.3) / 10) * 10,
+        Math.round((maxPrice * 0.7) / 10) * 10,
+      ],
+    },
+    {
+      key: 'high',
+      label: 'أعلى سعر',
+      range: [Math.round((maxPrice * 0.7) / 10) * 10, maxPrice],
+    },
+  ];
+
   const hasActiveFilters = priceRange[0] > 0 || priceRange[1] < maxPrice || selectedCategories.length > 0 || selectedBrands.length > 0;
 
   const allBrands = useMemo(() => {
@@ -169,24 +194,64 @@ const Search = () => {
   };
 
   const FilterContent = () => (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-sm mx-auto">
       {/* Price Range */}
-      <div>
-        <h4 className="font-medium mb-3">نطاق السعر</h4>
-        <Slider
-          value={priceRange}
-          onValueChange={(value) => {
-            setIsPriceRangeDirty(true);
-            setPriceRange(value as [number, number]);
-          }}
-          min={0}
-          max={maxPrice}
-          step={10}
-          className="mb-2"
-        />
-        <div className="flex justify-between text-sm text-muted-foreground">
-          <span>ج.م {priceRange[0]}</span>
-          <span>ج.م {priceRange[1]}</span>
+      <div className="w-full rounded-xl border border-border bg-muted/40 p-3 space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <h4 className="font-medium">نطاق السعر</h4>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="h-7 px-2 text-xs"
+            onClick={() => applyPriceRange([0, maxPrice])}
+            disabled={!isPriceRangeDirty}
+          >
+            إعادة ضبط
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2" dir="ltr">
+          <div className="rounded-lg bg-background border border-border px-3 py-2">
+            <p className="text-[11px] text-muted-foreground">من</p>
+            <p className="text-sm font-semibold">{formatEgp(priceRange[0])}</p>
+          </div>
+          <div className="rounded-lg bg-background border border-border px-3 py-2">
+            <p className="text-[11px] text-muted-foreground">إلى</p>
+            <p className="text-sm font-semibold">{formatEgp(priceRange[1])}</p>
+          </div>
+        </div>
+
+        <div dir="ltr">
+          <Slider
+            value={priceRange}
+            onValueChange={(value) => {
+              setIsPriceRangeDirty(true);
+              setPriceRange(value as [number, number]);
+            }}
+            min={0}
+            max={maxPrice}
+            step={10}
+            className="py-1"
+          />
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-2">
+          {quickPriceRanges.map((preset) => {
+            const isActive = priceRange[0] === preset.range[0] && priceRange[1] === preset.range[1];
+            return (
+              <Button
+                key={preset.key}
+                type="button"
+                size="sm"
+                variant={isActive ? 'default' : 'outline'}
+                className="h-7 px-2 text-xs"
+                onClick={() => applyPriceRange(preset.range)}
+              >
+                {preset.label}
+              </Button>
+            );
+          })}
         </div>
       </div>
 
@@ -225,7 +290,7 @@ const Search = () => {
       )}
 
       {hasActiveFilters && (
-        <Button variant="outline" onClick={clearFilters} className="w-full">
+        <Button variant="outline" onClick={clearFilters} className="w-full max-w-xs mx-auto block">
           <X className="h-4 w-4 mr-2" />
           مسح الفلاتر
         </Button>
@@ -270,17 +335,25 @@ const Search = () => {
                 )}
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-80">
-              <SheetHeader>
+            <SheetContent side="right" className="w-80 max-w-[85vw] h-[100dvh] max-h-[100dvh] p-0 overflow-y-auto overscroll-contain">
+              <SheetHeader className="px-6 pt-6 sticky top-0 bg-background z-10">
                 <SheetTitle>الفلاتر</SheetTitle>
               </SheetHeader>
-              <div className="mt-6">
+              <div className="px-6 pt-6 pb-[max(6rem,env(safe-area-inset-bottom))]">
                 <FilterContent />
               </div>
             </SheetContent>
           </Sheet>
 
           <div className="flex items-center gap-2 ml-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearFilters}
+              disabled={!hasActiveFilters}
+            >
+              إعادة ضبط الفلاتر
+            </Button>
             <span className="text-sm text-muted-foreground hidden sm:inline">ترتيب حسب:</span>
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-40">
