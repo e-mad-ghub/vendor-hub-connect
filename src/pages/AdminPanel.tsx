@@ -527,7 +527,7 @@ const AdminPanel = () => {
           <div className="flex items-center gap-2">
             <h1 className="text-xl md:text-2xl font-bold">لوحة الإدارة</h1>
             <span className="text-xs md:text-sm px-2 py-1 rounded bg-muted text-muted-foreground">
-              v1.8
+              v1.9
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -772,6 +772,16 @@ const AdminPanel = () => {
                           alt="معاينة المنتج"
                           className="h-32 w-32 rounded object-cover border border-border"
                         />
+                        <div className="mt-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setNewProduct((prev) => ({ ...prev, imageDataUrl: '' }))}
+                          >
+                            إزالة الصورة
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1003,6 +1013,16 @@ const AdminPanel = () => {
                                         alt="معاينة المنتج"
                                         className="h-32 w-32 rounded object-cover border border-border"
                                       />
+                                      <div className="mt-2">
+                                        <Button
+                                          type="button"
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => setEditingProduct((prev) => ({ ...prev, imageDataUrl: '' }))}
+                                        >
+                                          إزالة الصورة
+                                        </Button>
+                                      </div>
                                     </div>
                                   )}
                                 </div>

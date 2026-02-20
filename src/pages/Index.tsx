@@ -67,9 +67,10 @@ const Index = () => {
   useEffect(() => {
     if (didInitRef.current) return;
 
-    const urlBrand = searchParams.get('brand') || '';
-    const urlModel = searchParams.get('model') || '';
-    const urlQuery = searchParams.get('q') || '';
+    const isSharedFilterLink = searchParams.get('shared') === '1';
+    const urlBrand = isSharedFilterLink ? (searchParams.get('brand') || '') : '';
+    const urlModel = isSharedFilterLink ? (searchParams.get('model') || '') : '';
+    const urlQuery = isSharedFilterLink ? (searchParams.get('q') || '') : '';
 
     setSelectedBrand(urlBrand);
     setSelectedModel(urlBrand ? urlModel : '');
@@ -80,21 +81,25 @@ const Index = () => {
     setRecentViewedIds(getRecentViewedProductIds());
 
     didInitRef.current = true;
-  }, [searchParams]);
+
+    // Prevent implicit filtering from stale/non-shared URL params on home.
+    if (!isSharedFilterLink && searchParams.toString()) {
+      setSearchParams(new URLSearchParams(), { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!didInitRef.current) return;
 
-    const nextParams = new URLSearchParams(searchParams);
+    const nextParams = new URLSearchParams();
+    const hasFilters = !!selectedBrand || !!selectedModel || !!nameQueryInput.trim();
 
-    if (selectedBrand) nextParams.set('brand', selectedBrand);
-    else nextParams.delete('brand');
-
-    if (selectedModel) nextParams.set('model', selectedModel);
-    else nextParams.delete('model');
-
-    if (nameQueryInput.trim()) nextParams.set('q', nameQueryInput.trim());
-    else nextParams.delete('q');
+    if (hasFilters) {
+      nextParams.set('shared', '1');
+      if (selectedBrand) nextParams.set('brand', selectedBrand);
+      if (selectedModel) nextParams.set('model', selectedModel);
+      if (nameQueryInput.trim()) nextParams.set('q', nameQueryInput.trim());
+    }
 
     const currentString = searchParams.toString();
     const nextString = nextParams.toString();
@@ -174,7 +179,7 @@ const Index = () => {
     return candidates.slice(0, 6);
   }, [hasNoResults, products, selectedBrand, debouncedNameQuery]);
 
-  const featuredProducts = filteredProducts.slice(0, 8);
+  const featuredProducts = filteredProducts;
   const newArrivals = [...filteredProducts]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 6);

@@ -11,6 +11,7 @@ import { api } from '@/lib/api';
 const ADMIN_ID = 'admin_local';
 const ADMIN_NAME = 'الأدمن';
 const MAX_IMAGE_DATA_URL_LENGTH = 2_000_000;
+const PRODUCT_IMAGES_BUCKET = import.meta.env.VITE_PRODUCT_IMAGES_BUCKET || 'product-images';
 
 export type NewProductInput = {
   title: string;
@@ -60,6 +61,37 @@ const normalizeFetchedImageUrl = (value: unknown): string => {
 const emitProductsUpdated = () => {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new Event('vhc-products-updated'));
+  }
+};
+
+const getStoragePathFromPublicUrl = (value: string): string | null => {
+  if (!value) return null;
+
+  try {
+    const parsed = new URL(value);
+    const marker = `/storage/v1/object/public/${PRODUCT_IMAGES_BUCKET}/`;
+    const markerIndex = parsed.pathname.indexOf(marker);
+    if (markerIndex === -1) return null;
+
+    const encodedPath = parsed.pathname.slice(markerIndex + marker.length);
+    const decodedPath = decodeURIComponent(encodedPath).trim();
+    return decodedPath || null;
+  } catch {
+    return null;
+  }
+};
+
+const deleteProductImageObject = async (imageUrl: string) => {
+  const objectPath = getStoragePathFromPublicUrl(imageUrl);
+  if (!objectPath) return;
+
+  const { error } = await supabase.storage
+    .from(PRODUCT_IMAGES_BUCKET)
+    .remove([objectPath]);
+
+  if (error) {
+    // Keep product CRUD successful even if image cleanup fails.
+    console.error('Failed to cleanup product image object:', error.message);
   }
 };
 
@@ -194,12 +226,16 @@ export const addProduct = async (input: NewProductInput): Promise<Product> => {
 };
 
 export const removeProduct = async (id: string) => {
+  const current = cachedProducts.find((product) => product.id === id);
   const { error } = await supabase
     .from('app_products')
     .delete()
     .eq('id', id);
   if (error) throw error;
   await loadDbBackedProducts();
+  if (current?.imageDataUrl) {
+    await deleteProductImageObject(current.imageDataUrl);
+  }
 };
 
 export const updateProduct = async (id: string, updates: Partial<Product>): Promise<Product | null> => {
@@ -233,6 +269,10 @@ export const updateProduct = async (id: string, updates: Partial<Product>): Prom
   if (error) throw error;
 
   const latest = await loadDbBackedProducts();
+  const hasImageChanged = hasImageUpdate && normalizedImageDataUrl !== (current?.imageDataUrl || '');
+  if (hasImageChanged && current?.imageDataUrl) {
+    await deleteProductImageObject(current.imageDataUrl);
+  }
   return latest.find((product) => product.id === id) || null;
 };
 

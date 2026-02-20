@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { ProductCard } from '@/components/ProductCard';
@@ -22,9 +22,9 @@ const Search = () => {
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState('relevance');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isPriceRangeDirty, setIsPriceRangeDirty] = useState(false);
 
   const { products } = useProducts();
-  const didInitPriceRangeRef = useRef(false);
 
   const maxPrice = useMemo(() => {
     const highest = products.reduce((acc, product) => {
@@ -39,10 +39,17 @@ const Search = () => {
   }, [products]);
 
   useEffect(() => {
-    if (didInitPriceRangeRef.current) return;
-    setPriceRange([0, maxPrice]);
-    didInitPriceRangeRef.current = true;
-  }, [maxPrice]);
+    setPriceRange((prev) => {
+      if (!isPriceRangeDirty) {
+        return [0, maxPrice];
+      }
+
+      const nextMin = Math.max(0, Math.min(prev[0], maxPrice));
+      const nextMax = Math.max(nextMin, Math.min(prev[1], maxPrice));
+      if (nextMin === prev[0] && nextMax === prev[1]) return prev;
+      return [nextMin, nextMax];
+    });
+  }, [maxPrice, isPriceRangeDirty]);
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
@@ -107,6 +114,7 @@ const Search = () => {
 
   const clearFilters = () => {
     setPriceRange([0, maxPrice]);
+    setIsPriceRangeDirty(false);
     setSelectedCategories([]);
     setSelectedBrands([]);
   };
@@ -136,7 +144,10 @@ const Search = () => {
         <h4 className="font-medium mb-3">نطاق السعر</h4>
         <Slider
           value={priceRange}
-          onValueChange={setPriceRange}
+          onValueChange={(value) => {
+            setIsPriceRangeDirty(true);
+            setPriceRange(value as [number, number]);
+          }}
           min={0}
           max={maxPrice}
           step={10}
