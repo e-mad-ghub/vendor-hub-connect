@@ -113,13 +113,23 @@ const ProductDetail = () => {
     );
   }
 
+  const isOnlyNewSelected = selectedQualities.new && !selectedQualities.imported;
+  const includesImportedSelection = selectedQualities.imported;
+  const primaryActionLabel = isOnlyNewSelected ? 'أضف واشتري الآن' : 'أضف واطلب عرض سعر';
+  const mobilePrimaryActionLabel = isOnlyNewSelected ? 'اشتري الآن' : 'اطلب عرض سعر';
+
+  const addSelectedQualitiesToCart = () => {
+    if (selectedQualities.new) addToCart(product, 'new', quantity);
+    if (selectedQualities.imported) addToCart(product, 'imported', quantity);
+  };
+
   const handleAddToCart = () => {
     if (!selectedQualities.new && !selectedQualities.imported) {
       toast.error('اختار الجودة قبل الإضافة');
       return;
     }
-    if (selectedQualities.new) addToCart(product, 'new', quantity);
-    if (selectedQualities.imported) addToCart(product, 'imported', quantity);
+
+    addSelectedQualitiesToCart();
     toast.success(`تم إضافة ${product.title} للعربة`, {
       description: `الكمية: ${quantity}`,
     });
@@ -131,8 +141,18 @@ const ProductDetail = () => {
       toast.error('اختار الجودة قبل الإضافة');
       return;
     }
-    if (selectedQualities.new) addToCart(product, 'new', quantity);
-    if (selectedQualities.imported) addToCart(product, 'imported', quantity);
+
+    addSelectedQualitiesToCart();
+
+    if (!includesImportedSelection) {
+      toast.success(`تم إضافة ${product.title} - أكمل الشراء الآن`, {
+        description: `الكمية: ${quantity}`,
+      });
+      trackEvent('Buy Now Start', { source: 'product_primary', productId: product.id, quantity, quality: selectedQualities });
+      navigate('/checkout');
+      return;
+    }
+
     toast.success('تمت الإضافة - اطلب عرض سعر عبر واتساب من العربة');
     trackEvent('Request Quote Start', { source: 'product', productId: product.id, quantity, quality: selectedQualities });
     navigate('/cart');
@@ -251,7 +271,7 @@ const ProductDetail = () => {
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-3">
               <Button onClick={handleBuyNow} size="lg" className="flex-1" disabled={!selectedQualities.new && !selectedQualities.imported}>
-                أضف واطلب عرض سعر
+                {primaryActionLabel}
               </Button>
               <Button onClick={handleAddToCart} size="lg" variant="outline" className="flex-1" disabled={!selectedQualities.new && !selectedQualities.imported}>
                 <ShoppingCart className="h-4 w-4 mr-2" />
@@ -320,7 +340,7 @@ const ProductDetail = () => {
             <ShoppingCart className="h-4 w-4" />
           </Button>
           <Button onClick={handleBuyNow} size="sm" className="px-6" disabled={!selectedQualities.new && !selectedQualities.imported}>
-            اطلب عرض سعر
+            {mobilePrimaryActionLabel}
           </Button>
         </div>
       </div>

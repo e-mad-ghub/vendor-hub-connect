@@ -15,10 +15,9 @@ import { formatCarBrands } from '@/lib/brands';
 import { getErrorMessage } from '@/lib/error';
 
 const Checkout = () => {
-  const { items, getCartTotal, getCartCount, getDetailedItems, clearCart } = useCart();
+  const { items, getDetailedItems, clearCart } = useCart();
   const detailedItems = getDetailedItems();
-  const subtotal = getCartTotal();
-  const cartCount = getCartCount();
+  const hasUnpricedItems = detailedItems.some((item) => item.quality === 'imported');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [settings, setSettings] = useState<WhatsAppSettings | null>(null);
   const [settingsLoading, setSettingsLoading] = useState(true);
@@ -61,12 +60,8 @@ const Checkout = () => {
 
   const buildMessage = () => {
     const header = [
-      'طلب عرض سعر',
-      '',
       'تفاصيل الطلب:',
       itemsText,
-      '',
-      'ملاحظة: من فضلك أكد السعر والتوفر.',
     ].join('\n');
 
     return header.trim();
@@ -75,7 +70,7 @@ const Checkout = () => {
   if (items.length === 0) {
     return (
       <Layout>
-        <Seo title="طلب عرض سعر" description="عربتك فاضية الآن." />
+        <Seo title="إتمام الطلب" description="عربتك فاضية الآن." />
         <div className="container py-12 text-center">
           <h1 className="text-2xl font-bold mb-4">العربة فاضية</h1>
           <Link to="/search">
@@ -89,7 +84,7 @@ const Checkout = () => {
   if (settingsLoading) {
     return (
       <Layout>
-        <Seo title="طلب عرض سعر" description="جاري تحميل إعدادات واتساب." />
+        <Seo title={hasUnpricedItems ? 'طلب عرض سعر' : 'إتمام الطلب'} description="جاري تحميل إعدادات واتساب." />
         <div className="container py-12 max-w-5xl">
           <LoadingState title="جاري تحميل إعدادات واتساب" message="برجاء الانتظار..." />
         </div>
@@ -100,7 +95,7 @@ const Checkout = () => {
   if (settingsError) {
     return (
       <Layout>
-        <Seo title="طلب عرض سعر" description="تعذر تحميل إعدادات واتساب." />
+        <Seo title={hasUnpricedItems ? 'طلب عرض سعر' : 'إتمام الطلب'} description="تعذر تحميل إعدادات واتساب." />
         <div className="container py-12 max-w-5xl">
           <InlineError
             title="تعذر تحميل الإعدادات"
@@ -154,9 +149,16 @@ const Checkout = () => {
 
   return (
     <Layout>
-      <Seo title="طلب عرض سعر" description="أرسل طلبك مباشرة عبر واتساب لتأكيد السعر والتوافر." />
+      <Seo
+        title={hasUnpricedItems ? 'طلب عرض سعر' : 'إتمام الطلب'}
+        description={hasUnpricedItems
+          ? 'أرسل طلبك عبر واتساب لتأكيد السعر والتوافر.'
+          : 'أرسل طلبك مباشرة عبر واتساب.'}
+      />
       <div className="container py-3 md:py-8 max-w-5xl">
-        <h1 className="text-xl md:text-3xl font-bold mb-4 md:mb-6">طلب عرض سعر عبر واتساب</h1>
+        <h1 className="text-xl md:text-3xl font-bold mb-4 md:mb-6">
+          {hasUnpricedItems ? 'طلب عرض سعر عبر واتساب' : 'إتمام الطلب عبر واتساب'}
+        </h1>
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Form Section */}
@@ -185,18 +187,6 @@ const Checkout = () => {
               <h2 className="text-lg font-semibold mb-4">ملخص الطلب</h2>
 
               <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">عدد القطع</span>
-                  <span className="font-medium">{cartCount}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">عدد البنود (منتج + جودة)</span>
-                  <span className="font-medium">{detailedItems.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">الإجمالي الفرعي</span>
-                  <span className="font-medium">ج.م {subtotal.toFixed(2)}</span>
-                </div>
                 <div className="border-t border-border pt-3 mt-3">
                   <p className="text-xs text-muted-foreground mb-2">الجودات المختارة</p>
                   <div className="space-y-2 text-xs text-muted-foreground">
@@ -212,15 +202,10 @@ const Checkout = () => {
                     ))}
                   </div>
                 </div>
-                <div className="border-t border-border pt-3 mt-3">
-                  <p className="text-xs text-muted-foreground">
-                    ده إجمالي تقريبي. السعر النهائي بيتأكد عبر واتساب.
-                  </p>
-                </div>
               </div>
 
               <Button onClick={handleRequestQuote} className="w-full mt-4" size="lg" disabled={isSubmitting}>
-                {isSubmitting ? 'جاري التحويل...' : 'طلب عرض سعر عبر واتساب'}
+                {isSubmitting ? 'جاري التحويل...' : (hasUnpricedItems ? 'طلب عرض سعر عبر واتساب' : 'اطلب الآن على واتساب')}
               </Button>
               <Link to="/cart">
                 <Button variant="ghost" className="w-full mt-2">
