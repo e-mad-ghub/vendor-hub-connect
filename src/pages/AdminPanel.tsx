@@ -24,6 +24,7 @@ import { sanitizePhoneInput, validatePhone } from '@/lib/validation';
 import { formatCarBrands } from '@/lib/brands';
 import { getErrorMessage } from '@/lib/error';
 import { supabase } from '@/integrations/supabase/client';
+import { extractFitmentOptions, filterHomeProducts } from '@/lib/fitment';
 
 const PRODUCT_IMAGES_BUCKET = import.meta.env.VITE_PRODUCT_IMAGES_BUCKET || 'product-images';
 
@@ -74,6 +75,26 @@ const AdminPanel = () => {
   const [editingProductBrands, setEditingProductBrands] = React.useState<string[]>([]);
 
   const [brandOptions, setBrandOptions] = React.useState<BrandOption[]>([]);
+  const [adminFilterBrand, setAdminFilterBrand] = React.useState('');
+  const [adminFilterModel, setAdminFilterModel] = React.useState('');
+  const [adminFilterQuery, setAdminFilterQuery] = React.useState('');
+
+  const adminFitmentOptions = React.useMemo(() => extractFitmentOptions(products), [products]);
+
+  const adminAvailableModels = React.useMemo(() => {
+    if (!adminFilterBrand) return [];
+    return adminFitmentOptions.modelsByBrand[adminFilterBrand] || [];
+  }, [adminFilterBrand, adminFitmentOptions.modelsByBrand]);
+
+  const filteredAdminProducts = React.useMemo(() => {
+    const byFitment = filterHomeProducts(products, {
+      selectedBrand: adminFilterBrand,
+      selectedModel: adminFilterModel,
+      nameQuery: adminFilterQuery,
+      includeUncertain: false,
+    }).items;
+    return byFitment;
+  }, [products, adminFilterBrand, adminFilterModel, adminFilterQuery]);
 
   const loadAdminData = React.useCallback(async () => {
     if (user?.role !== 'admin') return;
@@ -108,6 +129,17 @@ const AdminPanel = () => {
       .then((data) => setBrandOptions(data))
       .catch(() => setBrandOptions(defaultBrandOptions));
   }, []);
+
+  React.useEffect(() => {
+    if (!adminFilterBrand) {
+      setAdminFilterModel('');
+      return;
+    }
+
+    if (!adminAvailableModels.includes(adminFilterModel)) {
+      setAdminFilterModel('');
+    }
+  }, [adminFilterBrand, adminFilterModel, adminAvailableModels]);
 
   if (authLoading) {
     return (
@@ -807,8 +839,94 @@ const AdminPanel = () => {
                 {products.length === 0 ? (
                   <p className="text-sm text-muted-foreground">مافيش منتجات لسه.</p>
                 ) : (
-                  <div className="space-y-3">
-                    {products.map((product) => {
+                  <div className="space-y-4">
+                    <div className="rounded-lg border border-border p-3 md:p-4 space-y-3">
+                      <div>
+                        <p className="text-xs text-muted-foreground">اختيار حسب السيارة</p>
+                        <h4 className="font-medium">فلترة القطع المتوافقة</h4>
+                      </div>
+                      <div className="grid md:grid-cols-3 gap-3">
+                        <div>
+                          <Label htmlFor="admin-filter-brand">الماركة</Label>
+                          <Select
+                            value={adminFilterBrand || '__all_brands__'}
+                            onValueChange={(value) => setAdminFilterBrand(value === '__all_brands__' ? '' : value)}
+                          >
+                            <SelectTrigger id="admin-filter-brand">
+                              <SelectValue placeholder="اختر الماركة" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__all_brands__">الكل</SelectItem>
+                              {adminFitmentOptions.brands.map((brand) => (
+                                <SelectItem key={brand} value={brand}>
+                                  {brand}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="admin-filter-model">الموديل</Label>
+                          <Select
+                            value={adminFilterModel || '__all_models__'}
+                            onValueChange={(value) => setAdminFilterModel(value === '__all_models__' ? '' : value)}
+                            disabled={!adminFilterBrand}
+                          >
+                            <SelectTrigger id="admin-filter-model">
+                              <SelectValue placeholder={adminFilterBrand ? 'اختر الموديل' : 'اختر الماركة أولًا'} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__all_models__">الكل</SelectItem>
+                              {adminAvailableModels.map((model) => (
+                                <SelectItem key={model} value={model}>
+                                  {model}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="admin-filter-query">بحث داخل النتائج</Label>
+                          <Input
+                            id="admin-filter-query"
+                            value={adminFilterQuery}
+                            onChange={(e) => setAdminFilterQuery(e.target.value)}
+                            placeholder="اكتب اسم المنتج"
+                            autoComplete="off"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-xs text-muted-foreground">
+                          عدد النتائج: {filteredAdminProducts.length}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={!adminFilterModel}
+                            onClick={() => setAdminFilterModel('')}
+                          >
+                            مسح الموديل فقط
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setAdminFilterBrand('');
+                              setAdminFilterModel('');
+                              setAdminFilterQuery('');
+                            }}
+                          >
+                            مسح الفلاتر
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {filteredAdminProducts.map((product) => {
                       const isInlineEditing = editingId === product.id;
 
                       return (
