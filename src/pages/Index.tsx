@@ -39,6 +39,7 @@ const Index = () => {
 
   const [customPartName, setCustomPartName] = useState('');
   const [customCarBrand, setCustomCarBrand] = useState('');
+  const [customCarYear, setCustomCarYear] = useState('');
   const [isSending, setIsSending] = useState(false);
 
   const [selectedBrand, setSelectedBrand] = useState('');
@@ -205,6 +206,7 @@ const Index = () => {
       'تفاصيل الطلب:',
       `• القطعة: ${partLine}`,
       `  - الماركات/الموديلات: ${customCarBrand.trim() || 'غير محدد'}`,
+      `  - سنة الصنع: ${customCarYear.trim() || 'غير محدد'}`,
       '',
       'ملاحظة: من فضلك أكد السعر والتوفر. شكرًا.',
     ].join('\n');
@@ -365,7 +367,7 @@ const Index = () => {
               <div className="mt-6 bg-card rounded-xl p-4 shadow-card max-w-md mx-auto md:mx-0">
                 <h3 className="font-semibold mb-2">عايز قطعة مش موجودة؟</h3>
                 <p className="text-xs text-muted-foreground mb-3">
-                  ابعت طلب سريع باسم القطعة والماركة المطلوبة بدون إدخال بيانات شخصية.
+                  ابعت طلب بالقطعة النادرة اللي محتاجها وإحنا هندوّر عليها ونوصّلها لحد عندك.
                 </p>
                 <div className="grid gap-3">
                   <div>
@@ -384,6 +386,17 @@ const Index = () => {
                       value={customCarBrand}
                       onChange={(e) => setCustomCarBrand(e.target.value)}
                       placeholder="مثال: هيونداي"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="custom-year">سنة صنع العربية</Label>
+                    <Input
+                      id="custom-year"
+                      value={customCarYear}
+                      onChange={(e) => setCustomCarYear(e.target.value)}
+                      placeholder="مثال: 2018"
+                      inputMode="numeric"
+                      maxLength={4}
                     />
                   </div>
                   <Button onClick={handleCustomRequest} disabled={isSending}>
