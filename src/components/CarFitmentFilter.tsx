@@ -88,6 +88,7 @@ type CarFitmentFilterProps = {
   onClearAll: () => void;
   onClearCarOnly: () => void;
   onShare: () => void;
+  embedded?: boolean;
 };
 
 export const CarFitmentFilter: React.FC<CarFitmentFilterProps> = ({
@@ -105,12 +106,18 @@ export const CarFitmentFilter: React.FC<CarFitmentFilterProps> = ({
   onClearAll,
   onClearCarOnly,
   onShare,
+  embedded = false,
 }) => {
   const hasCarSelection = !!selectedBrand;
 
-  return (
-    <section className="container mt-6" aria-label="Car fitment filters">
-      <div className="rounded-2xl border-2 border-primary/40 bg-gradient-to-br from-primary/15 via-card to-card shadow-card-hover p-4 md:p-6 space-y-4 md:space-y-5">
+  const content = (
+    <div
+      className={
+        embedded
+          ? 'rounded-xl border border-border bg-muted/20 p-4 md:p-5 space-y-4'
+          : 'rounded-2xl border-2 border-primary/40 bg-gradient-to-br from-primary/15 via-card to-card shadow-card-hover p-4 md:p-6 space-y-4 md:space-y-5'
+      }
+    >
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
             <div className="mt-0.5 h-9 w-9 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
@@ -199,6 +206,15 @@ export const CarFitmentFilter: React.FC<CarFitmentFilterProps> = ({
           </div>
         </div>
       </div>
+  );
+
+  if (embedded) {
+    return content;
+  }
+
+  return (
+    <section className="container mt-6" aria-label="Car fitment filters">
+      {content}
     </section>
   );
 };
