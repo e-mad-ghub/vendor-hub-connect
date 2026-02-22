@@ -12,7 +12,6 @@ import { categories } from '@/data/mockData';
 import { useProducts } from '@/data/productsStore';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
-import { sanitizePhoneInput, validatePhone } from '@/lib/validation';
 import { Seo } from '@/components/Seo';
 import { trackEvent } from '@/lib/analytics';
 import { CarFitmentFilter } from '@/components/CarFitmentFilter';
@@ -38,8 +37,6 @@ const Index = () => {
   } = useProducts();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
   const [customPartName, setCustomPartName] = useState('');
   const [customCarBrand, setCustomCarBrand] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -204,8 +201,6 @@ const Index = () => {
       : customPartName.trim();
     return [
       'طلب عرض سعر (طلب مخصص)',
-      `الاسم: ${customerName.trim()}`,
-      `رقم التليفون: ${customerPhone.trim()}`,
       '',
       'تفاصيل الطلب:',
       `• القطعة: ${partLine}`,
@@ -230,15 +225,6 @@ const Index = () => {
 
   const handleCustomRequest = async () => {
     if (isSending) return;
-    if (!customerName.trim() || !customerPhone.trim()) {
-      toast.error('من فضلك اكتب الاسم ورقم التليفون');
-      return;
-    }
-    const phoneValidation = validatePhone(customerPhone);
-    if (!phoneValidation.valid) {
-      toast.error(phoneValidation.error || 'رقم التليفون غير صالح');
-      return;
-    }
     if (!customPartName.trim()) {
       toast.error('من فضلك اكتب اسم القطعة');
       return;
@@ -253,8 +239,8 @@ const Index = () => {
       }
       const message = buildCustomMessage();
       await api.createQuoteRequest({
-        customerName: customerName.trim(),
-        customerPhone: phoneValidation.sanitized || customerPhone.trim(),
+        customerName: 'عميل بدون اسم',
+        customerPhone: 'غير محدد',
         message,
         items: [
           {
@@ -379,29 +365,9 @@ const Index = () => {
               <div className="mt-6 bg-card rounded-xl p-4 shadow-card max-w-md mx-auto md:mx-0">
                 <h3 className="font-semibold mb-2">عايز قطعة مش موجودة؟</h3>
                 <p className="text-xs text-muted-foreground mb-3">
-                  ابعت طلب سريع باسم القطعة والماركة المطلوبة.
+                  ابعت طلب سريع باسم القطعة والماركة المطلوبة بدون إدخال بيانات شخصية.
                 </p>
                 <div className="grid gap-3">
-                  <div>
-                    <Label htmlFor="custom-name">اسمك</Label>
-                    <Input
-                      id="custom-name"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder="مثال: أحمد محمد"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="custom-phone">رقم التليفون</Label>
-                    <Input
-                      id="custom-phone"
-                      value={customerPhone}
-                      onChange={(e) => setCustomerPhone(sanitizePhoneInput(e.target.value))}
-                      placeholder="مثال: 01XXXXXXXXX"
-                      inputMode="tel"
-                      maxLength={16}
-                    />
-                  </div>
                   <div>
                     <Label htmlFor="custom-part">اسم القطعة</Label>
                     <Input
