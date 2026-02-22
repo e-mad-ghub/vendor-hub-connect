@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, ChevronsUpDown, Share2, X } from 'lucide-react';
+import { Car, Check, ChevronsUpDown, Share2, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
@@ -110,19 +110,25 @@ export const CarFitmentFilter: React.FC<CarFitmentFilterProps> = ({
 
   return (
     <section className="container mt-6" aria-label="Car fitment filters">
-      <div className="bg-card rounded-xl shadow-card p-4 md:p-5 space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">اختيار حسب السيارة</p>
-            <h3 className="font-semibold text-foreground">فلترة القطع المتوافقة</h3>
+      <div className="rounded-2xl border-2 border-primary/40 bg-gradient-to-br from-primary/15 via-card to-card shadow-card-hover p-4 md:p-6 space-y-4 md:space-y-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 h-9 w-9 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
+              <Car className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-[11px] md:text-xs font-semibold text-primary mb-1">اختيار حسب السيارة</p>
+              <h3 className="text-base md:text-lg font-bold text-foreground">فلترة القطع المتوافقة</h3>
+              <p className="text-xs text-muted-foreground mt-1">اختار الماركة والموديل علشان تظهر القطع المناسبة بسرعة.</p>
+            </div>
           </div>
-          <Button type="button" variant="ghost" size="sm" className="gap-2" onClick={onShare}>
+          <Button type="button" variant="secondary" size="sm" className="gap-2 border border-primary/20" onClick={onShare}>
             <Share2 className="h-4 w-4" />
             مشاركة
           </Button>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-12">
+        <div className="grid gap-3 md:grid-cols-12 rounded-xl border border-primary/20 bg-card/90 p-3 md:p-4">
           <div className="md:col-span-4">
             <Label htmlFor="fitment-brand" className="mb-2 block">الماركة</Label>
             <TypeaheadSelect
@@ -162,7 +168,7 @@ export const CarFitmentFilter: React.FC<CarFitmentFilterProps> = ({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/15 bg-background/90 p-3">
           <div className="flex flex-wrap items-center gap-2">
             {hasCarSelection && (
               <Badge variant="secondary" className="gap-2 text-xs">
@@ -178,7 +184,9 @@ export const CarFitmentFilter: React.FC<CarFitmentFilterProps> = ({
               </Badge>
             )}
 
-            <span className="text-sm text-muted-foreground">عدد النتائج: {resultCount}</span>
+            <span className="inline-flex items-center rounded-full bg-primary/10 text-primary px-3 py-1 text-xs md:text-sm font-medium">
+              عدد النتائج: {resultCount}
+            </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">

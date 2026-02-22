@@ -185,9 +185,6 @@ const Index = () => {
   }, [hasNoResults, products, selectedBrand, debouncedNameQuery]);
 
   const featuredProducts = filteredProducts;
-  const newArrivals = [...filteredProducts]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 6);
 
   const features = [
     { icon: Truck, title: 'شحن مرن', desc: 'ننسق معاك بعد تأكيد العرض' },
@@ -425,6 +422,23 @@ const Index = () => {
         <CategoryChips categories={categories} />
       </section>
 
+      {/* Features */}
+      <section className="container my-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {features.map(({ icon: Icon, title, desc }) => (
+            <div key={title} className="flex items-center gap-3 p-4 bg-card rounded-lg shadow-card">
+              <div className="p-2 bg-primary/10 rounded-full">
+                <Icon className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-sm text-foreground">{title}</p>
+                <p className="text-xs text-muted-foreground">{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <CarFitmentFilter
         brands={fitmentOptions.brands}
         models={availableModels}
@@ -498,39 +512,6 @@ const Index = () => {
         </section>
       )}
 
-      {/* Features */}
-      <section className="container my-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {features.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="flex items-center gap-3 p-4 bg-card rounded-lg shadow-card">
-              <div className="p-2 bg-primary/10 rounded-full">
-                <Icon className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-medium text-sm text-foreground">{title}</p>
-                <p className="text-xs text-muted-foreground">{desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {recentViewedProducts.length > 0 && (
-        <section className="container my-10">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-xl md:text-2xl font-bold text-foreground">تابع من حيث توقفت</h3>
-              <p className="text-sm text-muted-foreground">آخر المنتجات التي شاهدتها</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {recentViewedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
-      )}
-
       {productsLoading ? (
         <section className="container my-10">
           <LoadingState title="جاري تحميل المنتجات" message="برجاء الانتظار..." />
@@ -597,25 +578,21 @@ const Index = () => {
             </div>
           </section>
 
-          {/* New Arrivals */}
-          <section className="container my-10">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-xl md:text-2xl font-bold text-foreground">وصلت جديد</h3>
-                <p className="text-sm text-muted-foreground">أحدث منتجات تجارنا</p>
+          {recentViewedProducts.length > 0 && (
+            <section className="container my-10">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-xl md:text-2xl font-bold text-foreground">تابع من حيث توقفت</h3>
+                  <p className="text-sm text-muted-foreground">آخر المنتجات التي شاهدتها</p>
+                </div>
               </div>
-              <Link to="/search?sort=newest">
-                <Button variant="ghost" size="sm" className="text-primary">
-                  شوف الكل <ArrowRight className="ml-1 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {newArrivals.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          </section>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                {recentViewedProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </section>
+          )}
         </>
       )}
 
@@ -631,6 +608,7 @@ const Index = () => {
           </p>
         </div>
       </section>
+
     </Layout>
   );
 };
