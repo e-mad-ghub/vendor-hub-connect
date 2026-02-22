@@ -3,17 +3,18 @@ import { useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { ProductCard } from '@/components/ProductCard';
 import { CategoryChips } from '@/components/CategoryChips';
+import { CarFitmentFilter } from '@/components/CarFitmentFilter';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { SlidersHorizontal, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { categories } from '@/data/mockData';
 import { useProducts } from '@/data/productsStore';
 import { Seo } from '@/components/Seo';
 import { LoadingState } from '@/components/LoadingState';
 import { InlineError } from '@/components/InlineError';
+import { extractFitmentOptions, getProductFitmentMatch } from '@/lib/fitment';
 
 const SORT_VALUES = ['relevance', 'newest', 'price-low', 'price-high'] as const;
 type SortValue = (typeof SORT_VALUES)[number];
@@ -29,12 +30,19 @@ const Search = () => {
   
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
+  const [selectedBrand, setSelectedBrand] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
+  const [nameQueryInput, setNameQueryInput] = useState('');
   const [sortBy, setSortBy] = useState<SortValue>(initialSort);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isPriceRangeDirty, setIsPriceRangeDirty] = useState(false);
 
   const { products, isLoading: productsLoading, error: productsError, refresh: refreshProducts } = useProducts();
+  const fitmentOptions = useMemo(() => extractFitmentOptions(products), [products]);
+
+  const availableModels = useMemo(() => {
+    if (!selectedBrand) return [];
+    return fitmentOptions.modelsByBrand[selectedBrand] || [];
+  }, [fitmentOptions.modelsByBrand, selectedBrand]);
 
   useEffect(() => {
     const nextSort = isSortValue(searchParams.get('sort')) ? (searchParams.get('sort') as SortValue) : 'relevance';
@@ -82,6 +90,16 @@ const Search = () => {
     });
   }, [maxPrice, isPriceRangeDirty]);
 
+  useEffect(() => {
+    if (!selectedBrand) {
+      setSelectedModel('');
+      return;
+    }
+    if (selectedModel && !availableModels.includes(selectedModel)) {
+      setSelectedModel('');
+    }
+  }, [selectedBrand, selectedModel, availableModels]);
+
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
@@ -106,9 +124,15 @@ const Search = () => {
       result = result.filter(p => selectedCategories.includes(p.category));
     }
 
-    // Brand filter
-    if (selectedBrands.length > 0) {
-      result = result.filter(p => (p.carBrands || []).some(brand => selectedBrands.includes(brand)));
+    // Car fitment filter (same behavior as home filter: confirmed matches only)
+    if (selectedBrand) {
+      result = result.filter((product) => getProductFitmentMatch(product, selectedBrand, selectedModel).confirmed);
+    }
+
+    // Search inside filtered results
+    if (nameQueryInput.trim()) {
+      const lowerNameQuery = nameQueryInput.trim().toLowerCase();
+      result = result.filter((product) => product.title.toLowerCase().includes(lowerNameQuery));
     }
 
     // Sort
@@ -133,7 +157,7 @@ const Search = () => {
     }
 
     return result;
-  }, [products, query, priceRange, selectedCategories, selectedBrands, sortBy]);
+  }, [products, query, priceRange, selectedCategories, selectedBrand, selectedModel, nameQueryInput, sortBy]);
 
   const toggleCategory = (category: string) => {
     setSelectedCategories(prev =>
@@ -147,7 +171,9 @@ const Search = () => {
     setPriceRange([0, maxPrice]);
     setIsPriceRangeDirty(false);
     setSelectedCategories([]);
-    setSelectedBrands([]);
+    setSelectedBrand('');
+    setSelectedModel('');
+    setNameQueryInput('');
   };
 
   const formatEgp = (value: number) => `ج.م ${Math.round(value).toLocaleString('en-US')}`;
@@ -175,26 +201,28 @@ const Search = () => {
     },
   ];
 
-  const hasActiveFilters = priceRange[0] > 0 || priceRange[1] < maxPrice || selectedCategories.length > 0 || selectedBrands.length > 0;
+  const hasActiveFilters = priceRange[0] > 0
+    || priceRange[1] < maxPrice
+    || selectedCategories.length > 0
+    || !!selectedBrand
+    || !!selectedModel
+    || !!nameQueryInput.trim();
 
-  const allBrands = useMemo(() => {
-    const set = new Set<string>();
-    products.forEach((product) => {
-      (product.carBrands || []).forEach((brand) => set.add(brand));
-    });
-    return Array.from(set);
-  }, [products]);
-
-  const toggleBrand = (brand: string) => {
-    setSelectedBrands(prev =>
-      prev.includes(brand)
-        ? prev.filter(b => b !== brand)
-        : [...prev, brand]
-    );
+  const handleShareFilters = async () => {
+    const url = window.location.href;
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(url);
+        return;
+      } catch {
+        // fallback below
+      }
+    }
+    window.prompt('انسخ الرابط التالي:', url);
   };
 
   const FilterContent = () => (
-    <div className="space-y-6 w-full max-w-sm mx-auto">
+    <div className="space-y-6 w-full">
       {/* Price Range */}
       <div className="w-full rounded-xl border border-border bg-muted/40 p-3 space-y-3">
         <div className="flex items-center justify-between gap-2">
@@ -260,7 +288,10 @@ const Search = () => {
         <h4 className="font-medium mb-3">الفئات</h4>
         <div className="space-y-2">
           {categories.map((cat) => (
-            <label key={cat.id} className="flex items-center gap-2 cursor-pointer">
+            <label
+              key={cat.id}
+              className="flex items-center gap-3 cursor-pointer rounded-lg border border-border bg-background p-2.5 hover:bg-muted/40 transition-colors"
+            >
               <Checkbox
                 checked={selectedCategories.includes(cat.name)}
                 onCheckedChange={() => toggleCategory(cat.name)}
@@ -271,26 +302,8 @@ const Search = () => {
         </div>
       </div>
 
-      {/* Car Brands */}
-      {allBrands.length > 0 && (
-        <div>
-          <h4 className="font-medium mb-3">ماركات السيارات</h4>
-          <div className="space-y-2">
-            {allBrands.map((brand) => (
-              <label key={brand} className="flex items-center gap-2 cursor-pointer">
-                <Checkbox
-                  checked={selectedBrands.includes(brand)}
-                  onCheckedChange={() => toggleBrand(brand)}
-                />
-                <span className="text-sm">{brand}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-      )}
-
       {hasActiveFilters && (
-        <Button variant="outline" onClick={clearFilters} className="w-full max-w-xs mx-auto block">
+        <Button variant="outline" onClick={clearFilters} className="w-full md:w-auto">
           <X className="h-4 w-4 mr-2" />
           مسح الفلاتر
         </Button>
@@ -321,30 +334,40 @@ const Search = () => {
         {/* Category Chips */}
         <CategoryChips categories={categories} />
 
+        <section className="container mt-4">
+          <div className="bg-card rounded-xl shadow-card p-4 md:p-5 space-y-4">
+            <h3 className="font-semibold">الفلاتر</h3>
+            <div className="space-y-4">
+              <FilterContent />
+              <CarFitmentFilter
+                embedded
+                brands={fitmentOptions.brands}
+                models={availableModels}
+                selectedBrand={selectedBrand}
+                selectedModel={selectedModel}
+                nameQuery={nameQueryInput}
+                resultCount={filteredProducts.length}
+                isModelDisabled={!selectedBrand}
+                onBrandChange={(value) => {
+                  setSelectedBrand(value);
+                  setSelectedModel('');
+                }}
+                onModelChange={setSelectedModel}
+                onNameQueryChange={setNameQueryInput}
+                onClearModel={() => setSelectedModel('')}
+                onClearAll={clearFilters}
+                onClearCarOnly={() => {
+                  setSelectedBrand('');
+                  setSelectedModel('');
+                }}
+                onShare={handleShareFilters}
+              />
+            </div>
+          </div>
+        </section>
+
         {/* Sort & Filter Bar */}
         <div className="flex items-center justify-between gap-4 my-4">
-          <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="sm" className="md:hidden">
-                <SlidersHorizontal className="h-4 w-4 mr-2" />
-                الفلاتر
-                {hasActiveFilters && (
-                  <span className="ml-1 bg-primary text-primary-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center">
-                    !
-                  </span>
-                )}
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-80 max-w-[85vw] h-[100dvh] max-h-[100dvh] p-0 overflow-y-auto overscroll-contain">
-              <SheetHeader className="px-6 pt-6 sticky top-0 bg-background z-10">
-                <SheetTitle>الفلاتر</SheetTitle>
-              </SheetHeader>
-              <div className="px-6 pt-6 pb-[max(6rem,env(safe-area-inset-bottom))]">
-                <FilterContent />
-              </div>
-            </SheetContent>
-          </Sheet>
-
           <div className="flex items-center gap-2 ml-auto">
             <Button
               variant="outline"
@@ -370,41 +393,28 @@ const Search = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex gap-6">
-          {/* Desktop Filters */}
-          <aside className="hidden md:block w-64 flex-shrink-0">
-            <div className="sticky top-24 bg-card rounded-lg p-4 shadow-card">
-              <h3 className="font-semibold mb-4">الفلاتر</h3>
-              <FilterContent />
-            </div>
-          </aside>
-
-          {/* Products Grid */}
-          <div className="flex-1">
-            {productsLoading ? (
-              <LoadingState title="جاري تحميل المنتجات" message="برجاء الانتظار..." />
-            ) : productsError ? (
-              <InlineError
-                title="تعذر تحميل المنتجات"
-                message={productsError}
-                onRetry={refreshProducts}
-              />
-            ) : filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground mb-4">مافيش منتجات مطابقة</p>
-                <Button variant="outline" onClick={clearFilters}>
-                  مسح الفلاتر
-                </Button>
-              </div>
-            )}
+        {productsLoading ? (
+          <LoadingState title="جاري تحميل المنتجات" message="برجاء الانتظار..." />
+        ) : productsError ? (
+          <InlineError
+            title="تعذر تحميل المنتجات"
+            message={productsError}
+            onRetry={refreshProducts}
+          />
+        ) : filteredProducts.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filteredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
           </div>
-        </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground mb-4">مافيش منتجات مطابقة</p>
+            <Button variant="outline" onClick={clearFilters}>
+              مسح الفلاتر
+            </Button>
+          </div>
+        )}
       </div>
     </Layout>
   );

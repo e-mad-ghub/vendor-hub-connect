@@ -12,7 +12,6 @@ import { categories } from '@/data/mockData';
 import { useProducts } from '@/data/productsStore';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
-import { sanitizePhoneInput, validatePhone } from '@/lib/validation';
 import { Seo } from '@/components/Seo';
 import { trackEvent } from '@/lib/analytics';
 import { CarFitmentFilter } from '@/components/CarFitmentFilter';
@@ -38,10 +37,9 @@ const Index = () => {
   } = useProducts();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
   const [customPartName, setCustomPartName] = useState('');
   const [customCarBrand, setCustomCarBrand] = useState('');
+  const [customCarYear, setCustomCarYear] = useState('');
   const [isSending, setIsSending] = useState(false);
 
   const [selectedBrand, setSelectedBrand] = useState('');
@@ -187,9 +185,6 @@ const Index = () => {
   }, [hasNoResults, products, selectedBrand, debouncedNameQuery]);
 
   const featuredProducts = filteredProducts;
-  const newArrivals = [...filteredProducts]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 6);
 
   const features = [
     { icon: Truck, title: 'شحن مرن', desc: 'ننسق معاك بعد تأكيد العرض' },
@@ -204,12 +199,11 @@ const Index = () => {
       : customPartName.trim();
     return [
       'طلب عرض سعر (طلب مخصص)',
-      `الاسم: ${customerName.trim()}`,
-      `رقم التليفون: ${customerPhone.trim()}`,
       '',
       'تفاصيل الطلب:',
       `• القطعة: ${partLine}`,
       `  - الماركات/الموديلات: ${customCarBrand.trim() || 'غير محدد'}`,
+      `  - سنة الصنع: ${customCarYear.trim() || 'غير محدد'}`,
       '',
       'ملاحظة: من فضلك أكد السعر والتوفر. شكرًا.',
     ].join('\n');
@@ -230,15 +224,6 @@ const Index = () => {
 
   const handleCustomRequest = async () => {
     if (isSending) return;
-    if (!customerName.trim() || !customerPhone.trim()) {
-      toast.error('من فضلك اكتب الاسم ورقم التليفون');
-      return;
-    }
-    const phoneValidation = validatePhone(customerPhone);
-    if (!phoneValidation.valid) {
-      toast.error(phoneValidation.error || 'رقم التليفون غير صالح');
-      return;
-    }
     if (!customPartName.trim()) {
       toast.error('من فضلك اكتب اسم القطعة');
       return;
@@ -253,8 +238,8 @@ const Index = () => {
       }
       const message = buildCustomMessage();
       await api.createQuoteRequest({
-        customerName: customerName.trim(),
-        customerPhone: phoneValidation.sanitized || customerPhone.trim(),
+        customerName: 'عميل بدون اسم',
+        customerPhone: 'غير محدد',
         message,
         items: [
           {
@@ -379,29 +364,9 @@ const Index = () => {
               <div className="mt-6 bg-card rounded-xl p-4 shadow-card max-w-md mx-auto md:mx-0">
                 <h3 className="font-semibold mb-2">عايز قطعة مش موجودة؟</h3>
                 <p className="text-xs text-muted-foreground mb-3">
-                  ابعت طلب سريع باسم القطعة والماركة المطلوبة.
+                  ابعت طلب بالقطعة النادرة اللي محتاجها وإحنا هندوّر عليها ونوصّلها لحد عندك.
                 </p>
                 <div className="grid gap-3">
-                  <div>
-                    <Label htmlFor="custom-name">اسمك</Label>
-                    <Input
-                      id="custom-name"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder="مثال: أحمد محمد"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="custom-phone">رقم التليفون</Label>
-                    <Input
-                      id="custom-phone"
-                      value={customerPhone}
-                      onChange={(e) => setCustomerPhone(sanitizePhoneInput(e.target.value))}
-                      placeholder="مثال: 01XXXXXXXXX"
-                      inputMode="tel"
-                      maxLength={16}
-                    />
-                  </div>
                   <div>
                     <Label htmlFor="custom-part">اسم القطعة</Label>
                     <Input
@@ -418,6 +383,17 @@ const Index = () => {
                       value={customCarBrand}
                       onChange={(e) => setCustomCarBrand(e.target.value)}
                       placeholder="مثال: هيونداي"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="custom-year">سنة صنع العربية</Label>
+                    <Input
+                      id="custom-year"
+                      value={customCarYear}
+                      onChange={(e) => setCustomCarYear(e.target.value)}
+                      placeholder="مثال: 2018"
+                      inputMode="numeric"
+                      maxLength={4}
                     />
                   </div>
                   <Button onClick={handleCustomRequest} disabled={isSending}>
@@ -444,6 +420,23 @@ const Index = () => {
       {/* Category Chips */}
       <section className="container mt-6">
         <CategoryChips categories={categories} />
+      </section>
+
+      {/* Features */}
+      <section className="container my-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {features.map(({ icon: Icon, title, desc }) => (
+            <div key={title} className="flex items-center gap-3 p-4 bg-card rounded-lg shadow-card">
+              <div className="p-2 bg-primary/10 rounded-full">
+                <Icon className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-medium text-sm text-foreground">{title}</p>
+                <p className="text-xs text-muted-foreground">{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </section>
 
       <CarFitmentFilter
@@ -519,39 +512,6 @@ const Index = () => {
         </section>
       )}
 
-      {/* Features */}
-      <section className="container my-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {features.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="flex items-center gap-3 p-4 bg-card rounded-lg shadow-card">
-              <div className="p-2 bg-primary/10 rounded-full">
-                <Icon className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-medium text-sm text-foreground">{title}</p>
-                <p className="text-xs text-muted-foreground">{desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {recentViewedProducts.length > 0 && (
-        <section className="container my-10">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-xl md:text-2xl font-bold text-foreground">تابع من حيث توقفت</h3>
-              <p className="text-sm text-muted-foreground">آخر المنتجات التي شاهدتها</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {recentViewedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
-      )}
-
       {productsLoading ? (
         <section className="container my-10">
           <LoadingState title="جاري تحميل المنتجات" message="برجاء الانتظار..." />
@@ -618,25 +578,21 @@ const Index = () => {
             </div>
           </section>
 
-          {/* New Arrivals */}
-          <section className="container my-10">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-xl md:text-2xl font-bold text-foreground">وصلت جديد</h3>
-                <p className="text-sm text-muted-foreground">أحدث منتجات تجارنا</p>
+          {recentViewedProducts.length > 0 && (
+            <section className="container my-10">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-xl md:text-2xl font-bold text-foreground">تابع من حيث توقفت</h3>
+                  <p className="text-sm text-muted-foreground">آخر المنتجات التي شاهدتها</p>
+                </div>
               </div>
-              <Link to="/search?sort=newest">
-                <Button variant="ghost" size="sm" className="text-primary">
-                  شوف الكل <ArrowRight className="ml-1 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {newArrivals.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          </section>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                {recentViewedProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+            </section>
+          )}
         </>
       )}
 
@@ -652,6 +608,7 @@ const Index = () => {
           </p>
         </div>
       </section>
+
     </Layout>
   );
 };

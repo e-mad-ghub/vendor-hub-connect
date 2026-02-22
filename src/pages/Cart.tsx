@@ -13,6 +13,7 @@ const Cart = () => {
   const detailedItems = getDetailedItems();
   const cartCount = getCartCount();
   const subtotal = getCartTotal();
+  const hasUnpricedItems = detailedItems.some((item) => item.quality === 'imported');
 
   if (items.length === 0) {
     return (
@@ -128,32 +129,27 @@ const Cart = () => {
                   <span className="text-muted-foreground">الإجمالي الفرعي</span>
                   <span className="font-medium">ج.م {subtotal.toFixed(2)}</span>
                 </div>
-                <div className="border-t border-border pt-3 mt-3">
-                  <p className="text-xs text-muted-foreground">
-                    السعر النهائي والتوافر بيتأكدوا يدويًا بعد إرسال طلب عرض السعر عبر واتساب.
-                  </p>
-                </div>
               </div>
 
               <div className="mt-6 p-4 bg-muted/40 border border-border rounded-lg flex items-start gap-2">
                 <MessageCircle className="h-5 w-5 text-primary mt-0.5" />
                 <div>
-                  <p className="font-semibold text-sm">اطلب عرض سعر عبر واتساب</p>
+                  <p className="font-semibold text-sm">اعمل طلبك على واتساب</p>
                   <p className="text-xs text-muted-foreground">
-                    فريقنا هيأكد الأسعار والتوافر ويرد عليك مباشرة.
+                    فريق الخبراء عندنا هيرد عليك على واتساب.
                   </p>
                 </div>
               </div>
 
               <Button
                 onClick={() => {
-                  trackEvent('Request Quote Start', { source: 'cart' });
+                  trackEvent(hasUnpricedItems ? 'Request Quote Start' : 'Order Start', { source: 'cart' });
                   navigate('/checkout');
                 }}
                 className="w-full mt-4"
                 size="lg"
               >
-                طلب عرض سعر عبر واتساب
+                {hasUnpricedItems ? 'طلب عرض سعر عبر واتساب' : 'اطلب الآن على واتساب'}
               </Button>
 
               <Link to="/search">
