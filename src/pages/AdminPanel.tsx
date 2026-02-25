@@ -144,7 +144,7 @@ const AdminPanel = () => {
   if (authLoading) {
     return (
       <Layout>
-        <Seo title="لوحة الإدارة" description="إدارة الطلبات والمنتجات وإعدادات واتساب." />
+        <Seo title="لوحة الإدارة" description="إدارة الطلبات والمنتجات وإعدادات واتساب." noIndex />
         <div className="container py-12">
           <LoadingState title="جاري التحقق من الجلسة" message="برجاء الانتظار..." />
         </div>
@@ -155,7 +155,7 @@ const AdminPanel = () => {
   if (!user || user.role !== 'admin') {
     return (
       <Layout>
-        <Seo title="لوحة الإدارة" description="الدخول كأدمن مطلوب." />
+        <Seo title="لوحة الإدارة" description="الدخول كأدمن مطلوب." noIndex />
         <div className="container py-12 text-center">
           <h1 className="text-2xl font-bold mb-4">الدخول كأدمن مطلوب</h1>
           <Link to="/login"><Button>سجل دخول كأدمن</Button></Link>
@@ -553,13 +553,13 @@ const AdminPanel = () => {
 
   return (
     <Layout>
-      <Seo title="لوحة الإدارة" description="إدارة الطلبات والمنتجات وإعدادات واتساب." />
+      <Seo title="لوحة الإدارة" description="إدارة الطلبات والمنتجات وإعدادات واتساب." noIndex />
       <div className="container py-3 md:py-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5 md:mb-6">
           <div className="flex items-center gap-2">
             <h1 className="text-xl md:text-2xl font-bold">لوحة الإدارة</h1>
             <span className="text-xs md:text-sm px-2 py-1 rounded bg-muted text-muted-foreground">
-              v1.11
+              v1.13
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-2">

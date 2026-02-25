@@ -7,7 +7,7 @@ import { Seo } from '@/components/Seo';
 const NotAuthorized = () => {
   return (
     <Layout>
-      <Seo title="غير مصرح" description="لا تملك الصلاحيات المطلوبة للوصول إلى هذه الصفحة." />
+      <Seo title="غير مصرح" description="لا تملك الصلاحيات المطلوبة للوصول إلى هذه الصفحة." noIndex />
       <div className="container py-12 text-center">
         <h1 className="text-2xl font-bold mb-3">غير مصرح لك بالدخول</h1>
         <p className="text-muted-foreground mb-6">

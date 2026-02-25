@@ -28,7 +28,7 @@ const AdminBrands = () => {
   if (authLoading) {
     return (
       <Layout>
-        <Seo title="إدارة الماركات" description="إضافة وتعديل الماركات والموديلات." />
+        <Seo title="إدارة الماركات" description="إضافة وتعديل الماركات والموديلات." noIndex />
         <div className="container py-12">
           <LoadingState title="جاري التحقق من الجلسة" message="برجاء الانتظار..." />
         </div>
@@ -39,7 +39,7 @@ const AdminBrands = () => {
   if (!user || user.role !== 'admin') {
     return (
       <Layout>
-        <Seo title="غير مصرح" description="هذه الصفحة للأدمن فقط." />
+        <Seo title="غير مصرح" description="هذه الصفحة للأدمن فقط." noIndex />
         <div className="container py-12 text-center">
           <h1 className="text-2xl font-bold mb-4">الدخول كأدمن مطلوب</h1>
           <Link to="/login">
@@ -119,7 +119,7 @@ const AdminBrands = () => {
 
   return (
     <Layout>
-      <Seo title="إدارة الماركات" description="إضافة وتعديل الماركات والموديلات." />
+      <Seo title="إدارة الماركات" description="إضافة وتعديل الماركات والموديلات." noIndex />
       <div className="container py-4 md:py-8">
         <div className="flex items-center justify-between mb-6">
           <div>

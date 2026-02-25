@@ -14,7 +14,7 @@ const NotFound = () => {
 
   return (
     <Layout>
-      <Seo title="الصفحة غير موجودة" description="الصفحة المطلوبة غير متاحة." />
+      <Seo title="الصفحة غير موجودة" description="الصفحة المطلوبة غير متاحة." noIndex />
       <div className="container py-16 text-center">
         <h1 className="mb-4 text-4xl font-bold">404</h1>
         <p className="mb-4 text-xl text-muted-foreground">عفوًا! الصفحة مش موجودة</p>
