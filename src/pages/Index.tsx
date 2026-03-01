@@ -17,6 +17,7 @@ import { trackEvent } from '@/lib/analytics';
 import { CarFitmentFilter } from '@/components/CarFitmentFilter';
 import { extractFitmentOptions, filterHomeProducts } from '@/lib/fitment';
 import { getErrorMessage } from '@/lib/error';
+import { openWhatsAppChat, preloadWhatsAppPhoneDigits, resolveWhatsAppPhoneDigits } from '@/lib/whatsapp';
 import { LoadingState } from '@/components/LoadingState';
 import { InlineError } from '@/components/InlineError';
 import {
@@ -137,6 +138,10 @@ const Index = () => {
     setRecentQueries(getRecentPartQueries());
   }, [debouncedNameQuery]);
 
+  useEffect(() => {
+    void preloadWhatsAppPhoneDigits(api.getWhatsAppSettings);
+  }, []);
+
   const filtered = useMemo(
     () =>
       filterHomeProducts(products, {
@@ -230,14 +235,14 @@ const Index = () => {
     }
     setIsSending(true);
     try {
-      const settings = await api.getWhatsAppSettings();
-      const phoneDigits = settings.phoneNumber.replace(/\D/g, '');
+      const phoneDigits = await resolveWhatsAppPhoneDigits(api.getWhatsAppSettings);
       if (!phoneDigits) {
         toast.error('رقم واتساب غير مُعد. تواصل مع الأدمن.');
         return;
       }
       const message = buildCustomMessage();
-      await api.createQuoteRequest({
+      openWhatsAppChat(phoneDigits, message);
+      void api.createQuoteRequest({
         customerName: 'عميل بدون اسم',
         customerPhone: 'غير محدد',
         message,
@@ -252,9 +257,10 @@ const Index = () => {
             image: '',
           },
         ],
+      }).catch((error: unknown) => {
+        console.error('Failed to track custom request:', error);
       });
       trackEvent('Request Quote Submit', { source: 'custom', hasBrand: !!customCarBrand.trim() });
-      window.location.href = `https://wa.me/${phoneDigits}?text=${encodeURIComponent(message)}`;
     } catch (e: unknown) {
       toast.error(getErrorMessage(e, 'تعذر إرسال الطلب'));
     } finally {
@@ -302,15 +308,14 @@ const Index = () => {
 
     setIsOpeningWhatsApp(true);
     try {
-      const settings = await api.getWhatsAppSettings();
-      const phoneDigits = settings.phoneNumber.replace(/\D/g, '');
+      const phoneDigits = await resolveWhatsAppPhoneDigits(api.getWhatsAppSettings);
       if (!phoneDigits) {
         toast.error('رقم واتساب غير مُعد. تواصل مع الأدمن.');
         return;
       }
 
       const message = buildMissingPartMessage();
-      window.location.href = `https://wa.me/${phoneDigits}?text=${encodeURIComponent(message)}`;
+      openWhatsAppChat(phoneDigits, message);
     } catch (e: unknown) {
       toast.error(getErrorMessage(e, 'تعذر فتح واتساب'));
     } finally {

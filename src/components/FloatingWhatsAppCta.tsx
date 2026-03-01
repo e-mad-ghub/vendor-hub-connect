@@ -3,9 +3,14 @@ import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { getErrorMessage } from '@/lib/error';
+import {
+  getCachedWhatsAppPhoneDigits,
+  openWhatsAppChat,
+  preloadWhatsAppPhoneDigits,
+  resolveWhatsAppPhoneDigits,
+} from '@/lib/whatsapp';
 
 const STORAGE_KEY = 'vhc-whatsapp-float-top';
-const WHATSAPP_PHONE_CACHE_KEY = 'vhc-whatsapp-phone-digits';
 const MOBILE_BREAKPOINT = 768;
 const MOBILE_BOTTOM_OFFSET = 104;
 const DESKTOP_BOTTOM_OFFSET = 28;
@@ -27,26 +32,6 @@ const buildDirectWhatsAppTemplate = () => [
   '• سنة الصنع: [اكتب السنة]',
   '• تفاصيل إضافية: [أي ملاحظة مهمة]',
 ].join('\n');
-
-const openWhatsAppChat = (phoneDigits: string, message: string) => {
-  const encodedMessage = encodeURIComponent(message);
-  const webUrl = `https://wa.me/${phoneDigits}?text=${encodedMessage}`;
-  const appUrl = `whatsapp://send?phone=${phoneDigits}&text=${encodedMessage}`;
-  const isMobile =
-    /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-  if (!isMobile) {
-    window.location.href = webUrl;
-    return;
-  }
-
-  window.location.href = appUrl;
-  window.setTimeout(() => {
-    if (document.visibilityState === 'visible') {
-      window.location.href = webUrl;
-    }
-  }, 700);
-};
 
 export const FloatingWhatsAppCta: React.FC = () => {
   const { pathname } = useLocation();
@@ -133,9 +118,9 @@ export const FloatingWhatsAppCta: React.FC = () => {
   }, [topPx]);
 
   React.useEffect(() => {
-    const cached = window.localStorage.getItem(WHATSAPP_PHONE_CACHE_KEY) || '';
+    const cached = getCachedWhatsAppPhoneDigits();
     if (cached) {
-      setCachedPhoneDigits(cached.replace(/\D/g, ''));
+      setCachedPhoneDigits(cached);
     }
   }, []);
 
@@ -143,15 +128,9 @@ export const FloatingWhatsAppCta: React.FC = () => {
     let isActive = true;
 
     const preloadWhatsAppPhone = async () => {
-      try {
-        const settings = await api.getWhatsAppSettings();
-        const phoneDigits = settings.phoneNumber.replace(/\D/g, '');
-        if (!phoneDigits || !isActive) return;
-        setCachedPhoneDigits(phoneDigits);
-        window.localStorage.setItem(WHATSAPP_PHONE_CACHE_KEY, phoneDigits);
-      } catch {
-        // Keep silent: this is a non-blocking prefetch path.
-      }
+      const phoneDigits = await preloadWhatsAppPhoneDigits(api.getWhatsAppSettings);
+      if (!phoneDigits || !isActive) return;
+      setCachedPhoneDigits(phoneDigits);
     };
 
     void preloadWhatsAppPhone();
@@ -269,12 +248,8 @@ export const FloatingWhatsAppCta: React.FC = () => {
     try {
       let phoneDigits = cachedPhoneDigits;
       if (!phoneDigits) {
-        const settings = await api.getWhatsAppSettings();
-        phoneDigits = settings.phoneNumber.replace(/\D/g, '');
-        if (phoneDigits) {
-          setCachedPhoneDigits(phoneDigits);
-          window.localStorage.setItem(WHATSAPP_PHONE_CACHE_KEY, phoneDigits);
-        }
+        phoneDigits = await resolveWhatsAppPhoneDigits(api.getWhatsAppSettings);
+        if (phoneDigits) setCachedPhoneDigits(phoneDigits);
       }
       if (!phoneDigits) {
         toast.error('رقم واتساب غير مُعد. تواصل مع الأدمن.');
