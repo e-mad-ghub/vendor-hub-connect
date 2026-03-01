@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { ProductCard } from '@/components/ProductCard';
 import { CategoryChips } from '@/components/CategoryChips';
-import { categories } from '@/data/mockData';
+import { categories } from '@/data/categoriesConfig';
 import { useProducts } from '@/data/productsStore';
 import { ChevronRight } from 'lucide-react';
 import { Seo } from '@/components/Seo';

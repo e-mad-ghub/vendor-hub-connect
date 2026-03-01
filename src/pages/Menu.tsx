@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { categories } from '@/data/mockData';
+import { categories } from '@/data/categoriesConfig';
 import { Seo } from '@/components/Seo';
 
 const Menu = () => (

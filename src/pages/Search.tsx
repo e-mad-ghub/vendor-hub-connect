@@ -9,7 +9,7 @@ import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { X } from 'lucide-react';
-import { categories } from '@/data/mockData';
+import { categories } from '@/data/categoriesConfig';
 import { useProducts } from '@/data/productsStore';
 import { Seo } from '@/components/Seo';
 import { LoadingState } from '@/components/LoadingState';

@@ -12,7 +12,7 @@ import { api } from '@/lib/api';
 import { MessageCircle, FileDown, Settings, Package, Key } from 'lucide-react';
 import { toast } from 'sonner';
 import { useProducts } from '@/data/productsStore';
-import { categories } from '@/data/mockData';
+import { categories } from '@/data/categoriesConfig';
 import { defaultBrandOptions, type BrandOption } from '@/data/brandOptions';
 import type { QuoteRequest } from '@/types/marketplace';
 import { PasswordChangeForm } from '@/components/PasswordChangeForm';
@@ -559,7 +559,7 @@ const AdminPanel = () => {
           <div className="flex items-center gap-2">
             <h1 className="text-xl md:text-2xl font-bold">لوحة الإدارة</h1>
             <span className="text-xs md:text-sm px-2 py-1 rounded bg-muted text-muted-foreground">
-              v1.13
+              v1.14
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
