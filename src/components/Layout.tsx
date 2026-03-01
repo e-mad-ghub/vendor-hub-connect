@@ -2,6 +2,7 @@ import React from 'react';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { BottomNav } from './BottomNav';
+import { FloatingWhatsAppCta } from './FloatingWhatsAppCta';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -19,6 +20,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, hideFooter = false }) 
         {children}
       </main>
       {!hideFooter && <Footer />}
+      <FloatingWhatsAppCta />
       <BottomNav />
     </div>
   );
