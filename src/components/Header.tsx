@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { categories } from '@/data/mockData';
+import { categories } from '@/data/categoriesConfig';
 export const Header: React.FC = () => {
   const navigate = useNavigate();
   const {

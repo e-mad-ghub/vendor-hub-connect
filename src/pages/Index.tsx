@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowRight, Truck, Shield, RefreshCw, Headphones, MessageCircle } from 'lucide-react';
-import { categories } from '@/data/mockData';
+import { categories } from '@/data/categoriesConfig';
 import { useProducts } from '@/data/productsStore';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
