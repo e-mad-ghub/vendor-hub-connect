@@ -13,8 +13,10 @@ import { formatCarBrands } from '@/lib/brands';
 import { pushRecentViewedProduct } from '@/lib/customerContext';
 import { LoadingState } from '@/components/LoadingState';
 import { InlineError } from '@/components/InlineError';
+import { AdSlot } from '@/components/AdSlot';
 
 const ProductDetail = () => {
+  const productInlineAdSlot = (import.meta.env.VITE_ADSENSE_SLOT_PRODUCT_INLINE || '').trim();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToCart } = useCart();
@@ -307,6 +309,8 @@ const ProductDetail = () => {
           <h3 className="font-semibold mb-3">وصف المنتج</h3>
           <p className="text-muted-foreground leading-relaxed">{product.description}</p>
         </div>
+
+        <AdSlot slot={productInlineAdSlot} className="mt-6" minHeight={100} />
 
         {/* Related Products */}
         {relatedProducts.length > 0 && (
