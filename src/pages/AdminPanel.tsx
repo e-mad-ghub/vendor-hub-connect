@@ -559,7 +559,7 @@ const AdminPanel = () => {
           <div className="flex items-center gap-2">
             <h1 className="text-xl md:text-2xl font-bold">لوحة الإدارة</h1>
             <span className="text-xs md:text-sm px-2 py-1 rounded bg-muted text-muted-foreground">
-              v2.0
+              v2.1
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-2">

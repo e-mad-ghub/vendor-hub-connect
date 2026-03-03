@@ -20,6 +20,7 @@ import { getErrorMessage } from '@/lib/error';
 import { openWhatsAppChat, preloadWhatsAppPhoneDigits, resolveWhatsAppPhoneDigits } from '@/lib/whatsapp';
 import { LoadingState } from '@/components/LoadingState';
 import { InlineError } from '@/components/InlineError';
+import { AdSlot } from '@/components/AdSlot';
 import {
   getRecentPartQueries,
   getRecentViewedProductIds,
@@ -30,6 +31,7 @@ import {
 } from '@/lib/customerContext';
 
 const Index = () => {
+  const homeBannerAdSlot = (import.meta.env.VITE_ADSENSE_SLOT_HOME_BANNER || '').trim();
   const {
     products,
     isLoading: productsLoading,
@@ -425,6 +427,10 @@ const Index = () => {
       {/* Category Chips */}
       <section className="container mt-6">
         <CategoryChips categories={categories} />
+      </section>
+
+      <section className="container mt-6">
+        <AdSlot slot={homeBannerAdSlot} minHeight={120} />
       </section>
 
       {/* Features */}

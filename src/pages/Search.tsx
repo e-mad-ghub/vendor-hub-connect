@@ -15,6 +15,7 @@ import { Seo } from '@/components/Seo';
 import { LoadingState } from '@/components/LoadingState';
 import { InlineError } from '@/components/InlineError';
 import { extractFitmentOptions, getProductFitmentMatch } from '@/lib/fitment';
+import { AdSlot } from '@/components/AdSlot';
 
 const SORT_VALUES = ['relevance', 'newest', 'price-low', 'price-high'] as const;
 type SortValue = (typeof SORT_VALUES)[number];
@@ -23,6 +24,7 @@ const isSortValue = (value: string | null): value is SortValue =>
   !!value && SORT_VALUES.includes(value as SortValue);
 
 const Search = () => {
+  const searchInlineAdSlot = (import.meta.env.VITE_ADSENSE_SLOT_SEARCH_INLINE || '').trim();
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
   const sortParam = searchParams.get('sort');
@@ -391,6 +393,8 @@ const Search = () => {
             </Select>
           </div>
         </div>
+
+        <AdSlot slot={searchInlineAdSlot} className="my-4" minHeight={100} />
 
         {/* Main Content */}
         {productsLoading ? (
