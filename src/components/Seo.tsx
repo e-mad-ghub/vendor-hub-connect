@@ -60,7 +60,7 @@ export const Seo: React.FC<SeoProps> = ({ title, description, ogType = 'website'
     const baseUrl = getBaseUrl();
     const pageTitle = title.includes(BRAND_NAME) ? title : `${title} | ${BRAND_NAME}`;
     const url = baseUrl ? `${baseUrl}${location.pathname}${location.search}` : '';
-    const imageUrl = ogImage || (baseUrl ? `${baseUrl}/og-default.svg` : '/og-default.svg');
+    const imageUrl = ogImage || `https://www.souq-elherafyeen.com/og-default.png`;
 
     document.title = pageTitle;
 
