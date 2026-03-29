@@ -22,10 +22,13 @@ const Checkout = React.lazy(() => import("./pages/Checkout"));
 const Login = React.lazy(() => import("./pages/Login"));
 const AdminPanel = React.lazy(() => import("./pages/AdminPanel"));
 const AdminBrands = React.lazy(() => import("./pages/AdminBrands"));
+const About = React.lazy(() => import("./pages/About"));
 const Contact = React.lazy(() => import("./pages/Contact"));
+const Faq = React.lazy(() => import("./pages/Faq"));
 const Terms = React.lazy(() => import("./pages/Terms"));
 const Privacy = React.lazy(() => import("./pages/Privacy"));
 const RefundPolicy = React.lazy(() => import("./pages/RefundPolicy"));
+const ShippingInfo = React.lazy(() => import("./pages/ShippingInfo"));
 const Menu = React.lazy(() => import("./pages/Menu"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
 const NotAuthorized = React.lazy(() => import("./pages/NotAuthorized"));
@@ -96,10 +99,13 @@ const App = () => (
                         </ProtectedRoute>
                       )}
                     />
+                    <Route path="/about" element={<About />} />
                     <Route path="/contact" element={<Contact />} />
+                    <Route path="/faq" element={<Faq />} />
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/privacy" element={<Privacy />} />
                     <Route path="/refund-policy" element={<RefundPolicy />} />
+                    <Route path="/shipping-info" element={<ShippingInfo />} />
                     <Route path="/menu" element={<Menu />} />
                     <Route path="/not-authorized" element={<NotAuthorized />} />
                     <Route path="*" element={<NotFound />} />
