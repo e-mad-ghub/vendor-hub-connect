@@ -41,6 +41,7 @@ const AdminPanel = () => {
     supportEmail: '',
     supportPhone: '',
     supportAddress: '',
+    aboutContent: '',
     faqContent: '',
     shippingInfo: '',
     returnPolicy: '',
@@ -204,6 +205,7 @@ const AdminPanel = () => {
         supportEmail: customerService.supportEmail.trim(),
         supportPhone: phoneValidation.sanitized || customerService.supportPhone.trim(),
         supportAddress: customerService.supportAddress.trim(),
+        aboutContent: customerService.aboutContent.trim(),
         faqContent: customerService.faqContent.trim(),
         shippingInfo: customerService.shippingInfo.trim(),
         returnPolicy: customerService.returnPolicy.trim(),
@@ -1227,6 +1229,16 @@ const AdminPanel = () => {
                     value={customerService.supportAddress}
                     onChange={(e) => setCustomerService((prev) => ({ ...prev, supportAddress: e.target.value }))}
                     placeholder="العنوان"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label htmlFor="cs-about">عن سوق الحرفيين</Label>
+                  <Textarea
+                    id="cs-about"
+                    value={customerService.aboutContent}
+                    onChange={(e) => setCustomerService((prev) => ({ ...prev, aboutContent: e.target.value }))}
+                    placeholder="اكتب تعريفًا واضحًا بالموقع والخدمة، وافصل بين الفقرات بسطر فاضي."
+                    rows={5}
                   />
                 </div>
                 <div className="md:col-span-2">

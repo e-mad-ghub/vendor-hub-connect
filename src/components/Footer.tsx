@@ -3,9 +3,16 @@ import { Link } from 'react-router-dom';
 
 export const Footer: React.FC = () => {
   const footerLinks = {
+    'عن الموقع': [
+      { label: 'من نحن', path: '/about' },
+      { label: 'الأسئلة الشائعة', path: '/faq' },
+      { label: 'الشحن والتسليم', path: '/shipping-info' },
+    ],
     'خدمة العملاء': [
       { label: 'اتصل بينا', path: '/contact' },
       { label: 'الاسترجاع', path: '/refund-policy' },
+      { label: 'الخصوصية', path: '/privacy' },
+      { label: 'الشروط والأحكام', path: '/terms' },
     ],
     'لوحة الإدارة': [
       { label: 'إدارة طلبات عروض السعر', path: '/admin' },
@@ -16,7 +23,7 @@ export const Footer: React.FC = () => {
   return (
     <footer className="bg-marketplace-header text-marketplace-header-foreground mt-auto pb-20 md:pb-0">
       <div className="container py-10">
-        <div className="grid grid-cols-2 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
           {Object.entries(footerLinks).map(([title, links]) => (
             <div key={title}>
               <h3 className="font-semibold mb-4">{title}</h3>
